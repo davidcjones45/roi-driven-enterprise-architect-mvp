@@ -193,7 +193,70 @@ export function calculatePresentValueSchedule(schedule = {}, assumptions = {}) {
 export function calculateNPV(presentValueSchedule = {}) { const periods = recordArray(presentValueSchedule.periods); return { npv: periods.reduce((sum, period) => sum + Number(period.presentValue || 0), 0), periods, issues: presentValueSchedule.issues || [], status: presentValueSchedule.status || 'INCOMPLETE' }; }
 export function calculateROI({ pvBenefits, pvCosts, investmentBase, denominatorRule = '' } = {}) { if (!['TOTAL_INVESTMENT', 'TOTAL_DISCOUNTED_COST'].includes(denominatorRule)) return { result: null, status: 'INCOMPLETE', issues: ['Explicit supported ROI denominator rule is required.'] }; const denominator = denominatorRule === 'TOTAL_INVESTMENT' ? Number(investmentBase) : Number(pvCosts); if (!Number.isFinite(Number(pvBenefits)) || !Number.isFinite(denominator) || denominator <= 0) return { result: null, status: 'INCOMPLETE', issues: ['ROI inputs are unresolved.'] }; return { result: (Number(pvBenefits) - denominator) / denominator, denominator, denominatorRule, status: 'PASS', issues: [] }; }
 export function calculateBenefitCostRatio({ pvBenefits, pvCosts } = {}) { if (!Number.isFinite(Number(pvBenefits)) || !Number.isFinite(Number(pvCosts)) || Number(pvCosts) <= 0) return { result: null, status: 'INCOMPLETE', issues: ['Explicit positive benefit-cost denominator is required.'] }; return { result: Number(pvBenefits) / Number(pvCosts), status: 'PASS', issues: [] }; }
-export function calculateFederationEconomicCase({ caseId = '', periodFlows = [], assumptions = {}, participantCases = [] } = {}) { const schedule = buildCaseCashFlowSchedule({ caseId, baseFlows: periodFlows, assumptions }); const pv = calculatePresentValueSchedule(schedule, assumptions); const npv = calculateNPV(pv); const allFlows = recordArray(schedule.periodFlows).flat(); const pvTotals = recordArray(pv.periods).reduce((totals, row) => { const flows = schedule.periodFlows[schedule.periods.indexOf(row.periodIndex)] || []; flows.forEach(flow => { const value = Math.abs(signedFlow(flow)) / row.discountFactor; if (flow.direction === 'Outflow') totals.costs += value; else totals.benefits += value; }); return totals; }, { benefits: 0, costs: 0 }); const roi = calculateROI({ pvBenefits: pvTotals.benefits, pvCosts: pvTotals.costs, investmentBase: allFlows.filter(flow => Number(flow.periodIndex) === 0 && flow.direction === 'Outflow').reduce((sum, flow) => sum + Number(flow.amount || 0), 0), denominatorRule: normalizeEconomicCalculationAssumptions(assumptions).roiDenominatorRule }); const bcr = calculateBenefitCostRatio({ pvBenefits: pvTotals.benefits, pvCosts: pvTotals.costs }); return { caseId, collectiveNPV: npv.npv, collectiveROI: roi.result, benefitCostRatio: bcr.result, netOperatingBenefit: schedule.netCashFlowByPeriod.find(row => row.periodIndex === 1)?.netCashFlow ?? null, riskAdjustedResult: npv.npv, memberViabilityResult: recordArray(participantCases).every(item => item.thresholdEvaluation?.status !== 'FAIL') ? 'Not assessed' : 'FAIL', distributionSustainabilityResult: 'Not assessed', supportingPeriodSchedule: pv.periods, evidenceIds: ids(normalizeEconomicCalculationAssumptions(assumptions).evidenceIds), assumptionIds: ids(normalizeEconomicCalculationAssumptions(assumptions).assumptionIds), status: schedule.status === 'PASS' && pv.status === 'PASS' && roi.status === 'PASS' && bcr.status === 'PASS' ? 'PASS' : 'INCOMPLETE' }; }
+export function calculateFederationEconomicCase({ caseId = '', periodFlows = [], assumptions = {}, participantCases = [] } = {}) {
+  const schedule = buildCaseCashFlowSchedule({ caseId, baseFlows: periodFlows, assumptions }); const pv = calculatePresentValueSchedule(schedule, assumptions); const npv = calculateNPV(pv); const allFlows = recordArray(schedule.periodFlows).flat();
+  const pvTotals = recordArray(pv.periods).reduce((totals, row) => { const flows = schedule.periodFlows[schedule.periods.indexOf(row.periodIndex)] || []; flows.forEach(flow => { const value = Math.abs(signedFlow(flow)) / row.discountFactor; if (flow.direction === 'Outflow') totals.costs += value; else totals.benefits += value; }); return totals; }, { benefits: 0, costs: 0 });
+  const roi = calculateROI({ pvBenefits: pvTotals.benefits, pvCosts: pvTotals.costs, investmentBase: allFlows.filter(flow => Number(flow.periodIndex) === 0 && flow.direction === 'Outflow').reduce((sum, flow) => sum + Number(flow.amount || 0), 0), denominatorRule: normalizeEconomicCalculationAssumptions(assumptions).roiDenominatorRule }); const bcr = calculateBenefitCostRatio({ pvBenefits: pvTotals.benefits, pvCosts: pvTotals.costs });
+  return { caseId, collectiveNPV: npv.npv, collectiveROI: roi.result, benefitCostRatio: bcr.result, netOperatingBenefit: schedule.netCashFlowByPeriod.find(row => row.periodIndex === 1)?.netCashFlow ?? null, riskAdjustedResult: npv.npv, memberViabilityResult: recordArray(participantCases).every(item => item.thresholdEvaluation?.status !== 'FAIL') ? 'Not assessed' : 'FAIL', distributionSustainabilityResult: 'Not assessed', cashFlowSchedule: schedule, supportingPeriodSchedule: pv.periods, evidenceIds: ids(normalizeEconomicCalculationAssumptions(assumptions).evidenceIds), assumptionIds: ids(normalizeEconomicCalculationAssumptions(assumptions).assumptionIds), status: schedule.status === 'PASS' && pv.status === 'PASS' && roi.status === 'PASS' && bcr.status === 'PASS' ? 'PASS' : 'INCOMPLETE' };
+}
 export function allocateCaseEconomicsToParticipants({ caseId = '', periodFlows = [], distributionRules = [], participants = [] } = {}) { const validation = validateDistributionRules(caseId, distributionRules, ['benefit', 'operatingCost', 'investment', 'riskCost']); const unresolvedAllocations = []; const participantPeriodFlows = recordArray(periodFlows).flat().flatMap(flow => { if (flow.participantId) return [{ participantId: flow.participantId, ...flow, allocationSource: 'direct' }]; const field = flow.direction === 'Outflow' ? (Number(flow.periodIndex) === 0 ? 'investmentShare' : 'operatingCostShare') : 'benefitShare'; const rules = recordArray(distributionRules).filter(rule => rule.caseId === caseId); if (!validation.valid) { unresolvedAllocations.push(flow.id || ''); return []; } return rules.map(rule => ({ participantId: rule.participantId, ...flow, amount: Number(flow.amount) * Number(rule[field]), distributionRuleId: rule.id || '', allocationSource: 'rule' })); }); return { participantPeriodFlows, participantTotals: recordArray(participants).map(participant => ({ participantId: participant.id, amount: participantPeriodFlows.filter(flow => flow.participantId === participant.id).reduce((sum, flow) => sum + signedFlow(flow), 0) })), unresolvedAllocations, issues: validation.valid ? [] : ['Distribution rules are not mechanically valid.'], status: validation.valid ? 'PASS' : 'INCOMPLETE' }; }
-export function buildIncrementalCashFlowSchedule({ selectedSchedule = {}, comparatorSchedule = {} } = {}) { const selected = new Map(recordArray(selectedSchedule.netCashFlowByPeriod).map(row => [Number(row.periodIndex), row])); const comparator = new Map(recordArray(comparatorSchedule.netCashFlowByPeriod).map(row => [Number(row.periodIndex), row])); const indexes = [...new Set([...selected.keys(), ...comparator.keys()])].sort((a,b) => a-b); if (!indexes.length) return { periodFlows: [], netCashFlowByPeriod: [], issues: ['Incremental schedules are unresolved.'], status: 'INCOMPLETE' }; const flowAt = (schedule, index) => recordArray(schedule.periodFlows)[recordArray(schedule.periods).indexOf(index)] || []; const periodFlows = indexes.map(index => [...flowAt(selectedSchedule, index).map(flow => ({ ...flow, amount: Number(flow.amount), selectedSourceFlowId: flow.sourceFlowId || flow.id || '', comparatorSourceFlowId: '' })), ...flowAt(comparatorSchedule, index).map(flow => ({ ...flow, amount: -Number(flow.amount), direction: flow.direction === 'Outflow' ? 'Inflow' : 'Outflow', selectedSourceFlowId: '', comparatorSourceFlowId: flow.sourceFlowId || flow.id || '' }))]); const netCashFlowByPeriod = indexes.map(periodIndex => ({ periodIndex, netCashFlow: Number(selected.get(periodIndex)?.netCashFlow || 0) - Number(comparator.get(periodIndex)?.netCashFlow || 0) })); return { periods: indexes, periodFlows, netCashFlowByPeriod, issues: [], status: 'PASS' }; }
+export function buildIncrementalCashFlowSchedule({ selectedSchedule = {}, comparatorSchedule = {} } = {}) {
+  const scheduleStructureIssues = schedule => {
+    const periods = recordArray(schedule.periods);
+    const flows = recordArray(schedule.periodFlows);
+    const netRows = recordArray(schedule.netCashFlowByPeriod);
+    const numericPeriods = periods.every(period => Number.isInteger(Number(period)) && Number(period) >= 0);
+    const uniquePeriods = new Set(periods.map(Number)).size === periods.length;
+    const alignedNetRows = netRows.length === periods.length && netRows.every(row => periods.map(Number).includes(Number(row.periodIndex)) && Number.isFinite(Number(row.netCashFlow)));
+    return periods.length && flows.length === periods.length && numericPeriods && uniquePeriods && alignedNetRows ? [] : ['Calculated cash-flow schedule is not deterministically aligned.'];
+  };
+  const structureIssues = [...scheduleStructureIssues(selectedSchedule), ...scheduleStructureIssues(comparatorSchedule)];
+  if (structureIssues.length) return { periodFlows: [], netCashFlowByPeriod: [], issues: structureIssues, status: 'INCOMPLETE' };
+  const selected = new Map(recordArray(selectedSchedule.netCashFlowByPeriod).map(row => [Number(row.periodIndex), row]));
+  const comparator = new Map(recordArray(comparatorSchedule.netCashFlowByPeriod).map(row => [Number(row.periodIndex), row]));
+  const indexes = [...new Set([...selected.keys(), ...comparator.keys()])].sort((a, b) => a - b);
+  if (!indexes.length) return { periodFlows: [], netCashFlowByPeriod: [], issues: ['Incremental schedules are unresolved.'], status: 'INCOMPLETE' };
+
+  const flowAt = (schedule, index) => recordArray(schedule.periodFlows)[recordArray(schedule.periods).indexOf(index)] || [];
+  const classify = flows => recordArray(flows).reduce((totals, flow) => {
+    const amount = Math.abs(Number(flow.amount || 0));
+    if (flow.direction === 'Outflow') totals.costs += amount;
+    else totals.benefits += amount;
+    totals.sourceFlowIds.push(flow.sourceFlowId || flow.id || '');
+    return totals;
+  }, { benefits: 0, costs: 0, sourceFlowIds: [] });
+  const periodFlows = indexes.map(periodIndex => {
+    const selectedTotals = classify(flowAt(selectedSchedule, periodIndex));
+    const comparatorTotals = classify(flowAt(comparatorSchedule, periodIndex));
+    const benefitDelta = selectedTotals.benefits - comparatorTotals.benefits;
+    const costDelta = selectedTotals.costs - comparatorTotals.costs;
+    const flows = [];
+    if (benefitDelta !== 0) flows.push({
+      id: `INCREMENTAL-BENEFIT-${periodIndex}`,
+      periodIndex,
+      amount: Math.abs(benefitDelta),
+      direction: benefitDelta > 0 ? 'Inflow' : 'Outflow',
+      type: 'Incremental External Benefit',
+      flowClass: benefitDelta > 0 ? 'incremental benefit' : 'foregone benefit',
+      selectedSourceFlowIds: selectedTotals.sourceFlowIds,
+      comparatorSourceFlowIds: comparatorTotals.sourceFlowIds
+    });
+    if (costDelta !== 0) flows.push({
+      id: `INCREMENTAL-COST-${periodIndex}`,
+      periodIndex,
+      amount: Math.abs(costDelta),
+      direction: costDelta > 0 ? 'Outflow' : 'Inflow',
+      type: 'Incremental External Cost',
+      flowClass: costDelta > 0 ? 'incremental cost' : 'cost saving',
+      selectedSourceFlowIds: selectedTotals.sourceFlowIds,
+      comparatorSourceFlowIds: comparatorTotals.sourceFlowIds
+    });
+    return flows;
+  });
+  const netCashFlowByPeriod = indexes.map(periodIndex => ({
+    periodIndex,
+    netCashFlow: Number(selected.get(periodIndex)?.netCashFlow || 0) - Number(comparator.get(periodIndex)?.netCashFlow || 0)
+  }));
+  return { periods: indexes, periodFlows, netCashFlowByPeriod, issues: [], status: 'PASS' };
+}
 export function calculateScenarioEconomicIncrement({ workspace = {}, selectedCaseId = '', calculatedCases = [], assumptions = {} } = {}) { const comparison = scenarioComparison(workspace, selectedCaseId); if (comparison.comparatorResolutionStatus !== 'RESOLVED') return { status: 'INCOMPLETE', attribution: 'UNRESOLVED', issues: comparison.issues }; const selected = recordArray(calculatedCases).find(item => item.caseId === selectedCaseId); const comparator = recordArray(calculatedCases).find(item => item.caseId === comparison.comparatorCase.id); if (!selected || !comparator || !selected.cashFlowSchedule || !comparator.cashFlowSchedule) return { status: 'INCOMPLETE', attribution: comparison.attribution, issues: ['Calculated compatible schedules are missing.'] }; const schedule = buildIncrementalCashFlowSchedule({ selectedSchedule: selected.cashFlowSchedule, comparatorSchedule: comparator.cashFlowSchedule }); const pv = calculatePresentValueSchedule(schedule, assumptions); const npv = calculateNPV(pv); const totals = recordArray(pv.periods).reduce((result, row) => { const flows = schedule.periodFlows[schedule.periods.indexOf(row.periodIndex)] || []; flows.forEach(flow => { const value = Math.abs(signedFlow(flow)) / row.discountFactor; if (flow.direction === 'Outflow') result.costs += value; else result.benefits += value; }); return result; }, { benefits: 0, costs: 0 }); const roi = calculateROI({ pvBenefits: totals.benefits, pvCosts: totals.costs, denominatorRule: normalizeEconomicCalculationAssumptions(assumptions).roiDenominatorRule }); const bcr = calculateBenefitCostRatio({ pvBenefits: totals.benefits, pvCosts: totals.costs }); return { status: schedule.status === 'PASS' && pv.status === 'PASS' && roi.status === 'PASS' && bcr.status === 'PASS' ? 'PASS' : 'INCOMPLETE', attribution: comparison.attribution, collectiveNPV: npv.npv, collectiveROI: roi.result, benefitCostRatio: bcr.result, incrementalSchedule: schedule, reconciliationNPV: selected.collectiveNPV - comparator.collectiveNPV, issues: [...schedule.issues, ...pv.issues, ...roi.issues, ...bcr.issues] }; }
