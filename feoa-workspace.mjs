@@ -3,6 +3,7 @@ import { CASES, EVIDENCE_CLASSIFICATIONS, HANDOFF_STATES, PHASES, normalizeAsses
 import { normalizeAccountableDecision, normalizeCandidateModuleCollections, normalizeLifecycleEvent, normalizeReassessmentTrigger, normalizeReview } from './federated-extension-model.mjs';
 import { normalizeAlternativeRating, normalizeDecisionCriterion, normalizeDistributionRule, normalizeFederationEconomicCase, normalizeFormAlternative, normalizeFormDecision, normalizeMemberEconomicThreshold, normalizeParticipantEconomicCase, normalizeUnpricedEffect } from './federated-fofa-mcvsm-model.mjs';
 import { normalizeCommitment, normalizeEvidenceLineage, normalizeGovernedDependency, normalizeMembershipEvent, normalizeObservation, normalizePermission, normalizeDelegation, normalizeWorkExecutionEvent } from './federated-facem-model.mjs';
+import { normalizeAICapability, normalizeNonAIBaseline, normalizeAIInputBoundary, normalizeAIOutputBoundary, normalizeAuthorityCrosswalk, normalizeAIEvaluation, normalizeAbstentionRule, normalizeFallbackProcess, normalizeMonitoringTrigger, normalizeAISuspension, normalizeRecoveryCase, normalizeRecoveryGateAssessment, normalizeReleaseCriterion, normalizeAIReleaseDecision } from './federated-bacrm-model.mjs';
 
 const arr=v=>Array.isArray(v)?v:[];
 const ids=v=>Array.from(new Set(arr(v).filter(Boolean)));
@@ -63,7 +64,21 @@ export function normalizeWorkspace(raw={}, data={}){
   w.workExecutionEvents=arr(raw.workExecutionEvents).map(normalizeWorkExecutionEvent);
   w.observations=arr(raw.observations).map(normalizeObservation);
   w.evidenceLineage=arr(raw.evidenceLineage).map(normalizeEvidenceLineage);
-  Object.assign(w,genericCandidates,{formAlternatives:w.formAlternatives,decisionCriteria:w.decisionCriteria,alternativeRatings:w.alternativeRatings,formDecisions:w.formDecisions,memberEconomicThresholds:w.memberEconomicThresholds,distributionRules:w.distributionRules,unpricedEffects:w.unpricedEffects,membershipEvents:w.membershipEvents,governedDependencies:w.governedDependencies,permissions:w.permissions,delegations:w.delegations,commitments:w.commitments,workExecutionEvents:w.workExecutionEvents,observations:w.observations,evidenceLineage:w.evidenceLineage});
+  w.aiCapabilities=arr(raw.aiCapabilities).map(normalizeAICapability);
+  w.nonAiBaselines=arr(raw.nonAiBaselines).map(normalizeNonAIBaseline);
+  w.aiInputBoundaries=arr(raw.aiInputBoundaries).map(normalizeAIInputBoundary);
+  w.aiOutputBoundaries=arr(raw.aiOutputBoundaries).map(normalizeAIOutputBoundary);
+  w.authorityCrosswalks=arr(raw.authorityCrosswalks).map(normalizeAuthorityCrosswalk);
+  w.aiEvaluations=arr(raw.aiEvaluations).map(normalizeAIEvaluation);
+  w.abstentionRules=arr(raw.abstentionRules).map(normalizeAbstentionRule);
+  w.fallbackProcesses=arr(raw.fallbackProcesses).map(normalizeFallbackProcess);
+  w.monitoringTriggers=arr(raw.monitoringTriggers).map(normalizeMonitoringTrigger);
+  w.aiSuspensions=arr(raw.aiSuspensions).map(normalizeAISuspension);
+  w.recoveryCases=arr(raw.recoveryCases).map(normalizeRecoveryCase);
+  w.recoveryGateAssessments=arr(raw.recoveryGateAssessments).map(normalizeRecoveryGateAssessment);
+  w.releaseCriteria=arr(raw.releaseCriteria).map(normalizeReleaseCriterion);
+  w.aiReleaseDecisions=arr(raw.aiReleaseDecisions).map(normalizeAIReleaseDecision);
+  Object.assign(w,genericCandidates,{formAlternatives:w.formAlternatives,decisionCriteria:w.decisionCriteria,alternativeRatings:w.alternativeRatings,formDecisions:w.formDecisions,memberEconomicThresholds:w.memberEconomicThresholds,distributionRules:w.distributionRules,unpricedEffects:w.unpricedEffects,membershipEvents:w.membershipEvents,governedDependencies:w.governedDependencies,permissions:w.permissions,delegations:w.delegations,commitments:w.commitments,workExecutionEvents:w.workExecutionEvents,observations:w.observations,evidenceLineage:w.evidenceLineage,aiCapabilities:w.aiCapabilities,nonAiBaselines:w.nonAiBaselines,aiInputBoundaries:w.aiInputBoundaries,aiOutputBoundaries:w.aiOutputBoundaries,authorityCrosswalks:w.authorityCrosswalks,aiEvaluations:w.aiEvaluations,abstentionRules:w.abstentionRules,fallbackProcesses:w.fallbackProcesses,monitoringTriggers:w.monitoringTriggers,aiSuspensions:w.aiSuspensions,recoveryCases:w.recoveryCases,recoveryGateAssessments:w.recoveryGateAssessments,releaseCriteria:w.releaseCriteria,aiReleaseDecisions:w.aiReleaseDecisions});
   return w;
 }
 export function gateReadiness(gate, evidence=[]){const ev=new Set(arr(evidence).map(e=>e.id));const unmet=arr(gate.conditions).filter(c=>c.required!==false&&(!c.evidenceIds?.length||!c.evidenceIds.every(id=>ev.has(id))||c.status!=='Satisfied'));return {...gate,canBeDecisionReady:unmet.length===0&&gate.evidenceStatus!=='Insufficient',unmetConditions:unmet};}
