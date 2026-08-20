@@ -3,14 +3,14 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { resolveErirApiBase, runtimeErirConfig } from "./erir-client-config.mjs";
 
-test("public demo requires an explicit deployed ERIR API configuration", () => {
+test("public demo uses the same-origin ERIR proxy rather than a browser CORS configuration", () => {
   globalThis.ROI_EA_CONFIG = { publicDemo: true, erirApiBase: "" };
-  assert.equal(resolveErirApiBase({ gatewayUrl: "http://127.0.0.1:8766" }, { search: "" }), "");
+  assert.equal(resolveErirApiBase({ gatewayUrl: "http://127.0.0.1:8766" }, { search: "" }), "/api/erir");
 });
 
-test("public demo supports one configured read-only ERIR base without hard-coding it in application logic", () => {
+test("public demo does not use a browser-provided ERIR origin", () => {
   globalThis.ROI_EA_CONFIG = { publicDemo: true, erirApiBase: "https://erir-demo.example.vercel.app/" };
-  assert.equal(resolveErirApiBase({}, { search: "" }), "https://erir-demo.example.vercel.app");
+  assert.equal(resolveErirApiBase({}, { search: "?erirApi=https://untrusted.example" }), "/api/erir");
 });
 
 test("local mode retains the explicit local gateway option", () => {

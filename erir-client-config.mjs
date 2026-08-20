@@ -10,8 +10,6 @@ export function runtimeErirConfig(locationLike = globalThis.location) {
 
 export function resolveErirApiBase(regulatory = {}, locationLike = globalThis.location) {
   const config = runtimeErirConfig(locationLike);
-  const explicit = String(config.erirApiBase || "").trim();
-  if (explicit) return explicit.replace(/\/$/, "");
-  if (config.publicDemo) return "";
+  if (config.publicDemo) return "/api/erir";
   return String(regulatory.gatewayUrl || config.localErirApiBase || "").trim().replace(/\/$/, "");
 }

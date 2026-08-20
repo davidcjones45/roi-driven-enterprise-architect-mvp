@@ -58,16 +58,16 @@ node --test authority-envelope.test.mjs authority-acceptance-q1-q8.test.mjs feoa
 
 The Vercel deployment is a static, browser-local ROI-EA demo. It retains browser-local working data, Northstar, FEOA, Authority Envelope calculations, and dossier export. No customer data is sent to ROI-EA servers.
 
-ERIR remains a separate, authoritative record system. The public demo retrieves only a bounded read-only trace of illustrative ERIR records through `GET /api/v1/health` and `GET /api/v1/trace?ids=...` on the separately deployed ERIR demo API. An ERIR ID is a reference, not proof of legal applicability, compliance, effective control, accepted evidence, or organizational authorization.
+ERIR remains a separate, authoritative record system. The public demo calls the same-origin ROI-EA proxy at `GET /api/erir/trace?ids=...`; the proxy retrieves the bounded read-only trace from the separately deployed ERIR API. An ERIR ID is a reference, not proof of legal applicability, compliance, effective control, accepted evidence, or organizational authorization.
 
-Configure the API at deployment in `demo-config.js`, or temporarily append `?erirApi=https://<erir-demo-host>` to the ROI-EA URL. Local development remains available with `?mode=local`, which may use the existing localhost gateway. The public mode hides ERIR draft submission; the download-only ERIR handoff remains available.
+The proxy upstream is configured only on the ROI-EA server with `ERIR_READ_ONLY_API_ORIGIN` (HTTPS only). Browser users cannot provide or redirect the upstream. Local development remains available with `?mode=local`, which may use the existing localhost gateway. The public mode hides ERIR draft submission; the download-only ERIR handoff remains available.
 
-Deploy ROI-EA as a Vercel static project from this repository root. Deploy the ERIR repository's `feature/vercel-integrated-demo` branch as a separate Vercel project, then set its HTTPS URL in the ROI-EA configuration. Do not deploy `erir_gateway.py`; it is local-only and includes a local draft-writing capability.
+Deploy ROI-EA as a Vercel project from this repository root. Deploy the ERIR repository's `feature/vercel-integrated-demo` branch as a separate Vercel project, then set its HTTPS URL as the ROI-EA project's `ERIR_READ_ONLY_API_ORIGIN` environment variable. Do not deploy `erir_gateway.py`; it is local-only and includes a local draft-writing capability.
 
 The public demo is not authentication, tenancy, production authorization, legal advice, compliance certification, full regulatory coverage, durable customer-data storage, or a production SaaS service.
 
 ### Integrated-demo tests
 
 ```powershell
-node --test authority-envelope.test.mjs authority-acceptance-q1-q8.test.mjs feoa-foundation.test.mjs feoa-acceptance.test.mjs feoa-ui-wiring.test.mjs public-demo-config.test.mjs
+node --test authority-envelope.test.mjs authority-acceptance-q1-q8.test.mjs feoa-foundation.test.mjs feoa-acceptance.test.mjs feoa-ui-wiring.test.mjs public-demo-config.test.mjs erir-proxy.test.mjs
 ```
