@@ -13,3 +13,10 @@ export function resolveErirApiBase(regulatory = {}, locationLike = globalThis.lo
   if (config.publicDemo) return "/api/erir";
   return String(regulatory.gatewayUrl || config.localErirApiBase || "").trim().replace(/\/$/, "");
 }
+
+export function erirTraceUrl(ids, regulatory = {}, locationLike = globalThis.location) {
+  const config = runtimeErirConfig(locationLike);
+  const encodedIds = encodeURIComponent((ids || []).join(","));
+  if (config.publicDemo) return `/api/erir/trace?ids=${encodedIds}`;
+  return `${resolveErirApiBase(regulatory, locationLike)}/api/v1/trace?ids=${encodedIds}`;
+}

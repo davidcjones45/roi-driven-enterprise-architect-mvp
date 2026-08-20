@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { resolveErirApiBase, runtimeErirConfig } from "./erir-client-config.mjs";
+import { erirTraceUrl, resolveErirApiBase, runtimeErirConfig } from "./erir-client-config.mjs";
 
 test("public demo uses the same-origin ERIR proxy rather than a browser CORS configuration", () => {
   globalThis.ROI_EA_CONFIG = { publicDemo: true, erirApiBase: "" };
@@ -11,6 +11,11 @@ test("public demo uses the same-origin ERIR proxy rather than a browser CORS con
 test("public demo does not use a browser-provided ERIR origin", () => {
   globalThis.ROI_EA_CONFIG = { publicDemo: true, erirApiBase: "https://erir-demo.example.vercel.app/" };
   assert.equal(resolveErirApiBase({}, { search: "?erirApi=https://untrusted.example" }), "/api/erir");
+});
+
+test("public demo trace uses the exact same-origin proxy path", () => {
+  globalThis.ROI_EA_CONFIG = { publicDemo: true };
+  assert.equal(erirTraceUrl(["SRC-FTC-2026-001", "EVD-CLAIMS-001"], {}, { search: "" }), "/api/erir/trace?ids=SRC-FTC-2026-001%2CEVD-CLAIMS-001");
 });
 
 test("local mode retains the explicit local gateway option", () => {
