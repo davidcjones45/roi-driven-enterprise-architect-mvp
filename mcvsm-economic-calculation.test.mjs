@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildCaseCashFlowSchedule, calculateBenefitCostRatio, calculateFederationEconomicCase, calculateNPV, calculatePresentValueSchedule, calculateROI, normalizeEconomicCalculationAssumptions, normalizeEconomicPeriod } from './federated-fofa-mcvsm-model.mjs';
+import { buildCaseCashFlowSchedule, buildIncrementalCashFlowSchedule, calculateBenefitCostRatio, calculateFederationEconomicCase, calculateNPV, calculatePresentValueSchedule, calculateROI, normalizeEconomicCalculationAssumptions, normalizeEconomicPeriod } from './federated-fofa-mcvsm-model.mjs';
 
 const assumptions = caseId => ({ id: `ASM-${caseId}`, caseId, discountRate: 0.08, annualGrowthRate: 0.03, horizonPeriods: 5, basePeriod: 0, currency: 'USD', taxTreatment: 'Pre-tax', inflationTreatment: 'Real / no inflation escalation', roiDenominatorRule: 'TOTAL_DISCOUNTED_COST', evidenceIds: ['EVD-SYNTHETIC'], assumptionIds: ['ASM-SYNTHETIC'], status: 'Synthetic / modeled' });
 const flows = (caseId, benefit, operatingCost, investment) => [{ id: `${caseId}-INV`, caseId, periodIndex: 0, amount: investment, direction: 'Outflow', type: 'External Cost', flowClass: 'investment', status: 'Synthetic / modeled' }, { id: `${caseId}-BEN`, caseId, periodIndex: 1, amount: benefit, direction: 'Inflow', type: 'External Revenue', flowClass: 'benefit', status: 'Synthetic / modeled' }, { id: `${caseId}-COST`, caseId, periodIndex: 1, amount: operatingCost, direction: 'Outflow', type: 'External Cost', flowClass: 'operating cost', status: 'Synthetic / modeled' }];
@@ -17,4 +17,13 @@ test('periodization preserves Y0, grows only after year one, and exposes transpa
   const schedule = buildCaseCashFlowSchedule({ caseId: 'C2-C1', baseFlows: flows('C2-C1', 439200, 150000, 450000), periods, assumptions: assumptions('C2-C1') }); const pv = calculatePresentValueSchedule(schedule, assumptions('C2-C1'));
   assert.equal(schedule.netCashFlowByPeriod[0].netCashFlow, -450000); assert.equal(schedule.periodFlows[1][0].amount, 439200); assert.ok(Math.abs(schedule.periodFlows[2][0].amount - 452376) < 0.001); assert.equal(pv.periods[0].discountFactor, 1); assert.ok(Math.abs(calculateNPV(pv).npv - 770525.476084062) < 0.01);
   assert.equal(calculateROI({ pvBenefits: 100, pvCosts: 50, denominatorRule: '' }).status, 'INCOMPLETE'); assert.equal(calculateBenefitCostRatio({ pvBenefits: 100, pvCosts: 0 }).status, 'INCOMPLETE');
+});
+
+test('incremental ratios are recalculated from an aligned incremental discounted schedule', () => {
+  const base = buildCaseCashFlowSchedule({ caseId: 'C1', baseFlows: flows('C1', 0, 0, 0), assumptions: assumptions('C1') });
+  const selected = buildCaseCashFlowSchedule({ caseId: 'C2', baseFlows: flows('C2', 439200, 150000, 450000), assumptions: assumptions('C2') });
+  const incremental = buildIncrementalCashFlowSchedule({ selectedSchedule: selected, comparatorSchedule: base }); const pv = calculatePresentValueSchedule(incremental, assumptions('C2')); const npv = calculateNPV(pv);
+  const benefits = 1853578.10890775; const costs = 1083052.632823684; const roi = calculateROI({ pvBenefits: benefits, pvCosts: costs, denominatorRule: 'TOTAL_DISCOUNTED_COST' }); const bcr = calculateBenefitCostRatio({ pvBenefits: benefits, pvCosts: costs });
+  assert.ok(Math.abs(npv.npv - 770525.476084062) < 0.01); assert.ok(Math.abs(npv.npv - (calculateNPV(calculatePresentValueSchedule(selected, assumptions('C2'))).npv - calculateNPV(calculatePresentValueSchedule(base, assumptions('C1'))).npv)) < 0.01);
+  assert.ok(Math.abs(roi.result - 0.71143862517114) < 0.0001); assert.ok(Math.abs(bcr.result - 1.71143862517114) < 0.0001); assert.notEqual(roi.result, 0); assert.notEqual(bcr.result, 1);
 });

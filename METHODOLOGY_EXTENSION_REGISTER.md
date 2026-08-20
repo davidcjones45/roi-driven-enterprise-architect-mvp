@@ -11,4 +11,4 @@
 - **Severity:** Non-blocking / material for future calculation automation
 - **Proposed disposition:** Candidate model extension, separately reviewed; do not alter the accepted modules in this integrated-execution pass.
 - **Status:** Implemented candidate extension — pending independent review.
-- **Implementation:** `mcvsm-economic-calculation.test.mjs` demonstrates explicit periodized flows, 8% discounting, 3% annual growth, NPV, `TOTAL_DISCOUNTED_COST` ROI, and BCR reconciliation against the synthetic targets. Real-data validation remains outstanding.
+- **Implementation:** `mcvsm-economic-calculation.test.mjs` demonstrates explicit periodized flows, 8% discounting, 3% annual growth, NPV, and incremental `TOTAL_DISCOUNTED_COST` ROI/BCR reconciliation against the synthetic targets. Real-data validation remains outstanding.
