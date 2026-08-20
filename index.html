@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ROI-Driven Enterprise Architect: a decision workspace for paid design partners.">
+  <title>ROI-Driven Enterprise Architect</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="eyebrow">AI AT HUMAN SCALE</span><strong>ROI-Driven<br>Enterprise Architect</strong></div>
+    <nav aria-label="Workflow">
+      <button class="nav-link active" data-view="overview"><span>01</span> Decision workspace</button>
+      <button class="nav-link" data-view="opportunity"><span>02</span> Opportunity</button>
+      <button class="nav-link" data-view="evidence"><span>03</span> Evidence register</button>
+      <button class="nav-link" data-view="inventory"><span>04</span> Architecture inventory</button>
+      <button class="nav-link" data-view="baseline"><span>05</span> ROI baseline</button>
+      <button class="nav-link" data-view="risk"><span>06</span> Agentic risk</button>
+      <button class="nav-link" data-view="authority"><span>07</span> Authority envelope</button>
+      <button class="nav-link" data-view="authority-portfolio"><span>07a</span> Authority portfolio</button>
+      <button class="nav-link" data-view="architecture"><span>08</span> Architecture decision</button>
+      <button class="nav-link" data-view="pilot"><span>08</span> Pilot charter</button>
+      <button class="nav-link" data-view="results"><span>09</span> Pilot review</button>
+      <button class="nav-link" data-view="regulatory"><span>10</span> Regulatory context</button>
+      <button class="nav-link" data-view="compliance-cost"><span>11</span> Compliance cost &amp; capacity</button>
+      <button class="nav-link" data-view="feoa"><span>F</span> FEOA workbench</button>
+      <button class="nav-link" data-view="dossier"><span>12</span> Executive dossier</button>
+    </nav>
+    <div class="sidebar-note">Design-partner MVP<br><small>Stored in this browser only.</small><small class="copyright-notice">© 2026 David C. Jones. All rights reserved.<br>AI at Human Scale.</small></div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div><span class="eyebrow">MAKE THE NEXT DECISION VISIBLE</span><h1 id="page-title">Decision workspace</h1></div>
+      <div class="topbar-actions"><button id="load-demo" class="secondary">Load Northstar example</button><button id="reset-data" class="secondary danger">Reset local data</button></div>
+    </header>
+
+    <section id="overview" class="view active">
+      <div class="hero"><div><span class="eyebrow accent">PAID DESIGN-PARTNER WORKFLOW</span><h2>Turn a costly work problem into an accountable, bounded AI decision.</h2><p>This MVP captures the minimum facts required to decide whether to proceed: a defined opportunity, economic baseline, agentic-risk boundary, architecture choice, pilot charter, and executive-ready dossier.</p></div><div class="hero-status"><span id="readiness-label">Draft</span><strong id="readiness-score">0 / 6</strong><small>decision components complete</small></div></div>
+      <div class="card-grid" id="progress-cards"></div>
+      <section class="card"><div class="section-heading"><div><span class="eyebrow">WORKING RULES</span><h2>Evidence before enthusiasm</h2></div></div><ul class="rule-list"><li>Forecast value is not realized value.</li><li>Risk reduction, cost avoidance, and released capacity require explicit evidence and owners.</li><li>Agentic recommendations do not replace named human authority.</li><li>Exported dossiers are decision-support documents, not legal, security, or financial approval.</li></ul></section>
+    </section>
+
+    <section id="opportunity" class="view">
+      <div class="section-heading"><div><span class="eyebrow">01 / OPPORTUNITY INTAKE</span><h2>Define the costly work, not the technology.</h2><p>Describe a bounded decision opportunity with a business owner, a measurable problem, and a decision deadline.</p></div><span class="status-pill" id="opportunity-status">Incomplete</span></div>
+      <form id="opportunity-form" class="form-grid card">
+        <label>Opportunity name<input required name="name" placeholder="e.g., Scheduling exception preparation"></label>
+        <label>Business sponsor<input required name="sponsor" placeholder="Name and role"></label>
+        <label>Decision deadline<input required type="date" name="deadline"></label>
+        <label>Business capability<input required name="capability" placeholder="e.g., Service scheduling"></label>
+        <label class="full">Costly work or problem statement<textarea required name="problem" rows="4" placeholder="Describe the recurring work, delay, rework, exception, or exposure. Avoid solution language."></textarea></label>
+        <label class="full">Desired decision<textarea required name="decision" rows="3" placeholder="e.g., Approve a 60-day bounded pilot, defer pending evidence, or select a non-AI alternative."></textarea></label>
+        <label>Evidence owner<input required name="evidenceOwner" placeholder="Who will validate material facts?"></label>
+        <label>Evidence state<select required name="evidenceState"><option value="">Select</option><option>Requested</option><option>Supplied</option><option>Validated</option><option>Disputed</option></select></label>
+        <div class="form-actions full"><button type="submit">Save opportunity</button></div>
+      </form>
+    </section>
+
+    <section id="evidence" class="view">
+      <div class="section-heading"><div><span class="eyebrow">SUPPORTING RECORD / EVIDENCE REGISTER</span><h2>Distinguish a claim from a resolved fact.</h2><p>Record evidence for a material baseline, risk condition, architecture decision, or pilot measure. An entry is not a legal conclusion or validation merely because it has been supplied.</p></div><span class="status-pill" id="evidence-status">No records</span></div>
+      <form id="evidence-form" class="form-grid card">
+        <label>Claim or data point<input required name="claim" placeholder="e.g., Coordinators spend 15 minutes per eligible exception"></label>
+        <label>Record type<select required name="recordType"><option value="">Select</option><option>Observed fact</option><option>Reported statement</option><option>Assumption</option><option>Calculation input</option><option>Control evidence</option><option>Decision condition</option></select></label>
+        <label>Related decision area<select required name="area"><option value="">Select</option><option>Opportunity</option><option>ROI baseline</option><option>Agentic risk</option><option>Architecture decision</option><option>Pilot charter</option></select></label>
+        <label>Evidence state<select required name="state"><option value="">Select</option><option>Requested</option><option>Supplied</option><option>Validated</option><option>Disputed</option><option>Resolved</option></select></label>
+        <label>Source or reference<input required name="source" placeholder="System report, interview, policy, ticket, or document ID"></label>
+        <label>Source owner<input required name="sourceOwner" placeholder="Person or accountable team"></label>
+        <label>Confidence / reliability<select required name="confidence"><option value="">Select</option><option>Low</option><option>Moderate</option><option>High</option></select></label>
+        <label>Review date<input required type="date" name="reviewDate"></label>
+        <label class="full">Limitation, contradiction, or next action<textarea required name="limitation" rows="3" placeholder="State what the evidence does not prove, what could contradict it, or what must happen before it can support a decision."></textarea></label>
+        <div class="form-actions full"><button type="submit">Add evidence record</button></div>
+      </form>
+      <div class="card evidence-table-wrap"><div class="evidence-summary" id="evidence-summary"></div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Claim</th><th>Area</th><th>Type</th><th>State</th><th>Source</th><th>Next action / limitation</th><th></th></tr></thead><tbody id="evidence-rows"></tbody></table></div></div>
+    </section>
+
+    <section id="inventory" class="view">
+      <div class="section-heading"><div><span class="eyebrow">SUPPORTING RECORD / MINIMUM ARCHITECTURE INVENTORY</span><h2>Capture the architecture facts that materially affect the decision.</h2><p>Start with the affected applications, services, data stores, and interfaces. This is a decision-scoped inventory, not a claim of complete enterprise coverage.</p></div><span class="status-pill" id="inventory-status">No records</span></div>
+      <form id="inventory-form" class="form-grid card">
+        <label>Asset or application name<input required name="name" placeholder="e.g., Scheduling Hub"></label>
+        <label>Record type<select required name="type"><option value="">Select</option><option>Application</option><option>Service</option><option>Data store</option><option>Interface / API</option><option>Technology component</option><option>Vendor contract</option></select></label>
+        <label>Business capability<input required name="capability" placeholder="e.g., Service scheduling"></label>
+        <label>Business owner<input required name="businessOwner" placeholder="Name and role"></label>
+        <label>Technical owner<input required name="technicalOwner" placeholder="Name and role"></label>
+        <label>Vendor / provider<input name="vendor" placeholder="Provider, internal, or unknown"></label>
+        <label>Annual cost ($)<input type="number" min="0" step="0.01" name="annualCost" placeholder="e.g., 24000"></label>
+        <label>Renewal or review date<input type="date" name="renewalDate"></label>
+        <label>Lifecycle status<select required name="lifecycle"><option value="">Select</option><option>Invest</option><option>Tolerate</option><option>Migrate</option><option>Eliminate</option><option>Unknown</option></select></label>
+        <label>Criticality<select required name="criticality"><option value="">Select</option><option>Low</option><option>Moderate</option><option>High</option><option>Mission critical</option></select></label>
+        <label>Data classification<select required name="dataClass"><option value="">Select</option><option>Public</option><option>Internal</option><option>Confidential</option><option>Personal / regulated</option></select></label>
+        <label>Evidence record reference<input name="evidenceRef" placeholder="Evidence claim or document ID"></label>
+        <label class="full">Dependencies and decision relevance<textarea name="dependencies" rows="3" placeholder="What does this record depend on, what depends on it, and why does it materially affect this opportunity or decision?"></textarea></label>
+        <div class="form-actions full"><button type="submit">Add architecture record</button></div>
+      </form>
+      <div class="card evidence-table-wrap"><div class="evidence-summary" id="inventory-summary"></div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Record</th><th>Capability / owners</th><th>Lifecycle / criticality</th><th>Cost / renewal</th><th>Data / dependency</th><th></th></tr></thead><tbody id="inventory-rows"></tbody></table></div></div>
+    </section>
+
+    <section id="baseline" class="view">
+      <div class="section-heading"><div><span class="eyebrow">02 / ROI BASELINE</span><h2>Calculate the current cost and test a bounded value case.</h2><p>Use observed inputs where possible. The output remains a forecast until a human validates both inputs and realized results.</p></div><span class="status-pill" id="baseline-status">Incomplete</span></div>
+      <form id="baseline-form" class="form-grid card">
+        <label>Annual work volume<input required type="number" min="0" step="1" name="annualVolume" placeholder="e.g., 12000"></label>
+        <label>Hours per occurrence<input required type="number" min="0" step="0.01" name="hoursPerOccurrence" placeholder="e.g., 0.25"></label>
+        <label>Loaded labor rate ($/hour)<input required type="number" min="0" step="0.01" name="loadedRate" placeholder="e.g., 38"></label>
+        <label>Annual errors / incident cost ($)<input required type="number" min="0" step="0.01" name="annualErrorCost" placeholder="e.g., 12000"></label>
+        <label>Current annual tool cost ($)<input required type="number" min="0" step="0.01" name="currentToolCost" placeholder="e.g., 4800"></label>
+        <label>Evidence state<select required name="baselineEvidence"><option value="">Select</option><option>Assumption</option><option>Reported</option><option>Observed</option><option>Validated</option></select></label>
+        <div class="divider full"><span>Proposed intervention economics</span></div>
+        <label>Expected labor reduction (%)<input required type="number" min="0" max="100" step="1" name="laborReduction" placeholder="e.g., 30"></label>
+        <label>Expected error-cost reduction (%)<input required type="number" min="0" max="100" step="1" name="errorReduction" placeholder="e.g., 20"></label>
+        <label>One-time implementation cost ($)<input required type="number" min="0" step="0.01" name="implementationCost" placeholder="e.g., 18000"></label>
+        <label>Annual recurring cost ($)<input required type="number" min="0" step="0.01" name="recurringCost" placeholder="e.g., 7200"></label>
+        <label>Value classification<select required name="valueClass"><option value="">Select</option><option>Cash-releasing saving</option><option>Cost avoidance</option><option>Released capacity</option><option>Risk reduction</option><option>Revenue support</option></select></label>
+        <label>Finance validator<input required name="financeOwner" placeholder="Name and role"></label>
+        <div class="form-actions full"><button type="submit">Calculate and save baseline</button></div>
+      </form>
+      <div class="metric-grid" id="baseline-results" aria-live="polite"></div>
+      <p class="quiet-note">Formula: annual labor cost = volume × hours per occurrence × loaded rate. Forecast net annual benefit = reduced labor + reduced error cost − recurring cost. Payback is not shown when forecast net annual benefit is zero or negative.</p>
+    </section>
+
+    <section id="risk" class="view">
+      <div class="section-heading"><div><span class="eyebrow">03 / AGENTIC RISK AND HUMAN BOUNDARY</span><h2>Bound authority before expanding autonomy.</h2><p>This is a design-screening tool, not a legal conclusion or a complete security assessment.</p></div><span class="status-pill" id="risk-status">Incomplete</span></div>
+      <form id="risk-form" class="form-grid card">
+        <label>System role<select required name="systemRole"><option value="">Select</option><option>Preparation / summarization</option><option>Recommendation</option><option>Drafting external communication</option><option>Workflow execution</option><option>Autonomous action</option></select></label>
+        <label>Decision impact<select required name="decisionImpact"><option value="">Select</option><option>Low - reversible internal work</option><option>Moderate - customer or operational impact</option><option>High - financial, safety, employment, or rights impact</option></select></label>
+        <label>Data sensitivity<select required name="dataSensitivity"><option value="">Select</option><option>Public / non-sensitive</option><option>Internal business data</option><option>Confidential or personal data</option><option>Highly sensitive / regulated data</option></select></label>
+        <label>Action capability<select required name="actionCapability"><option value="">Select</option><option>Read-only</option><option>Drafts only</option><option>Creates records with approval</option><option>Writes or sends without approval</option></select></label>
+        <label>External-tool access<select required name="externalAccess"><option value="">Select</option><option>No external tools</option><option>Approved internal tools only</option><option>Third-party APIs or public web</option></select></label>
+        <label>Human approval required?<select required name="humanApproval"><option value="">Select</option><option>Yes, before any consequential action</option><option>Yes, sampled review only</option><option>No human approval planned</option></select></label>
+        <label>Named decision authority<input required name="decisionAuthority" placeholder="Who accepts, pauses, or stops the pilot?"></label>
+        <label>Fallback / manual process<input required name="fallback" placeholder="How work continues if the system fails"></label>
+        <label class="full">Key risk conditions and mitigations<textarea required name="mitigations" rows="4" placeholder="State the specific condition, proposed control, owner, and evidence needed. Do not claim a control is effective until it is validated."></textarea></label>
+        <div class="form-actions full"><button type="submit">Assess risk boundary</button></div>
+      </form>
+      <div class="risk-result card" id="risk-results"></div>
+    </section>
+
+    <section id="authority" class="view">
+      <div class="section-heading"><div><span class="eyebrow">AI AUTHORITY &amp; EVIDENCE</span><h2>Record the specific authority, not a general autonomy label.</h2><p>This local decision record is not an authorization mechanism, legal conclusion, or proof that evidence is sufficient.</p></div><span class="status-pill" id="authority-status">Incomplete</span></div>
+      <div class="card form-grid"><label>Local Authority Envelope<select id="authority-record-selector"></select></label><div class="form-actions"><button type="button" id="new-authority-envelope" class="secondary">Create new envelope</button></div><p class="full quiet-note">Each envelope is retained locally. Select one to view or edit it; saving appends a lifecycle decision only when its decision details changed.</p></div>
+      <form id="authority-form" class="form-grid card">
+        <label>Authority envelope ID<input required name="id" placeholder="e.g., AE-SCHED-001"></label>
+        <label>AI system or agent<input required name="aiSystem" placeholder="e.g., Scheduling preparation assistant"></label>
+        <label>AI system/use-case ID<input required name="aiSystemId" placeholder="e.g., AIS-SCHED-PREP"></label>
+        <label>Agent ID (optional)<input name="agentId" placeholder="Leave blank for a non-agentic use case"></label>
+        <label>Business capability<input required name="businessCapability" placeholder="e.g., Service scheduling"></label>
+        <label>Named human authority<input required name="authorityOwner" placeholder="Name and role"></label>
+        <label>Lifecycle status<select required name="status"><option value="">Select</option><option>Proposed</option><option>Active - controlled pilot</option><option>Active - limited production</option><option>Constrained</option><option>Suspended</option><option>Revoked</option><option>Expired</option></select></label>
+        <label>Effective date<input required type="date" name="effectiveDate"></label>
+        <label>Review/expiry date<input required type="date" name="reviewDate"></label>
+        <label>Linked inventory records<input name="inventoryRefs" placeholder="Names or IDs; comma separated"></label>
+        <label>Action IDs<input name="actionIds" placeholder="e.g., ACT-READ-RECORDS; ACT-DRAFT-SUMMARY"></label>
+        <label>Resource IDs<input name="resourceIds" placeholder="e.g., RES-APPROVED-RECORDS"></label>
+        <label class="full">Permitted action classes<textarea required name="permittedActions" required rows="2" placeholder="e.g., Read approved records; prepare context; draft internal summary"></textarea></label>
+        <label class="full">Prohibited action classes<textarea required name="prohibitedActions" required rows="2" placeholder="e.g., No scheduling write-back, external communications, or autonomous commitments"></textarea></label>
+        <label class="full">Resource and context boundary<textarea required name="resourceScope" required rows="2" placeholder="State permitted data, tools, credentials, population, workflow, and environmental limits."></textarea></label>
+        <label class="full">Required evidence references<textarea required name="evidenceRefs" required rows="2" placeholder="Reference MVP evidence records and ERIR IDs. State unknown or pending evidence explicitly."></textarea></label>
+        <label class="full">Evidence requirement<textarea required name="evidenceRequirement" rows="2" placeholder="What must be demonstrated before authority is effective?"></textarea></label>
+        <label class="full">Acceptance criterion<textarea required name="acceptanceCriterion" rows="2" placeholder="What would a qualified reviewer accept as sufficient evidence?"></textarea></label>
+        <label>Evidence artifact IDs<input name="evidenceArtifactIds" placeholder="e.g., MVP-EVD-002; EVD-CLAIMS-001"></label>
+        <label>Evidence applies to action IDs<input name="evidenceActionIds" placeholder="Defaults to all permitted actions when blank"></label>
+        <label>Evidence assessment state<select name="evidenceAssessmentState"><option>missing</option><option>planned</option><option selected>not assessed</option><option>accepted</option><option>rejected</option><option>expired</option><option>superseded</option></select></label>
+        <label>Evidence valid from<input type="date" name="evidenceValidFrom"></label>
+        <label>Evidence valid until/review<input type="date" name="evidenceValidUntil"></label>
+        <label>Evidence reviewer<input name="evidenceReviewer" placeholder="Name and role"></label>
+        <label>Review authority<input name="evidenceReviewAuthority" placeholder="Role or body"></label>
+        <label class="full">Monitoring triggers and observations<textarea required name="monitoringTriggers" required rows="2" placeholder="State observable threshold/event, measurement owner, and what is recorded."></textarea></label>
+        <label class="full">Recorded monitoring observations<textarea name="monitoringObservationsText" rows="2" placeholder="One per line: observation ID | observed date | condition | action IDs | evidence IDs"></textarea></label>
+        <label class="full">Constrain, suspend, or revoke conditions<textarea required name="revocationConditions" required rows="2" placeholder="State condition, decision authority, fallback, and required next action."></textarea></label>
+        <label>Authority decision<select required name="decision"><option value="">Select</option><option>Authorize</option><option>Maintain</option><option>Expand</option><option>Constrain</option><option>Suspend</option><option>Restore</option><option>Revoke</option><option>Expire</option></select></label>
+        <label>Decision date<input required type="date" name="decisionDate"></label>
+        <label>Triggering observation IDs<input name="triggeringObservationIds" placeholder="e.g., OBS-001; OBS-002"></label>
+        <label class="full">Decision rationale and limitation<textarea required name="rationale" required rows="3" placeholder="Tie the decision to evidence state, remaining uncertainty, and human review. Do not claim validated effectiveness without evidence."></textarea></label>
+        <div class="form-actions full"><button type="submit">Save authority envelope</button></div>
+      </form>
+      <div class="card" id="authority-summary">No authority envelope recorded.</div>
+      <div class="card form-grid"><label>Active authority as of date<input type="date" id="authority-as-of-date" value="2026-08-13"></label><div class="form-actions"><button type="button" id="calculate-authority-state">Calculate effective authority</button></div><div class="full" id="authority-as-of-result">Enter a date to calculate the effective authority state.</div></div>
+      <div class="card form-grid"><label>ERIR reference impact ID<input id="erir-impact-id" placeholder="e.g., SRC-FTC-2026-001"></label><div class="form-actions"><button type="button" id="calculate-erir-impact">Find local authority impact</button></div><div class="full" id="erir-impact-result">Enter an ERIR ID to identify local authority envelopes that require review.</div></div>
+    </section>
+
+    <section id="authority-portfolio" class="view">
+      <div class="section-heading"><div><span class="eyebrow">LOCAL AUTHORITY PORTFOLIO</span><h2>Inspect effective authority and evidence exceptions across local envelopes.</h2><p>Calculated states use the same deterministic authority model. They do not establish legal compliance or enforce runtime authorization.</p></div><span class="status-pill" id="authority-portfolio-status">Local only</span></div>
+      <div class="card form-grid"><label>As of date<input type="date" id="portfolio-as-of-date" value="2026-08-13"></label><label>Attention window (days)<input type="number" id="portfolio-window-days" value="30" min="1" max="365"></label><div class="form-actions"><button type="button" id="calculate-authority-portfolio">Refresh portfolio</button></div></div>
+      <div class="card"><h3>Authority Portfolio</h3><div class="table-wrap"><table><thead><tr><th>Envelope / AI system</th><th>Capability / owner</th><th>Stored / calculated state</th><th>Effective / review date</th><th>Evidence support / exception</th><th>Required action</th></tr></thead><tbody id="authority-portfolio-rows"><tr><td colspan="6" class="quiet-note">Select a date and refresh the portfolio.</td></tr></tbody></table></div></div>
+      <div class="card"><h3>Authority Requiring Attention</h3><p class="quiet-note">Includes evidence exceptions and envelopes approaching or past review. The active-authority subset is identified separately.</p><div id="authority-exception-rows">No portfolio calculated.</div></div>
+      <div class="card"><h3>Active Authority Evidence Exceptions (Q6)</h3><p class="quiet-note">Only effective authorities are listed here. Authorities with failed or unresolved required evidence are calculated as not effectively authorized and remain in the broader attention view.</p><div id="active-authority-exception-rows">No portfolio calculated.</div></div>
+    </section>
+
+    <section id="architecture" class="view">
+      <div class="section-heading"><div><span class="eyebrow">04 / ARCHITECTURE DECISION</span><h2>Record alternatives, conditions, and a decision owner.</h2><p>The preferred option is not automatically approved. It becomes a proposed decision with evidence conditions and a named authority.</p></div><span class="status-pill" id="architecture-status">Incomplete</span></div>
+      <form id="architecture-form" class="card">
+        <div class="form-grid">
+          <label>Decision title<input required name="title" placeholder="e.g., Select bounded scheduling preparation approach"></label>
+          <label>Decision authority<input required name="authority" placeholder="Name and role"></label>
+          <label>Review date<input required type="date" name="reviewDate"></label>
+          <label>Decision status<select required name="decisionStatus"><option value="">Select</option><option>Proposed</option><option>Conditionally approved</option><option>Deferred</option><option>Not approved</option></select></label>
+          <label class="full">Decision context<textarea required name="context" rows="3" placeholder="What architecture, business, data, or control question must be decided?"></textarea></label>
+        </div>
+        <div class="alternatives-header"><div><h3>Alternatives</h3><p>Compare a non-AI option with any bounded AI option.</p></div><button type="button" id="add-alternative" class="secondary">Add alternative</button></div>
+        <div id="alternatives"></div>
+        <div class="form-grid"><label class="full">Conditions, evidence, and exceptions<textarea required name="conditions" rows="4" placeholder="e.g., validate labor baseline, obtain security review, retain human approval, confirm integration scope."></textarea></label><label class="full">Decision rationale<textarea required name="rationale" rows="4" placeholder="Why is the preferred alternative appropriate now, given its evidence, risk, cost, and change envelope?"></textarea></label><div class="form-actions full"><button type="submit">Save architecture decision</button></div></div>
+      </form>
+    </section>
+
+    <section id="pilot" class="view">
+      <div class="section-heading"><div><span class="eyebrow">05 / PILOT CHARTER</span><h2>Test the smallest responsible scope.</h2><p>A pilot earns the right to proceed only through measured evidence. It must have a stop rule and a human owner.</p></div><span class="status-pill" id="pilot-status">Incomplete</span></div>
+      <form id="pilot-form" class="form-grid card">
+        <label>Pilot name<input required name="pilotName" placeholder="e.g., Scheduling preparation shadow pilot"></label>
+        <label>Pilot owner<input required name="pilotOwner" placeholder="Name and role"></label>
+        <label>Start date<input required type="date" name="startDate"></label>
+        <label>End date<input required type="date" name="endDate"></label>
+        <label class="full">Hypothesis<textarea required name="hypothesis" rows="3" placeholder="If we do X in a bounded workflow, then Y measurable result should occur without violating stated controls."></textarea></label>
+        <label>Primary metric<input required name="metric" placeholder="e.g., preparation minutes per case"></label>
+        <label>Baseline value<input required name="metricBaseline" placeholder="e.g., 18 minutes"></label>
+        <label>Target value<input required name="metricTarget" placeholder="e.g., 12 minutes"></label>
+        <label>Measurement owner<input required name="measurementOwner" placeholder="Name and role"></label>
+        <label class="full">Scope and exclusions<textarea required name="scope" rows="3" placeholder="State which cases, systems, data, people, and actions are included and explicitly excluded."></textarea></label>
+        <label class="full">Guardrails and human approvals<textarea required name="guardrails" rows="3" placeholder="State required review, prohibited actions, access restrictions, and escalation path."></textarea></label>
+        <label class="full">Pause / stop / rollback conditions<textarea required name="stopRules" rows="3" placeholder="Specify the observable condition, who can stop the pilot, and the fallback process."></textarea></label>
+        <label class="full">Go / no-go decision rule<textarea required name="goNoGo" rows="3" placeholder="State the evidence threshold and decision authority required at pilot close."></textarea></label>
+        <div class="form-actions full"><button type="submit">Save pilot charter</button></div>
+      </form>
+    </section>
+
+    <section id="results" class="view">
+      <div class="section-heading"><div><span class="eyebrow">PILOT REVIEW / BENEFITS VERIFICATION</span><h2>Separate forecast, observation, and validated result.</h2><p>Record what was measured, whether guardrails operated as designed, and the next recommendation. A completed form is not proof of benefit or control effectiveness.</p></div><span class="status-pill" id="results-status">Not reviewed</span></div>
+      <form id="results-form" class="form-grid card">
+        <label>Review date<input type="date" name="reviewDate"></label>
+        <label>Review authority<input name="reviewAuthority" placeholder="Name and role accountable for the recommendation"></label>
+        <label>Measured metric<input name="metric" placeholder="Use the pilot's primary metric"></label>
+        <label>Observed result<input name="observedResult" placeholder="e.g., median preparation time was 11.5 minutes"></label>
+        <label>Result state<select name="resultState"><option value="">Select</option><option>Not measured</option><option>Observed</option><option>Validated</option><option>Disputed</option></select></label>
+        <label>Measurement evidence/reference<input name="measurementEvidence" placeholder="Report, sample, dashboard, or document ID"></label>
+        <label>Guardrail outcome<select name="guardrailOutcome"><option value="">Select</option><option>Not yet assessed</option><option>Operated as designed</option><option>Exception recorded</option><option>Control failure recorded</option></select></label>
+        <label>Adoption/operating signal<input name="adoptionSignal" placeholder="e.g., 82% of eligible cases reviewed by coordinators"></label>
+        <label class="full">Exceptions, incidents, or limitations<textarea name="limitations" rows="3" placeholder="State material exceptions, data gaps, adverse effects, and the action required. Leave no implication that an unmeasured result is proven."></textarea></label>
+        <label class="full">Recommendation<select name="recommendation"><option value="">Select</option><option>Continue measurement</option><option>Extend the bounded pilot</option><option>Proceed to a governed next stage</option><option>Narrow or redesign</option><option>Pause or retire</option></select></label>
+        <label class="full">Recommendation rationale and conditions<textarea name="rationale" rows="3" placeholder="Connect the recommendation to measured evidence, control outcome, remaining uncertainty, and the approving authority."></textarea></label>
+        <div class="form-actions full"><button type="submit">Save pilot review</button></div>
+      </form>
+    </section>
+
+    <section id="regulatory" class="view">
+      <div class="section-heading"><div><span class="eyebrow">REGULATORY CONTEXT / READ-ONLY TRACEABILITY</span><h2>Link a decision to reviewed regulatory intelligence without turning it into a legal conclusion.</h2><p>ERIR remains the authority for source review and applicability approval. This panel links decision context, displays the repository’s current record status, and can submit an explicitly requested draft package for ERIR review.</p></div><span class="status-pill" id="regulatory-status">No links</span></div>
+      <form id="regulatory-form" class="form-grid card">
+        <label>ERIR gateway URL<input name="gatewayUrl" value="http://127.0.0.1:8766" placeholder="Local gateway URL"></label>
+        <label>Subject asset ID<input name="subjectAssetId" placeholder="e.g., SYS-DEMO-001"></label>
+        <label>Regulatory source ID<input name="sourceId" placeholder="e.g., SRC-FTC-2026-001"></label>
+        <label>Obligation ID<input name="obligationId" placeholder="e.g., OBL-FTC-001"></label>
+        <label>Applicability assessment ID<input name="assessmentId" placeholder="e.g., APP-FTC-001"></label>
+        <label>Control ID<input name="controlId" placeholder="e.g., CTL-CLAIMS-001"></label>
+        <label>Evidence ID<input name="evidenceId" placeholder="e.g., EVD-CLAIMS-001"></label>
+        <label>Linked review date<input type="date" name="reviewDate"></label>
+        <label>Decision status<select name="status"><option value="">Select</option><option>Context linked</option><option>Potentially applicable - human review required</option><option>Undetermined</option><option>Control mapping proposed</option><option>Reviewed in ERIR</option></select></label>
+        <label class="full">Source citation / official reference<textarea name="citation" rows="2" placeholder="Record the ERIR source title, citation locator, and official reference. The gateway may enrich this from a linked record."></textarea></label>
+        <label class="full">Unresolved regulatory conditions<textarea name="unresolvedConditions" rows="3" placeholder="State missing facts, source-review gaps, pending counsel/compliance review, control conditions, or other uncertainty. Do not imply a compliance conclusion."></textarea></label>
+        <div class="form-actions full"><button type="submit">Save regulatory links</button><button type="button" id="load-erir-trace" class="secondary">Load ERIR traceability</button><button type="button" id="download-erir-handoff" class="secondary">Download ERIR handoff</button></div>
+      </form>
+      <div class="card evidence-table-wrap"><div class="evidence-summary" id="regulatory-summary">No ERIR records linked.</div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>ERIR record</th><th>Status / review</th><th>Source / citation</th><th>Relationship</th></tr></thead><tbody id="regulatory-rows"><tr><td colspan="4" class="quiet-note">Connect a local gateway and load linked record IDs to display read-only traceability.</td></tr></tbody></table></div></div>
+      <div class="card regulatory-draft">
+        <span class="eyebrow">EXPLICIT DRAFT REQUEST / NOT AN APPROVAL</span><h3>Propose a control draft for ERIR review.</h3><p class="quiet-note">The gateway accepts only a schema-valid draft. It does not create a compliance determination, attach evidence, or modify reviewed repository records.</p>
+        <div class="form-grid">
+          <label>Draft control ID<input id="draft-control-id" placeholder="e.g., CTL-ROI-EA-001"></label>
+          <label>Control owner<input id="draft-control-owner" placeholder="Name and role"></label>
+          <label>Draft control title<input id="draft-control-title" placeholder="e.g., Human approval before consequential action"></label>
+          <label>Control frequency<select id="draft-control-frequency"><option value="event_driven">Event driven</option><option value="continuous">Continuous</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="ad_hoc">Ad hoc</option></select></label>
+          <label class="full">Control objective<textarea id="draft-control-objective" rows="2" placeholder="State the objective. The linked obligation ID is required for an ERIR control draft."></textarea></label>
+          <label class="full checkbox-label"><input type="checkbox" id="draft-intent"> I explicitly request submission of this proposed draft control to the local ERIR gateway for review. I understand it will be recorded as a draft, not approved.</label>
+          <div class="form-actions full"><button type="button" id="submit-erir-draft" class="secondary">Submit explicit draft request</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="compliance-cost" class="view">
+      <div class="section-heading"><div><span class="eyebrow">DECISION-SCOPED / COMPLIANCE COST AND CAPACITY</span><h2>Make recurring governance work visible without claiming audited precision.</h2><p>Model only the regulatory, control, evidence, and monitoring activities materially affected by this decision. Use scenario inputs and record the evidence, confidence, and unresolved assumptions behind every estimate.</p></div><span class="status-pill" id="compliance-cost-status">No activities</span></div>
+      <div class="card">
+        <p class="quiet-note"><strong>Boundary:</strong> This is a decision-support model, not a general ledger, payroll feed, enterprise allocation engine, or financial statement. Annual activity cost = volume &times; hours per occurrence &times; loaded hourly rate + direct external expense.</p>
+        <form id="compliance-assumptions-form" class="form-grid">
+          <label class="full">Cross-cutting assumptions and unknowns<textarea name="assumptions" rows="3" placeholder="State scope limits, allocation choices, unavailable data, likely double-counting risks, and what must be validated before an investment decision."></textarea></label>
+          <div class="form-actions full"><button type="submit" class="secondary">Save model assumptions</button></div>
+        </form>
+      </div>
+      <form id="compliance-activity-form" class="card">
+        <div class="section-heading compact"><div><span class="eyebrow">ACTIVITY RECORD</span><h3>Add one recurring governance or compliance activity.</h3><p>Enter separate baseline, pilot, and target-state assumptions. A lower modeled cost is not a realized saving until measured and validated.</p></div></div>
+        <div class="form-grid">
+          <label>Activity name<input required name="name" placeholder="e.g., Regulatory intake and triage"></label>
+          <label>Activity category<select required name="category"><option value="">Select</option><option>Source monitoring and intake</option><option>Triage and relevance assessment</option><option>Applicability review</option><option>Obligation interpretation and mapping</option><option>Control design or revision</option><option>Evidence collection and validation</option><option>Training, testing, or reporting</option><option>Audit response or remediation</option><option>AI monitoring or oversight</option></select></label>
+          <label>Responsible role or team<input required name="owner" placeholder="e.g., Compliance Operations"></label>
+          <label>Related decision area<select required name="decisionArea"><option value="">Select</option><option>ROI baseline</option><option>Agentic risk</option><option>Architecture decision</option><option>Pilot charter</option><option>Regulatory context</option></select></label>
+          <label>Evidence source<input required name="evidenceSource" placeholder="Study, time record, invoice, estimate, or interview"></label>
+          <label>Confidence<select required name="confidence"><option value="">Select</option><option>Assumption</option><option>Low</option><option>Moderate</option><option>High</option><option>Validated</option></select></label>
+          <label>ERIR source ID<input name="sourceId" placeholder="Optional source ID"></label>
+          <label>ERIR obligation ID<input name="obligationId" placeholder="Optional obligation ID"></label>
+          <label>ERIR control ID<input name="controlId" placeholder="Optional control ID"></label>
+          <label>ERIR evidence ID<input name="evidenceId" placeholder="Optional evidence ID"></label>
+          <label class="full">Assumption, limitation, or unresolved condition<textarea required name="notes" rows="2" placeholder="Explain material uncertainty. Do not present uncertain inputs as verified facts."></textarea></label>
+        </div>
+        <div class="divider"><span>Baseline scenario</span></div>
+        <div class="form-grid">
+          <label>Annual volume<input required type="number" min="0" step="0.01" name="baselineVolume" placeholder="e.g., 24"></label><label>Hours per occurrence<input required type="number" min="0" step="0.01" name="baselineHours" placeholder="e.g., 6"></label><label>Loaded rate ($/hour)<input required type="number" min="0" step="0.01" name="baselineRate" placeholder="e.g., 85"></label><label>Direct external cost ($/year)<input required type="number" min="0" step="0.01" name="baselineExternal" value="0"></label>
+        </div>
+        <div class="divider"><span>Pilot scenario</span></div>
+        <div class="form-grid">
+          <label>Annualized volume<input required type="number" min="0" step="0.01" name="pilotVolume" placeholder="e.g., 24"></label><label>Hours per occurrence<input required type="number" min="0" step="0.01" name="pilotHours" placeholder="e.g., 7"></label><label>Loaded rate ($/hour)<input required type="number" min="0" step="0.01" name="pilotRate" placeholder="e.g., 85"></label><label>Direct external cost ($/year)<input required type="number" min="0" step="0.01" name="pilotExternal" value="0"></label>
+        </div>
+        <div class="divider"><span>Target-state scenario</span></div>
+        <div class="form-grid">
+          <label>Annual volume<input required type="number" min="0" step="0.01" name="targetVolume" placeholder="e.g., 24"></label><label>Hours per occurrence<input required type="number" min="0" step="0.01" name="targetHours" placeholder="e.g., 3"></label><label>Loaded rate ($/hour)<input required type="number" min="0" step="0.01" name="targetRate" placeholder="e.g., 85"></label><label>Direct external cost ($/year)<input required type="number" min="0" step="0.01" name="targetExternal" value="0"></label>
+          <div class="form-actions full"><button type="submit">Add activity to model</button></div>
+        </div>
+      </form>
+      <div class="metric-grid" id="compliance-cost-results" aria-live="polite"></div>
+      <div class="card evidence-table-wrap"><div class="evidence-summary" id="compliance-cost-summary">No activity records have been added.</div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Activity / owner</th><th>Evidence / confidence</th><th>Baseline</th><th>Pilot</th><th>Target state</th><th>ERIR links / conditions</th><th></th></tr></thead><tbody id="compliance-cost-rows"></tbody></table></div></div>
+    </section>
+
+    <section id="feoa" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FEOA v0.2.3 / FEDERATED ENTERPRISE OPPORTUNITY ASSESSMENT</span><h2>Assessment home and progressive-enrichment workbench.</h2><p>Start with a traceable opportunity, then enrich operating handoffs, authority/evidence constraints, baseline friction, counterfactual economics, readiness, gates, AI capability, Cognitive Resilience, sensitivity, and pilot observations. AI is optional and remains bounded by the existing Authority Envelope.</p></div><span class="status-pill" id="feoa-status">Draft</span></div>
+      <form id="feoa-assessment-form" class="card form-grid">
+        <label>Assessment name<input required name="name" placeholder="Federated opportunity assessment"></label>
+        <label>Current phase<select name="currentPhase"><option>0 Qualify</option><option>1 Opportunity &amp; Incentives</option><option>2 Structure &amp; Constraints</option><option>3 Operating Evidence</option><option>4 Federation Design &amp; Economics</option><option>5 Feasibility</option><option>6 AI &amp; Resilience</option><option>7 Investment Decision</option><option>8 Controlled Pilot</option></select></label>
+        <label class="full">Federated value proposition<textarea required name="valueProposition" rows="2" placeholder="Describe the value created by federation; do not confuse value creation, capture, allocation, or internal transfers."></textarea></label>
+        <label>Participants (semicolon separated)<input name="participantsText" placeholder="Participant A; Participant B"></label>
+        <label>Existing evidence IDs (semicolon separated)<input name="evidenceIds" placeholder="Use IDs from the Evidence register"></label>
+        <label class="full">Material gap IDs or descriptions<textarea name="majorGapIds" rows="2" placeholder="Keep unknowns and specialist questions visible."></textarea></label>
+        <label class="full">Required next action<textarea name="requiredNextAction" rows="2" placeholder="State the next evidence, design, or decision action."></textarea></label>
+        <div class="form-actions full"><button type="submit">Save assessment foundation</button></div>
+      </form>
+      <div class="card"><span class="eyebrow">GUIDED FEOA LIFECYCLE</span><h3>Continue the current assessment</h3><p class="quiet-note">Select a stage to review shared records, identify evidence gaps, and add the next record without re-entering prior work.</p><div class="dossier-actions" id="feoa-surface-nav"><button type="button" data-feoa-surface="home">Assessment Home</button><button type="button" data-feoa-surface="participants">Participants</button><button type="button" data-feoa-surface="stream">Value Stream</button><button type="button" data-feoa-surface="handoffs">Handoffs &amp; Actions</button><button type="button" data-feoa-surface="authority">Authority &amp; Evidence</button><button type="button" data-feoa-surface="baseline">Baseline &amp; Friction</button><button type="button" data-feoa-surface="economics">Economics</button><button type="button" data-feoa-surface="viability">Deal Viability</button><button type="button" data-feoa-surface="readiness">Readiness</button><button type="button" data-feoa-surface="gates">Gates</button><button type="button" data-feoa-surface="ai">AI Case</button><button type="button" data-feoa-surface="resilience">Resilience</button><button type="button" data-feoa-surface="sensitivity">Sensitivity</button><button type="button" data-feoa-surface="pilot">Pilot Evidence</button><button type="button" data-feoa-surface="reports">Reports</button></div><div class="dossier-summary" id="feoa-guided-surface" aria-live="polite"></div></div>
+      <div class="card form-grid"><div class="full"><span class="eyebrow">CANONICAL WORKSPACE RECORDS</span><h3>Add a traceable record to the current assessment</h3><p class="quiet-note">Each panel in the FEOA workbench reads from the same persisted assessment workspace. Use the synthetic healthcare fixture to explore the complete workflow, or add a record with the selected canonical collection.</p></div><label>Workspace surface<select id="feoa-record-type"><option value="participants">Participants &amp; value propositions</option><option value="capabilities">Capabilities</option><option value="valueStreams">Value streams</option><option value="processSteps">Process steps</option><option value="handoffs">Handoffs</option><option value="actions">Consequential actions</option><option value="constraints">Authority / evidence / constraints</option><option value="metrics">Baseline metrics</option><option value="frictions">Friction</option><option value="counterfactuals">Counterfactual cases</option><option value="economicFlows">Economic flows</option><option value="riskAdjustments">Risk adjustments</option><option value="participantEconomicCases">Participant deal viability</option><option value="readinessGaps">Technical &amp; operational readiness</option><option value="gates">Gate decisions</option><option value="aiCases">AI capability cases</option><option value="cognitiveResilience">Cognitive resilience</option><option value="sensitivities">Sensitivity / breakpoints</option><option value="pilotMeasurements">Pilot evidence &amp; variance</option></select></label><label class="full">Record JSON<textarea id="feoa-record-json" rows="6" aria-label="FEOA record JSON">{"name":"New record"}</textarea></label><div class="form-actions full"><button type="button" id="add-feoa-record">Add FEOA record</button><button type="button" id="load-feoa-healthcare" class="secondary">Load synthetic healthcare acceptance case</button><button type="button" id="generate-feoa-reports" class="secondary">Generate seven report instances</button></div></div>
+      <div class="card"><h3>Assessment views and reusable records</h3><div class="table-wrap"><table><thead><tr><th>View</th><th>Primary FEOA concern</th><th>Existing ROI-EA / ERIR source of truth</th></tr></thead><tbody><tr><td>Participants &amp; allocation</td><td>Creation, capture, allocation, and internal transfers</td><td>FEOA participant and economic-line records</td></tr><tr><td>Operating handoffs</td><td>Communication, responsibility, authority, accountability</td><td>FEOA actions/handoffs + Authority Envelope</td></tr><tr><td>Authority, evidence &amp; constraints</td><td>Valid evidence is not authorization</td><td>Authority Envelope, Evidence register, ERIR links</td></tr><tr><td>Baseline, friction &amp; economics</td><td>Case 0 / 1 / 2, consolidated and risk-adjusted value</td><td>ROI baseline, Architecture alternatives, FEOA counterfactuals</td></tr><tr><td>Readiness, gates &amp; pilot</td><td>Decision-proportional evidence and reversible learning</td><td>Risk, Pilot/Results, FEOA gates and observations</td></tr><tr><td>AI &amp; Cognitive Resilience</td><td>Optional performer capability and durable human fallback</td><td>Authority Envelope, FEOA AI case and resilience records</td></tr></tbody></table></div></div>
+      <div class="card" id="feoa-summary" aria-live="polite"></div>
+    </section>
+
+    <section id="dossier" class="view">
+      <div class="section-heading"><div><span class="eyebrow">06 / EXECUTIVE DECISION DOSSIER</span><h2>Export a concise, evidence-aware decision package.</h2><p>The dossier records the current decision position. It must be reviewed by the named decision authority before any action is approved.</p></div><span class="status-pill" id="dossier-status">Needs inputs</span></div>
+      <div class="card dossier-summary" id="dossier-summary"></div>
+      <div class="dossier-actions"><button id="export-html">Export executive dossier</button><button id="download-json" class="secondary">Download working record (JSON)</button></div>
+      <p class="quiet-note">“Export executive dossier” opens a print-ready document. Use the browser’s Print command to save a PDF or print for review.</p>
+    </section>
+    <footer class="application-footer">© 2026 David C. Jones. All rights reserved. AI at Human Scale.</footer>
+  </main>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
