@@ -10,4 +10,5 @@
 - **Evidence:** `north-star-integrated-execution.test.mjs`; the synthetic C2/C1 and C3/C2 reviewed values were retained as fixture inputs because no accepted calculator relationship exists.
 - **Severity:** Non-blocking / material for future calculation automation
 - **Proposed disposition:** Candidate model extension, separately reviewed; do not alter the accepted modules in this integrated-execution pass.
-- **Status:** Open — defer pending real-data execution and separate candidate-model scope.
+- **Status:** Implemented candidate extension — pending independent review.
+- **Implementation:** `mcvsm-economic-calculation.test.mjs` demonstrates explicit periodized flows, 8% discounting, 3% annual growth, NPV, `TOTAL_DISCOUNTED_COST` ROI, and BCR reconciliation against the synthetic targets. Real-data validation remains outstanding.

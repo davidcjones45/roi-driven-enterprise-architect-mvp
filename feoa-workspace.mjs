@@ -1,7 +1,7 @@
 import { stableId } from './authority-model.mjs';
 import { CASES, EVIDENCE_CLASSIFICATIONS, HANDOFF_STATES, PHASES, normalizeAssessment, normalizeCounterfactual, normalizeHandoff } from './feoa-model.mjs';
 import { normalizeAccountableDecision, normalizeCandidateModuleCollections, normalizeLifecycleEvent, normalizeReassessmentTrigger, normalizeReview } from './federated-extension-model.mjs';
-import { normalizeAlternativeRating, normalizeDecisionCriterion, normalizeDistributionRule, normalizeFederationEconomicCase, normalizeFormAlternative, normalizeFormDecision, normalizeMemberEconomicThreshold, normalizeParticipantEconomicCase, normalizeUnpricedEffect } from './federated-fofa-mcvsm-model.mjs';
+import { normalizeAlternativeRating, normalizeDecisionCriterion, normalizeDistributionRule, normalizeEconomicCalculationAssumptions, normalizeEconomicPeriod, normalizeFederationEconomicCase, normalizeFormAlternative, normalizeFormDecision, normalizeMemberEconomicThreshold, normalizeParticipantEconomicCase, normalizeUnpricedEffect } from './federated-fofa-mcvsm-model.mjs';
 import { normalizeCommitment, normalizeEvidenceLineage, normalizeGovernedDependency, normalizeMembershipEvent, normalizeObservation, normalizePermission, normalizeDelegation, normalizeWorkExecutionEvent } from './federated-facem-model.mjs';
 import { normalizeAICapability, normalizeNonAIBaseline, normalizeAIInputBoundary, normalizeAIOutputBoundary, normalizeAuthorityCrosswalk, normalizeAIEvaluation, normalizeAbstentionRule, normalizeFallbackProcess, normalizeMonitoringTrigger, normalizeAISuspension, normalizeRecoveryCase, normalizeRecoveryGateAssessment, normalizeReleaseCriterion, normalizeAIReleaseDecision } from './federated-bacrm-model.mjs';
 
@@ -34,6 +34,8 @@ export function normalizeWorkspace(raw={}, data={}){
   w.economicFlows=records(raw.economicFlows,'ECO','economic-flow').map(x=>({...x,type:FLOW_TYPES.includes(x.type)?x.type:'External Cost',direction:x.direction||'Outflow',internalExternal:x.internalExternal||'External',cashNonCash:x.cashNonCash||'Cash',grossNet:x.grossNet||'Gross',scenario:x.scenario||'Future',caseId:x.caseId||'',amount:Number(x.amount||0),evidenceIds:ids(x.evidenceIds),assumptionIds:ids(x.assumptionIds),costPoolId:x.costPoolId||''}));
   w.counterfactuals=records(raw.counterfactuals,'CASE','counterfactual').map(normalizeCounterfactual);
   w.riskAdjustments=records(raw.riskAdjustments,'RA','risk-adjustment').map(x=>({...x,amount:Number(x.amount||0),caseId:x.caseId||'',evidenceIds:ids(x.evidenceIds)}));
+  w.economicPeriods=arr(raw.economicPeriods).map(normalizeEconomicPeriod);
+  w.economicCalculationAssumptions=arr(raw.economicCalculationAssumptions).map(normalizeEconomicCalculationAssumptions);
   w.participantEconomicCases=arr(raw.participantEconomicCases).map(x=>({...normalizeParticipantEconomicCase(x),alignment:ALIGNMENTS.includes(x.alignment)?x.alignment:'Unknown'}));
   w.federationEconomicCases=arr(raw.federationEconomicCases).map(normalizeFederationEconomicCase);
   w.readinessGaps=records(raw.readinessGaps,'TRG','technical-readiness-gap').map(x=>({...x,dimension:READINESS_DIMENSIONS.includes(x.dimension)?x.dimension:'Integration',finding:READINESS_FINDINGS.includes(x.finding)?x.finding:'Unknown',evidenceIds:ids(x.evidenceIds),gateIds:ids(x.gateIds),economicCaseIds:ids(x.economicCaseIds)}));
