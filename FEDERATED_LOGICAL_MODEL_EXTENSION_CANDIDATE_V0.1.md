@@ -30,3 +30,13 @@ Scenario comparison is comparator-ID-based. It classifies a federation increment
 Member viability is a separate non-override check: a positive collective result cannot pass required-member viability. Distribution checks distinguish mechanical share validity from participant acceptance; neither a valid allocation nor a ranking is a fairness conclusion, negotiated consent, form decision, authorization, or implementation decision. Unpriced effects remain qualitative and decision relevant.
 
 FACEM lifecycle/dependency enforcement, BACRM release/recovery behavior, UI changes, ERIR writes or schema changes, and deployment changes remain excluded. Increment 2 remains candidate logical-model work, not validated methodology, compliance, safety, effectiveness, or ROI validation.
+
+## Increment 3 — FACEM candidate behavior
+
+Increment 3 adds dedicated candidate records and pure checks for membership events, governed dependencies, permissions, delegations, commitments, work-execution events, observations, evidence lineage, and selected accountable-decision/lifecycle checks. Participants remain the canonical parties, Authority Envelopes remain canonical authorities, and the existing Handoff object is extended in place with transmission, receipt, validation, acceptance, provenance, and correction references.
+
+Membership state is derived from explicit effective-time events rather than record order; future events do not alter earlier state and ambiguous same-time transitions remain unresolved. A governed dependency is not a member merely because it supplies a service. Permission cannot create authority, and delegation cannot transfer residual accountability in this increment.
+
+Commitment progression keeps request, offer, acceptance, execution, and completion distinct. Handoff, execution, evidence-lineage, and decision checks preserve explicit references and append-only predecessor links. The as-of helper is a limited logical reconstruction from currently normalized records, not a production event store or a claim of complete historical reconstruction.
+
+BACRM input/output enforcement, abstention, fallback, suspension, recovery, and release behavior remain excluded, as do UI changes, persistence architecture, authentication, ERIR writes/schema changes, and deployment changes. Increment 3 remains candidate work only: it is not independently validated and makes no legal, compliance, safety, effectiveness, or production event-sourcing claim.

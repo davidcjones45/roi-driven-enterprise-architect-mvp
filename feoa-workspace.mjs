@@ -1,7 +1,8 @@
 import { stableId } from './authority-model.mjs';
-import { CASES, EVIDENCE_CLASSIFICATIONS, HANDOFF_STATES, PHASES, normalizeAssessment, normalizeCounterfactual } from './feoa-model.mjs';
+import { CASES, EVIDENCE_CLASSIFICATIONS, HANDOFF_STATES, PHASES, normalizeAssessment, normalizeCounterfactual, normalizeHandoff } from './feoa-model.mjs';
 import { normalizeAccountableDecision, normalizeCandidateModuleCollections, normalizeLifecycleEvent, normalizeReassessmentTrigger, normalizeReview } from './federated-extension-model.mjs';
 import { normalizeAlternativeRating, normalizeDecisionCriterion, normalizeDistributionRule, normalizeFederationEconomicCase, normalizeFormAlternative, normalizeFormDecision, normalizeMemberEconomicThreshold, normalizeParticipantEconomicCase, normalizeUnpricedEffect } from './federated-fofa-mcvsm-model.mjs';
+import { normalizeCommitment, normalizeEvidenceLineage, normalizeGovernedDependency, normalizeMembershipEvent, normalizeObservation, normalizePermission, normalizeDelegation, normalizeWorkExecutionEvent } from './federated-facem-model.mjs';
 
 const arr=v=>Array.isArray(v)?v:[];
 const ids=v=>Array.from(new Set(arr(v).filter(Boolean)));
@@ -23,7 +24,7 @@ export function normalizeWorkspace(raw={}, data={}){
   w.evidenceGaps=records(raw.evidenceGaps,'GAP','evidence-gap').map(x=>({...x,status:x.status||'Open',evidenceIds:ids(x.evidenceIds)}));
   w.participants=records(raw.participants||w.assessment.participants,'PAR','participant').map((x,i)=>({...x,valueProposition:rec(x.valueProposition||{},'PVP',`participant-value-${i+1}`),indispensability:x.indispensability||'Unknown',alignment:ALIGNMENTS.includes(x.alignment)?x.alignment:'Unknown',capabilityIds:ids(x.capabilityIds),receivedCapabilityIds:ids(x.receivedCapabilityIds),evidenceIds:ids(x.evidenceIds)}));
   w.capabilities=records(raw.capabilities,'CAP','capability'); w.valueStreams=records(raw.valueStreams,'VS','value-stream'); w.processSteps=records(raw.processSteps,'PS','process-step');
-  w.handoffs=records(raw.handoffs,'HOF','handoff').map(x=>({...x,communicationState:HANDOFF_STATES.communication.includes(x.communicationState)?x.communicationState:'Created',responsibilityState:HANDOFF_STATES.responsibility.includes(x.responsibilityState)?x.responsibilityState:'Not Offered',authorityState:HANDOFF_STATES.authority.includes(x.authorityState)?x.authorityState:'Not Applicable',actionIds:ids(x.actionIds),evidenceIds:ids(x.evidenceIds),authorityEnvelopeIds:ids(x.authorityEnvelopeIds),constraintIds:ids(x.constraintIds),controlIds:ids(x.controlIds)}));
+  w.handoffs=records(raw.handoffs,'HOF','handoff').map(x=>({...normalizeHandoff(x),communicationState:HANDOFF_STATES.communication.includes(x.communicationState)?x.communicationState:'Created',responsibilityState:HANDOFF_STATES.responsibility.includes(x.responsibilityState)?x.responsibilityState:'Not Offered',authorityState:HANDOFF_STATES.authority.includes(x.authorityState)?x.authorityState:'Not Applicable',actionIds:ids(x.actionIds),evidenceIds:ids(x.evidenceIds),authorityEnvelopeIds:ids(x.authorityEnvelopeIds),constraintIds:ids(x.constraintIds),controlIds:ids(x.controlIds)}));
   w.actions=records(raw.actions,'ACT','action').map(x=>({...x,evidenceRequirementIds:ids(x.evidenceRequirementIds),constraintIds:ids(x.constraintIds),controlIds:ids(x.controlIds),humanAuthorizationRequirement:x.humanAuthorizationRequirement||'Not assessed'}));
   w.constraints=records(raw.constraints,'CON','constraint').map(x=>({...x,type:CONSTRAINT_TYPES.includes(x.type)?x.type:'Unresolved',evidenceIds:ids(x.evidenceIds),actionIds:ids(x.actionIds),controlIds:ids(x.controlIds)}));
   w.metrics=records(raw.metrics,'MET','metric').map(x=>({...x,evidenceIds:ids(x.evidenceIds),classification:EVIDENCE_CLASSIFICATIONS.includes(x.classification)?x.classification:'Reported'}));
@@ -54,7 +55,15 @@ export function normalizeWorkspace(raw={}, data={}){
   w.distributionRules=arr(raw.distributionRules).map(normalizeDistributionRule);
   w.unpricedEffects=arr(raw.unpricedEffects).map(normalizeUnpricedEffect);
   const genericCandidates=normalizeCandidateModuleCollections(raw);
-  Object.assign(w,genericCandidates,{formAlternatives:w.formAlternatives,decisionCriteria:w.decisionCriteria,alternativeRatings:w.alternativeRatings,formDecisions:w.formDecisions,memberEconomicThresholds:w.memberEconomicThresholds,distributionRules:w.distributionRules,unpricedEffects:w.unpricedEffects});
+  w.membershipEvents=arr(raw.membershipEvents).map(normalizeMembershipEvent);
+  w.governedDependencies=arr(raw.governedDependencies).map(normalizeGovernedDependency);
+  w.permissions=arr(raw.permissions).map(normalizePermission);
+  w.delegations=arr(raw.delegations).map(normalizeDelegation);
+  w.commitments=arr(raw.commitments).map(normalizeCommitment);
+  w.workExecutionEvents=arr(raw.workExecutionEvents).map(normalizeWorkExecutionEvent);
+  w.observations=arr(raw.observations).map(normalizeObservation);
+  w.evidenceLineage=arr(raw.evidenceLineage).map(normalizeEvidenceLineage);
+  Object.assign(w,genericCandidates,{formAlternatives:w.formAlternatives,decisionCriteria:w.decisionCriteria,alternativeRatings:w.alternativeRatings,formDecisions:w.formDecisions,memberEconomicThresholds:w.memberEconomicThresholds,distributionRules:w.distributionRules,unpricedEffects:w.unpricedEffects,membershipEvents:w.membershipEvents,governedDependencies:w.governedDependencies,permissions:w.permissions,delegations:w.delegations,commitments:w.commitments,workExecutionEvents:w.workExecutionEvents,observations:w.observations,evidenceLineage:w.evidenceLineage});
   return w;
 }
 export function gateReadiness(gate, evidence=[]){const ev=new Set(arr(evidence).map(e=>e.id));const unmet=arr(gate.conditions).filter(c=>c.required!==false&&(!c.evidenceIds?.length||!c.evidenceIds.every(id=>ev.has(id))||c.status!=='Satisfied'));return {...gate,canBeDecisionReady:unmet.length===0&&gate.evidenceStatus!=='Insufficient',unmetConditions:unmet};}
