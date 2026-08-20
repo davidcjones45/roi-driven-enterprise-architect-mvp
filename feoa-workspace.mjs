@@ -1,5 +1,6 @@
 import { stableId } from './authority-model.mjs';
-import { CASES, EVIDENCE_CLASSIFICATIONS, HANDOFF_STATES, PHASES, normalizeAssessment } from './feoa-model.mjs';
+import { CASES, EVIDENCE_CLASSIFICATIONS, HANDOFF_STATES, PHASES, normalizeAssessment, normalizeCounterfactual } from './feoa-model.mjs';
+import { normalizeAccountableDecision, normalizeCandidateModuleCollections, normalizeLifecycleEvent, normalizeReassessmentTrigger, normalizeReview } from './federated-extension-model.mjs';
 
 const arr=v=>Array.isArray(v)?v:[];
 const ids=v=>Array.from(new Set(arr(v).filter(Boolean)));
@@ -28,7 +29,7 @@ export function normalizeWorkspace(raw={}, data={}){
   w.frictions=records(raw.frictions,'FRI','friction').map(x=>({...x,classification:x.classification||'Unresolved',requiredControlIds:ids(x.requiredControlIds),metricIds:ids(x.metricIds)}));
   w.benefits=records(raw.benefits,'BEN','benefit'); w.costPools=records(raw.costPools,'CST','cost-pool').map(x=>({...x,type:COST_POOLS.includes(x.type)?x.type:'Other Material Cost'}));
   w.economicFlows=records(raw.economicFlows,'ECO','economic-flow').map(x=>({...x,type:FLOW_TYPES.includes(x.type)?x.type:'External Cost',direction:x.direction||'Outflow',internalExternal:x.internalExternal||'External',cashNonCash:x.cashNonCash||'Cash',grossNet:x.grossNet||'Gross',scenario:x.scenario||'Future',caseId:x.caseId||'',amount:Number(x.amount||0),evidenceIds:ids(x.evidenceIds),assumptionIds:ids(x.assumptionIds),costPoolId:x.costPoolId||''}));
-  w.counterfactuals=records(raw.counterfactuals,'CASE','counterfactual').map(x=>({...x,caseName:CASES.includes(x.caseName)?x.caseName:CASES[0],flowIds:ids(x.flowIds),benefitIds:ids(x.benefitIds),costPoolIds:ids(x.costPoolIds),evidenceIds:ids(x.evidenceIds)}));
+  w.counterfactuals=records(raw.counterfactuals,'CASE','counterfactual').map(normalizeCounterfactual);
   w.riskAdjustments=records(raw.riskAdjustments,'RA','risk-adjustment').map(x=>({...x,amount:Number(x.amount||0),caseId:x.caseId||'',evidenceIds:ids(x.evidenceIds)}));
   w.participantEconomicCases=records(raw.participantEconomicCases,'PEC','participant-economic-case').map(x=>({...x,participantId:x.participantId||'',alignment:ALIGNMENTS.includes(x.alignment)?x.alignment:'Unknown'}));
   w.federationEconomicCases=records(raw.federationEconomicCases,'FEC','federation-economic-case');
@@ -38,6 +39,12 @@ export function normalizeWorkspace(raw={}, data={}){
   w.aiCases=records(raw.aiCases,'AIC','ai-capability-case').map(x=>({...x,case1Id:x.case1Id||'',case2Id:x.case2Id||'',evidenceIds:ids(x.evidenceIds),incrementalBenefit:Number(x.incrementalBenefit||0),incrementalCost:Number(x.incrementalCost||0)}));
   w.cognitiveResilience=records(raw.cognitiveResilience,'CRR','cognitive-resilience').map(x=>({...x,history:arr(x.history),aiCaseId:x.aiCaseId||'',processStepIds:ids(x.processStepIds),actionIds:ids(x.actionIds)}));
   w.sensitivities=records(raw.sensitivities,'SEN','sensitivity'); w.pilotMeasurements=records(raw.pilotMeasurements,'PM','pilot-measurement').map(x=>({...x,observations:arr(x.observations),decision:x.decision||'Modify'})); w.reports=records(raw.reports,'RPT','report-instance');
+  // Candidate cross-cutting records coexist with, and do not replace, Authority Envelope decision history.
+  w.accountableDecisions=arr(raw.accountableDecisions).map(normalizeAccountableDecision);
+  w.reviews=arr(raw.reviews).map(normalizeReview);
+  w.lifecycleEvents=arr(raw.lifecycleEvents).map(normalizeLifecycleEvent);
+  w.reassessmentTriggers=arr(raw.reassessmentTriggers).map(normalizeReassessmentTrigger);
+  Object.assign(w,normalizeCandidateModuleCollections(raw));
   return w;
 }
 export function gateReadiness(gate, evidence=[]){const ev=new Set(arr(evidence).map(e=>e.id));const unmet=arr(gate.conditions).filter(c=>c.required!==false&&(!c.evidenceIds?.length||!c.evidenceIds.every(id=>ev.has(id))||c.status!=='Satisfied'));return {...gate,canBeDecisionReady:unmet.length===0&&gate.evidenceStatus!=='Insufficient',unmetConditions:unmet};}

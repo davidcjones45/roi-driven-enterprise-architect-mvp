@@ -26,6 +26,10 @@ export function normalizeAction(raw={}){ return {...raw,id:raw.id||id(raw.name||
 
 export const COST_POOL_TYPES=['Operating Cost','Implementation Cost','Technology Cost','Compliance Cost','Risk Cost','Internal Transfer'];
 export const CASES=['Case 0 — Current / Independent','Case 1 — Conventional Federation','Case 2 — AI-Enabled Federation'];
+export const SCENARIO_CASE_TYPES=['CURRENT','BEST_NON_FEDERATION','FEDERATION_NON_AI','FEDERATION_BOUNDED_AI','CUSTOM'];
+const legacyCaseType=caseName=>({
+  [CASES[0]]:'CURRENT', [CASES[1]]:'FEDERATION_NON_AI', [CASES[2]]:'FEDERATION_BOUNDED_AI',
+}[caseName]||'CUSTOM');
 
 export function normalizeBaselineMetric(raw={}){
   return {...raw,id:raw.id||id(raw.name||raw.metric||'baseline-metric','MET'),name:raw.name||raw.metric||'',value:Number(raw.value||0),unit:raw.unit||'',period:raw.period||'',sourceEvidenceIds:unique(list(raw.sourceEvidenceIds)),classification:EVIDENCE_CLASSIFICATIONS.includes(raw.classification)?raw.classification:'Reported'};
@@ -39,7 +43,12 @@ export function normalizeEconomicLine(raw={}){
 }
 export function normalizeCounterfactual(raw={}){
   const c={...raw,id:raw.id||id(raw.name||raw.case||'counterfactual','CASE')};
-  c.caseName=CASES.includes(c.caseName)?c.caseName:CASES[0]; c.status=c.status||'Draft'; c.economicLines=(c.economicLines||[]).map(normalizeEconomicLine); c.assumptionIds=unique(list(c.assumptionIds)); c.evidenceIds=unique(list(c.evidenceIds)); return c;
+  // Preserve legacy case names while allowing arbitrary, comparator-linked scenarios.
+  c.caseName=c.caseName||c.name||''; c.name=c.name||c.caseName||'';
+  c.caseType=SCENARIO_CASE_TYPES.includes(c.caseType)?c.caseType:legacyCaseType(c.caseName);
+  c.comparatorCaseId=c.comparatorCaseId||''; c.organizationalFormId=c.organizationalFormId||''; c.aiCapabilityId=c.aiCapabilityId||'';
+  c.status=c.status||'Draft'; c.flowIds=unique(list(c.flowIds)); c.benefitIds=unique(list(c.benefitIds)); c.costPoolIds=unique(list(c.costPoolIds));
+  c.economicLines=(c.economicLines||[]).map(normalizeEconomicLine); c.assumptionIds=unique(list(c.assumptionIds)); c.evidenceIds=unique(list(c.evidenceIds)); return c;
 }
 export function validateEconomicLine(line, metrics=[], evidence=[]){
   const issues=[];
