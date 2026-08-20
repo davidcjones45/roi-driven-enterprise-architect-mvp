@@ -1,6 +1,7 @@
 import { stableId } from './authority-model.mjs';
 import { CASES, EVIDENCE_CLASSIFICATIONS, HANDOFF_STATES, PHASES, normalizeAssessment, normalizeCounterfactual } from './feoa-model.mjs';
 import { normalizeAccountableDecision, normalizeCandidateModuleCollections, normalizeLifecycleEvent, normalizeReassessmentTrigger, normalizeReview } from './federated-extension-model.mjs';
+import { normalizeAlternativeRating, normalizeDecisionCriterion, normalizeDistributionRule, normalizeFederationEconomicCase, normalizeFormAlternative, normalizeFormDecision, normalizeMemberEconomicThreshold, normalizeParticipantEconomicCase, normalizeUnpricedEffect } from './federated-fofa-mcvsm-model.mjs';
 
 const arr=v=>Array.isArray(v)?v:[];
 const ids=v=>Array.from(new Set(arr(v).filter(Boolean)));
@@ -31,8 +32,8 @@ export function normalizeWorkspace(raw={}, data={}){
   w.economicFlows=records(raw.economicFlows,'ECO','economic-flow').map(x=>({...x,type:FLOW_TYPES.includes(x.type)?x.type:'External Cost',direction:x.direction||'Outflow',internalExternal:x.internalExternal||'External',cashNonCash:x.cashNonCash||'Cash',grossNet:x.grossNet||'Gross',scenario:x.scenario||'Future',caseId:x.caseId||'',amount:Number(x.amount||0),evidenceIds:ids(x.evidenceIds),assumptionIds:ids(x.assumptionIds),costPoolId:x.costPoolId||''}));
   w.counterfactuals=records(raw.counterfactuals,'CASE','counterfactual').map(normalizeCounterfactual);
   w.riskAdjustments=records(raw.riskAdjustments,'RA','risk-adjustment').map(x=>({...x,amount:Number(x.amount||0),caseId:x.caseId||'',evidenceIds:ids(x.evidenceIds)}));
-  w.participantEconomicCases=records(raw.participantEconomicCases,'PEC','participant-economic-case').map(x=>({...x,participantId:x.participantId||'',alignment:ALIGNMENTS.includes(x.alignment)?x.alignment:'Unknown'}));
-  w.federationEconomicCases=records(raw.federationEconomicCases,'FEC','federation-economic-case');
+  w.participantEconomicCases=records(raw.participantEconomicCases,'PEC','participant-economic-case').map(x=>({...normalizeParticipantEconomicCase(x),alignment:ALIGNMENTS.includes(x.alignment)?x.alignment:'Unknown'}));
+  w.federationEconomicCases=records(raw.federationEconomicCases,'FEC','federation-economic-case').map(normalizeFederationEconomicCase);
   w.readinessGaps=records(raw.readinessGaps,'TRG','technical-readiness-gap').map(x=>({...x,dimension:READINESS_DIMENSIONS.includes(x.dimension)?x.dimension:'Integration',finding:READINESS_FINDINGS.includes(x.finding)?x.finding:'Unknown',evidenceIds:ids(x.evidenceIds),gateIds:ids(x.gateIds),economicCaseIds:ids(x.economicCaseIds)}));
   w.readiness={...raw.readiness,overall:OVERALL_READINESS.includes(raw.readiness?.overall)?raw.readiness.overall:'Insufficient Evidence'};
   w.gates=records(raw.gates,'GATE','gate-decision').map(x=>({...x,gateNumber:Number.isInteger(+x.gateNumber)&&+x.gateNumber>=0&&+x.gateNumber<=6?+x.gateNumber:0,phase:PHASES.includes(x.phase)?x.phase:PHASES[0],evidenceStatus:['Sufficient','Sufficient with Gaps','Insufficient'].includes(x.evidenceStatus)?x.evidenceStatus:'Insufficient',finding:['Strong','Acceptable','Weak','Unacceptable'].includes(x.finding)?x.finding:'Weak',decision:['Proceed','Proceed Conditionally','Restructure','Stop','Obtain Evidence'].includes(x.decision)?x.decision:'Obtain Evidence',confidence:['High','Moderate','Low'].includes(x.confidence)?x.confidence:'Low',status:GATE_STATES.includes(x.status)?x.status:'Draft',conditions:arr(x.conditions),evidenceIds:ids(x.evidenceIds),gapIds:ids(x.gapIds),history:arr(x.history)}));
@@ -44,7 +45,16 @@ export function normalizeWorkspace(raw={}, data={}){
   w.reviews=arr(raw.reviews).map(normalizeReview);
   w.lifecycleEvents=arr(raw.lifecycleEvents).map(normalizeLifecycleEvent);
   w.reassessmentTriggers=arr(raw.reassessmentTriggers).map(normalizeReassessmentTrigger);
-  Object.assign(w,normalizeCandidateModuleCollections(raw));
+  // FOFA and MCVSM now have dedicated candidate normalizers. Other candidate modules remain generic.
+  w.formAlternatives=arr(raw.formAlternatives).map(normalizeFormAlternative);
+  w.decisionCriteria=arr(raw.decisionCriteria).map(normalizeDecisionCriterion);
+  w.alternativeRatings=arr(raw.alternativeRatings).map(normalizeAlternativeRating);
+  w.formDecisions=arr(raw.formDecisions).map(normalizeFormDecision);
+  w.memberEconomicThresholds=arr(raw.memberEconomicThresholds).map(normalizeMemberEconomicThreshold);
+  w.distributionRules=arr(raw.distributionRules).map(normalizeDistributionRule);
+  w.unpricedEffects=arr(raw.unpricedEffects).map(normalizeUnpricedEffect);
+  const genericCandidates=normalizeCandidateModuleCollections(raw);
+  Object.assign(w,genericCandidates,{formAlternatives:w.formAlternatives,decisionCriteria:w.decisionCriteria,alternativeRatings:w.alternativeRatings,formDecisions:w.formDecisions,memberEconomicThresholds:w.memberEconomicThresholds,distributionRules:w.distributionRules,unpricedEffects:w.unpricedEffects});
   return w;
 }
 export function gateReadiness(gate, evidence=[]){const ev=new Set(arr(evidence).map(e=>e.id));const unmet=arr(gate.conditions).filter(c=>c.required!==false&&(!c.evidenceIds?.length||!c.evidenceIds.every(id=>ev.has(id))||c.status!=='Satisfied'));return {...gate,canBeDecisionReady:unmet.length===0&&gate.evidenceStatus!=='Insufficient',unmetConditions:unmet};}
