@@ -79,12 +79,14 @@ export function evaluateCriticalCriteria(alternativeId, criteria = [], ratings =
   return { alternativeId, failedCriticalCriteria, unresolvedCriticalCriteria, status: failedCriticalCriteria.length ? 'BLOCKED' : unresolvedCriticalCriteria.length ? 'INCOMPLETE' : 'PASS' };
 }
 export function rankFormAlternatives(alternatives = [], criteria = [], ratings = [], options = {}) {
-  const weightCheck = validateCriteriaWeights(criteria, options.tolerance);
-  const coverage = validateAlternativeRatingCoverage(alternatives, criteria, ratings);
+  const includedAlternatives = recordArray(alternatives).filter(item => item.status !== 'Excluded');
+  const includedCriteria = recordArray(criteria).filter(item => item.status !== 'Excluded');
+  const weightCheck = validateCriteriaWeights(includedCriteria, options.tolerance);
+  const coverage = validateAlternativeRatingCoverage(includedAlternatives, includedCriteria, ratings);
   const activeGate = options.activeDisqualifyingGate === true;
-  const ranking = recordArray(alternatives).map(alternative => {
-    const critical = evaluateCriticalCriteria(alternative.id, criteria, ratings);
-    const score = recordArray(criteria).reduce((total, criterion) => {
+  const ranking = includedAlternatives.map(alternative => {
+    const critical = evaluateCriticalCriteria(alternative.id, includedCriteria, ratings);
+    const score = includedCriteria.reduce((total, criterion) => {
       const rating = recordArray(ratings).find(item => item.alternativeId === alternative.id && item.criterionId === criterion.id);
       return total + (numeric(criterion.weight) && numeric(rating?.rating) ? Number(criterion.weight) * Number(rating.rating) : 0);
     }, 0);
@@ -113,7 +115,8 @@ export function normalizeUnpricedEffect(record = {}) {
   });
 }
 export function normalizeParticipantEconomicCase(record = {}) {
-  return { ...record, id: record.id || stableId(record.participantId || record.name || 'participant-economic-case', 'PEC'), participantId: record.participantId || '', caseId: record.caseId || '', memberNPV: record.memberNPV ?? '', minimumCumulativeCash: record.minimumCumulativeCash ?? '', benefitShare: record.benefitShare ?? '', costShare: record.costShare ?? '', thresholdResult: record.thresholdResult || '', calculatedDisposition: record.calculatedDisposition || '', evidenceIds: ids(record.evidenceIds) };
+  const identity = record.participantId && record.caseId ? `${record.participantId}::${record.caseId}` : record.participantId || record.name || '';
+  return { ...record, id: record.id || (identity ? stableId(identity, 'PEC') : ''), participantId: record.participantId || '', caseId: record.caseId || '', memberNPV: record.memberNPV ?? '', minimumCumulativeCash: record.minimumCumulativeCash ?? '', benefitShare: record.benefitShare ?? '', costShare: record.costShare ?? '', thresholdResult: record.thresholdResult || '', calculatedDisposition: record.calculatedDisposition || '', evidenceIds: ids(record.evidenceIds) };
 }
 export function normalizeFederationEconomicCase(record = {}) {
   return { ...record, id: record.id || stableId(record.caseId || record.name || 'federation-economic-case', 'FEC'), caseId: record.caseId || '', collectiveNPV: record.collectiveNPV ?? '', collectiveROI: record.collectiveROI ?? '', benefitCostRatio: record.benefitCostRatio ?? '', netOperatingBenefit: record.netOperatingBenefit ?? '', riskAdjustedResult: record.riskAdjustedResult ?? '', memberViabilityResult: record.memberViabilityResult || '', distributionSustainabilityResult: record.distributionSustainabilityResult || '', evidenceIds: ids(record.evidenceIds), status: record.status || 'Draft' };
@@ -125,11 +128,18 @@ export function evaluateMemberFinancialViability(participantCase = {}, threshold
   if (present(threshold.maximumLossDuration)) { if (!numeric(threshold.maximumLossDuration) || !numeric(participantCase.lossDuration)) incomplete.push('maximumLossDuration'); else if (Number(participantCase.lossDuration) > Number(threshold.maximumLossDuration)) failures.push('maximumLossDuration'); }
   return { participantId: participantCase.participantId || threshold.participantId || '', status: incomplete.length ? 'INCOMPLETE' : failures.length ? 'FAIL' : 'PASS', incomplete, failures };
 }
-export function evaluateRequiredMemberViability(participants = [], participantCases = [], thresholds = [], requiredParticipantIds = []) {
+export function evaluateRequiredMemberViability(participants = [], participantCases = [], thresholds = [], requiredParticipantIds = [], caseId = '') {
   const required = requiredParticipantIds.length ? requiredParticipantIds : recordArray(participants).filter(item => item.required === true).map(item => item.id);
-  const perMember = required.map(participantId => evaluateMemberFinancialViability(recordArray(participantCases).find(item => item.participantId === participantId) || { participantId }, recordArray(thresholds).find(item => item.participantId === participantId) || { participantId }));
+  const knownCaseIds = [...new Set([...recordArray(participantCases), ...recordArray(thresholds)].map(item => item.caseId).filter(Boolean))];
+  const resolvedCaseId = caseId || (knownCaseIds.length === 1 ? knownCaseIds[0] : '');
+  const perMember = required.map(participantId => {
+    if (!resolvedCaseId && knownCaseIds.length > 1) return { participantId, status: 'INCOMPLETE', incomplete: ['caseId'], failures: [] };
+    const memberCase = recordArray(participantCases).find(item => item.participantId === participantId && (item.caseId || '') === resolvedCaseId) || { participantId, caseId: resolvedCaseId };
+    const threshold = recordArray(thresholds).find(item => item.participantId === participantId && (item.caseId || '') === resolvedCaseId) || { participantId, caseId: resolvedCaseId };
+    return evaluateMemberFinancialViability(memberCase, threshold);
+  });
   const failingParticipantIds = perMember.filter(item => item.status === 'FAIL').map(item => item.participantId); const incompleteParticipantIds = perMember.filter(item => item.status === 'INCOMPLETE').map(item => item.participantId);
-  return { perMember, failingParticipantIds, incompleteParticipantIds, overallResult: failingParticipantIds.length ? 'FAIL' : incompleteParticipantIds.length ? 'INCOMPLETE' : 'PASS' };
+  return { caseId: resolvedCaseId, perMember, failingParticipantIds, incompleteParticipantIds, overallResult: failingParticipantIds.length ? 'FAIL' : incompleteParticipantIds.length ? 'INCOMPLETE' : 'PASS' };
 }
 
 const SHARE_CLASSES = { benefit: 'benefitShare', operatingCost: 'operatingCostShare', investment: 'investmentShare', riskCost: 'riskCostShare' };
@@ -146,8 +156,11 @@ export function distributionSustainability({ distributionValidation = {}, member
   if (memberViability.overallResult === 'FAIL') return { status: 'BLOCKED_MEMBER_FINANCIAL_FAILURE', mechanicalValidity: distributionValidation.valid === true, memberViability, unacceptedParticipantIds: [], unpricedEffects, dependencyExposure };
   if (memberViability.overallResult !== 'PASS' || distributionValidation.valid !== true) return { status: 'INCOMPLETE', mechanicalValidity: distributionValidation.valid === true, memberViability, unacceptedParticipantIds: [], unpricedEffects, dependencyExposure };
   const unacceptedParticipantIds = recordArray(rules).filter(rule => rule.acceptanceStatus !== 'Accepted').map(rule => rule.participantId).filter(Boolean);
-  const contested = unacceptedParticipantIds.length || recordArray(unpricedEffects).length || recordArray(dependencyExposure).length;
-  return { status: contested ? 'CONTESTED' : 'SUSTAINABLE_FOR_DECISION_REVIEW', mechanicalValidity: true, memberViability, unacceptedParticipantIds, unpricedEffects, dependencyExposure };
+  const unpricedRequiringDisposition = recordArray(unpricedEffects).filter(effect => ['Block', 'Escalate', 'Requires Review'].includes(effect.decisionTreatment) || effect.distributionalConcern === 'Material');
+  const unpricedUndispositioned = recordArray(unpricedEffects).filter(effect => !effect.decisionTreatment);
+  if (unpricedUndispositioned.length) return { status: 'INCOMPLETE', mechanicalValidity: true, memberViability, unacceptedParticipantIds, unpricedEffects, dependencyExposure, unpricedRequiringDisposition };
+  const contested = unacceptedParticipantIds.length || unpricedRequiringDisposition.length || recordArray(dependencyExposure).length;
+  return { status: contested ? 'CONTESTED' : 'SUSTAINABLE_FOR_DECISION_REVIEW', mechanicalValidity: true, memberViability, unacceptedParticipantIds, unpricedEffects, dependencyExposure, unpricedRequiringDisposition };
 }
 
 const caseEconomics = (workspace, caseId) => {

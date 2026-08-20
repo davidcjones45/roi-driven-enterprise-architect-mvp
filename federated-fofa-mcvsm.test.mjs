@@ -26,6 +26,8 @@ test('FOFA critical checks and rankings remain analytical inputs', () => {
   assert.equal(ranked.kind, 'ANALYTICAL_RANKING'); assert.equal(ranked.decision, null); assert.equal(ranked.selectsForm, false);
   const blocked = rankFormAlternatives(alternatives, criteria, ratings, { activeDisqualifyingGate: true });
   assert.equal(blocked.activeDisqualifyingGate, true); assert.equal(blocked.decision, null);
+  const excluded = rankFormAlternatives([...alternatives, { id: 'FORM-X', status: 'Excluded' }], [...criteria, { id: 'CR-X', weight: 1, status: 'Excluded' }], ratings);
+  assert.deepEqual(new Set(excluded.ranking.map(item => item.alternativeId)), new Set(['FORM-A', 'FORM-B']));
 });
 
 test('form decision preserves unresolved singular selection and never infers legacy plural references', () => {
@@ -45,6 +47,15 @@ test('one required member failure blocks viability despite positive collective e
   assert.equal(result.overallResult, 'FAIL'); assert.deepEqual(result.failingParticipantIds, ['PAR-B']);
 });
 
+test('participant economic identities and required-member viability are case-specific', () => {
+  const c2 = { participantId: 'PAR-A', caseId: 'C2', memberNPV: 10 }; const c3 = { participantId: 'PAR-A', caseId: 'C3', memberNPV: -10 };
+  assert.notEqual(normalizeWorkspace({ participantEconomicCases: [c2] }).participantEconomicCases[0].id, normalizeWorkspace({ participantEconomicCases: [c3] }).participantEconomicCases[0].id);
+  const thresholds = [{ participantId: 'PAR-A', caseId: 'C2', minimumAcceptableNPV: 0 }, { participantId: 'PAR-A', caseId: 'C3', minimumAcceptableNPV: 0 }];
+  assert.equal(evaluateRequiredMemberViability([{ id: 'PAR-A', required: true }], [c2, c3], thresholds, ['PAR-A'], 'C2').overallResult, 'PASS');
+  assert.equal(evaluateRequiredMemberViability([{ id: 'PAR-A', required: true }], [c2, c3], thresholds, ['PAR-A'], 'C3').overallResult, 'FAIL');
+  assert.equal(evaluateRequiredMemberViability([{ id: 'PAR-A', required: true }], [c2, c3], thresholds, ['PAR-A']).overallResult, 'INCOMPLETE');
+});
+
 test('distribution validation keeps mechanical allocation separate from acceptance', () => {
   const rules = ['PAR-A', 'PAR-B'].map((participantId, index) => normalizeDistributionRule({ caseId: 'C2', participantId, benefitShare: 0.5, operatingCostShare: 0.5, investmentShare: 0.5, riskCostShare: 0.5, acceptanceStatus: index ? 'Unresolved' : 'Accepted' }));
   const valid = validateDistributionRules('C2', rules, ['benefit', 'operatingCost', 'investment', 'riskCost']);
@@ -54,10 +65,12 @@ test('distribution validation keeps mechanical allocation separate from acceptan
 });
 
 test('unpriced effects remain qualitative and sustainability does not calculate fairness', () => {
-  const effect = normalizeUnpricedEffect({ caseId: 'C2', affectedParticipantIds: ['PAR-A'], effectClass: 'Customer burden', description: 'Extra travel', magnitude: 'Unknown' });
+  const effect = normalizeUnpricedEffect({ caseId: 'C2', affectedParticipantIds: ['PAR-A'], effectClass: 'Customer burden', description: 'Extra travel', magnitude: 'Unknown', decisionTreatment: 'Requires Review' });
   assert.equal(effect.magnitude, 'Unknown'); assert.equal(effect.monetaryValue, undefined);
   const status = distributionSustainability({ distributionValidation: { valid: true }, memberViability: { overallResult: 'PASS' }, rules: [{ participantId: 'PAR-A', acceptanceStatus: 'Accepted' }], unpricedEffects: [effect] });
   assert.equal(status.status, 'CONTESTED'); assert.equal(status.fairnessConclusion, undefined);
+  const monitored = distributionSustainability({ distributionValidation: { valid: true }, memberViability: { overallResult: 'PASS' }, rules: [{ participantId: 'PAR-A', acceptanceStatus: 'Accepted' }], unpricedEffects: [{ ...effect, decisionTreatment: 'Monitor' }] });
+  assert.equal(monitored.status, 'SUSTAINABLE_FOR_DECISION_REVIEW');
 });
 
 const syntheticWorkspace = () => normalizeWorkspace({
