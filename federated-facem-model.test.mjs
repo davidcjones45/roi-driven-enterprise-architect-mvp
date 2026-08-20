@@ -59,6 +59,10 @@ test('execution separates actor, authority, permission, and completion', () => {
 test('accountable decisions and evidence lineage preserve unresolved authority and predecessor links', () => {
   assert.equal(validateAccountableDecision({ id: 'DEC-1', decisionType: 'Accept' }, null, '2027-01-01').status, 'INCOMPLETE');
   assert.equal(validateAccountableDecision({ id: 'DEC-2', decisionOwnerId: 'PAR-A', authorityId: 'AE-1', supersedesDecisionId: 'DEC-1' }, null, '2027-01-01').predecessorPreserved, true);
+  const authority = { id: 'AE-1', effectiveDate: '2027-01-01', status: 'Active', actions: [], relationships: [], evidenceRequirements: [], decisionHistory: [] };
+  assert.equal(validateAccountableDecision({ id: 'DEC-3', decisionOwnerId: 'PAR-A', authorityId: 'AE-1', effectiveTime: '2027-01-02T00:00:00Z', recordedTime: '2027-01-02T01:00:00Z' }, authority, '2027-01-02').status, 'PASS');
+  assert.match(validateAccountableDecision({ id: 'DEC-4', decisionOwnerId: 'PAR-A', authorityId: 'AE-1', effectiveTime: 'not-a-date', recordedTime: '2027-01-02T01:00:00Z' }, authority, '2027-01-02').issues.join(' '), /effective time is invalid/);
+  assert.match(validateAccountableDecision({ id: 'DEC-5', decisionOwnerId: 'PAR-A', authorityId: 'AE-1', effectiveTime: '2027-01-02T00:00:00Z', recordedTime: 'not-a-date' }, authority, '2027-01-02').issues.join(' '), /recorded time is invalid/);
   const corrected = normalizeEvidenceLineage({ id: 'EL-2', externalEvidenceId: 'EVD-EXT', version: '2', effectiveTime: '2027-01-02', correctionReason: 'Corrected source' });
   assert.equal(validateEvidenceLineage(corrected).valid, false); assert.equal(validateEvidenceLineage({ ...corrected, supersedesId: 'EL-1', prohibitedUse: 'No authority grant' }).externalEvidenceReference, 'EVD-EXT');
 });
@@ -68,6 +72,8 @@ test('lifecycle sequence and logical as-of reconstruction are append-only and re
   assert.equal(validateLifecycleEventSequence(events, 'COM-1').valid, true);
   const first = validateAsOfReconstruction({ lifecycleEvents: events }, 'lifecycle', 'COM-1', '2027-01-01T12:00:00Z'); const reordered = validateAsOfReconstruction({ lifecycleEvents: [...events].reverse() }, 'lifecycle', 'COM-1', '2027-01-01T12:00:00Z');
   assert.equal(first.reconstructedState, 'REQUESTED'); assert.equal(reordered.reconstructedState, 'REQUESTED');
+  const futureConflict = validateAsOfReconstruction({ lifecycleEvents: [...events, { id: 'L3', objectId: 'COM-1', effectiveTime: '2027-02-01T00:00:00Z', stateAfter: 'CANCELLED' }, { id: 'L4', objectId: 'COM-1', effectiveTime: '2027-02-01T00:00:00Z', stateAfter: 'COMPLETED' }] }, 'lifecycle', 'COM-1', '2027-01-02T12:00:00Z');
+  assert.equal(futureConflict.reconstructedState, 'ACCEPTED'); assert.equal(futureConflict.status, 'PASS');
   assert.equal(validateLifecycleEventSequence([{ ...events[0], stateAfter: 'REQUESTED' }, { ...events[0], id: 'L1B', stateAfter: 'CANCELLED' }], 'COM-1').valid, false);
 });
 
