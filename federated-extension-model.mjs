@@ -2,12 +2,23 @@ import { stableId } from './authority-model.mjs';
 
 const list = value => Array.isArray(value) ? value : String(value || '').split(/[;,\n]/).map(item => item.trim()).filter(Boolean);
 const ids = value => [...new Set(list(value))];
-const candidateId = (record, prefix, label) => record.id || stableId(record.name || record.title || record.question || label, prefix);
+const canonicalValue = value => {
+  if (Array.isArray(value)) return value.map(canonicalValue).sort();
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonicalValue(value[key])]));
+  return value;
+};
+const candidateNaturalKey = (record, keyFields = []) => {
+  const allowed = new Set([...keyFields, 'name', 'title', 'question']);
+  const fields = Object.fromEntries(Object.entries(record || {}).filter(([key, value]) => allowed.has(key) && value !== '' && value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0)));
+  return Object.keys(fields).length ? JSON.stringify(canonicalValue(fields)) : '';
+};
+// Position is deliberately excluded: records without an ID or natural key remain unresolved.
+const candidateId = (record, prefix, keyFields = []) => record.id || (candidateNaturalKey(record, keyFields) ? stableId(candidateNaturalKey(record, keyFields), prefix) : '');
 
 export function normalizeAccountableDecision(record = {}, index = 0) {
   return {
     ...record,
-    id: candidateId(record, 'ACD', `accountable-decision-${index + 1}`),
+    id: candidateId(record, 'ACD', ['decisionType', 'decisionOwnerId', 'authorityId', 'effectiveTime']),
     decisionType: record.decisionType || '',
     decisionOwnerId: record.decisionOwnerId || '',
     authorityId: record.authorityId || '',
@@ -26,7 +37,7 @@ export function normalizeAccountableDecision(record = {}, index = 0) {
 export function normalizeReview(record = {}, index = 0) {
   return {
     ...record,
-    id: candidateId(record, 'REV', `review-${index + 1}`),
+    id: candidateId(record, 'REV', ['reviewType', 'scopeObjectIds', 'reviewerId', 'reviewTime']),
     reviewType: record.reviewType || '', question: record.question || '',
     scopeObjectIds: ids(record.scopeObjectIds), requiredEvidenceIds: ids(record.requiredEvidenceIds),
     reviewerQualification: record.reviewerQualification || '', reviewerId: record.reviewerId || '',
@@ -38,7 +49,7 @@ export function normalizeReview(record = {}, index = 0) {
 export function normalizeLifecycleEvent(record = {}, index = 0) {
   return {
     ...record,
-    id: candidateId(record, 'LCE', `lifecycle-event-${index + 1}`),
+    id: candidateId(record, 'LCE', ['objectId', 'objectType', 'eventType', 'effectiveTime', 'recordedTime']),
     objectId: record.objectId || '', objectType: record.objectType || '', eventType: record.eventType || '',
     effectiveTime: record.effectiveTime || '', recordedTime: record.recordedTime || '',
     supersedesEventId: record.supersedesEventId || '', stateBefore: record.stateBefore || '',
@@ -65,7 +76,7 @@ export function preservesLifecyclePredecessor(event = {}) {
 export function normalizeReassessmentTrigger(record = {}, index = 0) {
   return {
     ...record,
-    id: candidateId(record, 'RAT', `reassessment-trigger-${index + 1}`),
+    id: candidateId(record, 'RAT', ['scopeObjectId', 'triggerType', 'condition', 'sourceMetricObservationId']),
     scopeObjectId: record.scopeObjectId || '', triggerType: record.triggerType || '',
     condition: record.condition || '', sourceMetricObservationId: record.sourceMetricObservationId || '',
     requiredModules: ids(record.requiredModules), ownerId: record.ownerId || '', status: record.status || 'Draft',
@@ -78,7 +89,7 @@ export function reassessmentTriggerEffect(trigger = {}, priorDecision = {}) {
 }
 
 export function normalizePermission(record = {}, index = 0) {
-  return { ...record, id: candidateId(record, 'PER', `permission-${index + 1}`), createsAuthority: false };
+  return { ...record, id: candidateId(record, 'PER', ['permissionType', 'holderId', 'scopeObjectId', 'purpose', 'effectiveTime']), createsAuthority: false };
 }
 
 export function permissionAuthorityInvariant(permission = {}) {
@@ -89,8 +100,8 @@ const MODULE_ARRAY_FIELDS = {
   formAlternatives: ['criterionIds', 'evidenceIds'],
   decisionCriteria: ['evidenceIds'],
   alternativeRatings: ['alternativeId', 'criterionId', 'evidenceIds'],
-  formDecisions: ['alternativeIds', 'evidenceIds'],
-  memberEconomicThresholds: ['participantId', 'evidenceIds'], distributionRules: ['participantIds', 'evidenceIds'], unpricedEffects: ['participantIds', 'evidenceIds'],
+  formDecisions: ['selectedAlternativeId', 'evidenceIds'],
+  memberEconomicThresholds: ['participantId', 'evidenceIds'], distributionRules: ['participantId', 'evidenceIds'], unpricedEffects: ['participantIds', 'evidenceIds'],
   membershipEvents: ['participantId', 'decisionIds', 'evidenceIds'], governedDependencies: ['providerParticipantId', 'evidenceIds'],
   permissions: ['authorityId', 'evidenceIds'], delegations: ['delegatorId', 'delegateeId', 'authorityId', 'evidenceIds'],
   commitments: ['ownerParticipantId', 'authorityId', 'evidenceIds'], workExecutionEvents: ['commitmentId', 'evidenceIds'],
@@ -109,8 +120,8 @@ export const CANDIDATE_MODULE_COLLECTIONS = Object.keys(MODULE_ARRAY_FIELDS);
 export function normalizeCandidateCollection(name, records = []) {
   const idFields = MODULE_ARRAY_FIELDS[name] || [];
   const prefix = `C${name.replace(/[^A-Za-z]/g, '').slice(0, 5).toUpperCase() || 'AND'}`;
-  return (Array.isArray(records) ? records : []).map((record, index) => {
-    const normalized = { ...record, id: candidateId(record || {}, prefix, `${name}-${index + 1}`) };
+  return (Array.isArray(records) ? records : []).map(record => {
+    const normalized = { ...record, id: candidateId(record || {}, prefix) };
     idFields.forEach(field => { if (field.endsWith('Ids')) normalized[field] = ids(record?.[field]); else normalized[field] = record?.[field] || ''; });
     return normalized;
   });

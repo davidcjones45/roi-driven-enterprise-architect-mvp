@@ -8,6 +8,9 @@ test('legacy counterfactuals remain readable while generalized scenarios round-t
   const legacy = normalizeWorkspace({ counterfactuals: [{ id: 'CASE-1', caseName: 'Case 1 — Conventional Federation' }] });
   assert.equal(legacy.counterfactuals[0].caseType, 'FEDERATION_NON_AI');
   assert.equal(legacy.counterfactuals[0].comparatorCaseId, '');
+  const emptyLegacy = normalizeCounterfactual({});
+  assert.equal(emptyLegacy.caseName, 'Case 0 — Current / Independent');
+  assert.equal(emptyLegacy.caseType, 'CURRENT');
   const scenario = normalizeCounterfactual({ id: 'CASE-3', name: 'Bounded AI federation', caseType: 'FEDERATION_BOUNDED_AI', comparatorCaseId: 'CASE-2', flowIds: ['FLOW-1', 'FLOW-1'], benefitIds: 'BEN-1;BEN-1', costPoolIds: ['CST-1'], assumptionIds: 'ASM-1', evidenceIds: ['EVD-1'] });
   assert.deepEqual(scenario, normalizeCounterfactual(scenario));
   assert.equal(scenario.comparatorCaseId, 'CASE-2');
@@ -39,6 +42,24 @@ test('new cross-cutting records have deterministic IDs and preserve unresolved r
   assert.equal(first.id, second.id); assert.equal(first.authorityId, ''); assert.equal(first.decisionOwnerId, '');
   const review = normalizeWorkspace({ reviews: [{ question: 'Is evidence sufficient?', scopeObjectIds: ['CASE-1', 'CASE-1'], requiredEvidenceIds: 'E-1,E-1' }] }).reviews[0];
   assert.deepEqual(review.scopeObjectIds, ['CASE-1']); assert.deepEqual(review.requiredEvidenceIds, ['E-1']);
+});
+
+test('candidate IDs are independent of collection order and blank natural keys remain unresolved', () => {
+  const source = [{ eventType: 'Admitted', objectId: 'PAR-A', objectType: 'participant', effectiveTime: '2027-01-01T00:00:00Z' }, { eventType: 'Admitted', objectId: 'PAR-B', objectType: 'participant', effectiveTime: '2027-01-02T00:00:00Z' }];
+  const forward = normalizeWorkspace({ lifecycleEvents: source }).lifecycleEvents;
+  const reverse = normalizeWorkspace({ lifecycleEvents: [...source].reverse() }).lifecycleEvents;
+  assert.deepEqual(new Set(forward.map(item => item.id)), new Set(reverse.map(item => item.id)));
+  assert.equal(normalizeLifecycleEvent({ ...source[0], status: 'Draft', evidenceIds: ['E-1'] }).id, normalizeLifecycleEvent({ ...source[0], status: 'Reviewed', evidenceIds: ['E-2'] }).id);
+  assert.equal(normalizeAccountableDecision({}).id, '');
+  assert.equal(normalizeWorkspace({ membershipEvents: [{}] }).membershipEvents[0].id, '');
+});
+
+test('candidate relationship fields remain specific and do not infer ambiguous legacy targets', () => {
+  const workspace = normalizeWorkspace({ formDecisions: [{ alternativeIds: ['FORM-A', 'FORM-B'] }], distributionRules: [{ participantIds: ['PAR-A', 'PAR-B'] }] });
+  assert.equal(workspace.formDecisions[0].selectedAlternativeId, '');
+  assert.deepEqual(workspace.formDecisions[0].alternativeIds, ['FORM-A', 'FORM-B']);
+  assert.equal(workspace.distributionRules[0].participantId, '');
+  assert.deepEqual(workspace.distributionRules[0].participantIds, ['PAR-A', 'PAR-B']);
 });
 
 test('permission cannot create authority', () => {

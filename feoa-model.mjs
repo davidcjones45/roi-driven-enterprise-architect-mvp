@@ -44,7 +44,10 @@ export function normalizeEconomicLine(raw={}){
 export function normalizeCounterfactual(raw={}){
   const c={...raw,id:raw.id||id(raw.name||raw.case||'counterfactual','CASE')};
   // Preserve legacy case names while allowing arbitrary, comparator-linked scenarios.
-  c.caseName=c.caseName||c.name||''; c.name=c.name||c.caseName||'';
+  const hasExplicitType=SCENARIO_CASE_TYPES.includes(c.caseType);
+  const hasScenarioLabel=Boolean(c.caseName||c.name||c.case);
+  // An empty legacy record retains its pre-Increment-1 Case 0 normalization.
+  c.caseName=hasScenarioLabel?(c.caseName||c.name||c.case||''):(!hasExplicitType?CASES[0]:''); c.name=c.name||c.caseName||'';
   c.caseType=SCENARIO_CASE_TYPES.includes(c.caseType)?c.caseType:legacyCaseType(c.caseName);
   c.comparatorCaseId=c.comparatorCaseId||''; c.organizationalFormId=c.organizationalFormId||''; c.aiCapabilityId=c.aiCapabilityId||'';
   c.status=c.status||'Draft'; c.flowIds=unique(list(c.flowIds)); c.benefitIds=unique(list(c.benefitIds)); c.costPoolIds=unique(list(c.costPoolIds));

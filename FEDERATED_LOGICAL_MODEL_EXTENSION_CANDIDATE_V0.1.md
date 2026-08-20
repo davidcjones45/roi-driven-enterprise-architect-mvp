@@ -10,12 +10,12 @@ Increment 1 preserves the existing FEOA workflow, Q1–Q8 Authority Envelope sem
 
 ## Implemented Increment 1 scope
 
-- Generalized counterfactual/scenario records with controlled `caseType`, optional comparator, form and AI references, and de-duplicated relationship IDs. Legacy case names remain readable; missing comparators remain blank rather than inferred.
+- Generalized counterfactual/scenario records with controlled `caseType`, optional comparator, form and AI references, and de-duplicated relationship IDs. Legacy case names, including an empty legacy counterfactual, retain their prior Case 0 normalization; missing comparators remain blank rather than inferred. Explicit generalized scenarios may use `CUSTOM`.
 - Candidate normalizers for accountable decisions, reviews, lifecycle events, and reassessment triggers.
 - Optional normalized collections for FOFA, MCVSM, FACEM, and BACRM foundations, with deterministic IDs and relationship ID preservation.
 - Pure cross-cutting checks for permission/authority separation, lifecycle-event completeness and predecessor preservation, and non-mutating reassessment triggers.
 
-For backward compatibility, an incoming permission that says `createsAuthority: true` is normalized to `false`; no authority is created. Candidate accountable decisions coexist with, rather than replace, Authority Envelope `decisionHistory`.
+For backward compatibility, an incoming permission that says `createsAuthority: true` is normalized to `false`; no authority is created. Candidate IDs use an explicit ID or a canonical natural key, never a collection position; a record lacking both remains unresolved with a blank ID. Candidate accountable decisions coexist with, rather than replace, Authority Envelope `decisionHistory`. `formDecisions` use `selectedAlternativeId` and `distributionRules` use `participantId`; ambiguous legacy plural references are retained but are not converted into those specific relationships.
 
 ## Not implemented
 
