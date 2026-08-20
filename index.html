@@ -240,9 +240,9 @@
     </section>
 
     <section id="regulatory" class="view">
-      <div class="section-heading"><div><span class="eyebrow">REGULATORY CONTEXT / READ-ONLY TRACEABILITY</span><h2>Link a decision to reviewed regulatory intelligence without turning it into a legal conclusion.</h2><p>ERIR remains the authority for source review and applicability approval. This panel links decision context, displays the repository’s current record status, and can submit an explicitly requested draft package for ERIR review.</p></div><span class="status-pill" id="regulatory-status">No links</span></div>
+      <div class="section-heading"><div><span class="eyebrow">REGULATORY CONTEXT / READ-ONLY TRACEABILITY</span><h2>Link a decision to reviewed regulatory intelligence without turning it into a legal conclusion.</h2><p>ERIR remains the authority for source review and applicability approval. This public reference demo retrieves read-only traceability only; it does not submit or change ERIR records.</p><p class="quiet-note">Data entered here remains in this browser unless you export it. The public demo has no authentication, tenancy, production authorization, or compliance-certification capability.</p></div><span class="status-pill" id="regulatory-status">No links</span></div>
       <form id="regulatory-form" class="form-grid card">
-        <label>ERIR gateway URL<input name="gatewayUrl" value="http://127.0.0.1:8766" placeholder="Local gateway URL"></label>
+        <label>ERIR read-only API URL<input name="gatewayUrl" placeholder="Configured public API or local development gateway"></label>
         <label>Subject asset ID<input name="subjectAssetId" placeholder="e.g., SYS-DEMO-001"></label>
         <label>Regulatory source ID<input name="sourceId" placeholder="e.g., SRC-FTC-2026-001"></label>
         <label>Obligation ID<input name="obligationId" placeholder="e.g., OBL-FTC-001"></label>
@@ -256,7 +256,7 @@
         <div class="form-actions full"><button type="submit">Save regulatory links</button><button type="button" id="load-erir-trace" class="secondary">Load ERIR traceability</button><button type="button" id="download-erir-handoff" class="secondary">Download ERIR handoff</button></div>
       </form>
       <div class="card evidence-table-wrap"><div class="evidence-summary" id="regulatory-summary">No ERIR records linked.</div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>ERIR record</th><th>Status / review</th><th>Source / citation</th><th>Relationship</th></tr></thead><tbody id="regulatory-rows"><tr><td colspan="4" class="quiet-note">Connect a local gateway and load linked record IDs to display read-only traceability.</td></tr></tbody></table></div></div>
-      <div class="card regulatory-draft">
+      <div class="card regulatory-draft" id="local-erir-draft-panel">
         <span class="eyebrow">EXPLICIT DRAFT REQUEST / NOT AN APPROVAL</span><h3>Propose a control draft for ERIR review.</h3><p class="quiet-note">The gateway accepts only a schema-valid draft. It does not create a compliance determination, attach evidence, or modify reviewed repository records.</p>
         <div class="form-grid">
           <label>Draft control ID<input id="draft-control-id" placeholder="e.g., CTL-ROI-EA-001"></label>
@@ -339,6 +339,7 @@
     <footer class="application-footer">© 2026 David C. Jones. All rights reserved. AI at Human Scale.</footer>
   </main>
   <div id="toast" role="status" aria-live="polite"></div>
+  <script src="demo-config.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
