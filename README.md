@@ -19,6 +19,7 @@ This local, browser-based MVP implements paid-design-partner workflows with supp
 11. Decision-scoped Compliance Cost and Capacity model, with baseline, pilot, and target-state scenarios
 12. Executive decision dossier export
 13. Additive FEOA v0.2.3 workbench and domain model: progressive enrichment from opportunity through participant economics, authority/evidence constraints, counterfactual Cases 0/1/2, consolidated and risk-adjusted economics, readiness, gates, Cognitive Resilience, sensitivity, pilot observations, and a structured executive report input.
+14. Controlled North Star Mortgage Reference Demonstrator v0.1: a sanitized synthetic fixture projection, deterministic DTI/LTV/reserve calculations, fictional policy comparison, evidence-gap abstention, BACRM configuration boundary, and read-only ERIR source seed. It does not make or recommend a credit decision.
 
 See `AI_AUTHORITY_EVIDENCE_ARCHITECTURE.md` for the current-state mapping, bounded-context ownership, acceptance-query coverage, and explicit non-goals for this vertical slice.
 
@@ -71,3 +72,15 @@ The public demo is not authentication, tenancy, production authorization, legal 
 ```powershell
 node --test authority-envelope.test.mjs authority-acceptance-q1-q8.test.mjs feoa-foundation.test.mjs feoa-acceptance.test.mjs feoa-ui-wiring.test.mjs public-demo-config.test.mjs erir-proxy.test.mjs
 ```
+
+### Mortgage reference demonstrator
+
+The mortgage implementation is confined to `feature/mortgage-reference-demo-v0.1`. It projects only the approved Case Inputs, Fictional Policy, Evidence Inventory, and ERIR Source Seed into static browser-readable modules. Protected Audit data and age are excluded from the implementation schema and UI. The approved DOCX and XLSX artifacts remain external and unchanged.
+
+Run the focused tests:
+
+```powershell
+node --test mortgage-demo.test.mjs mortgage-ui-wiring.test.mjs
+```
+
+The focal output is `INSUFFICIENT EVIDENCE`; MERCA abstains and produces an advisory trace only. See `MORTGAGE_REFERENCE_DEMO.md` for the controlled source hash, calculation results, and explicit non-goals.
