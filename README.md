@@ -75,6 +75,8 @@ node --test authority-envelope.test.mjs authority-acceptance-q1-q8.test.mjs feoa
 
 ### Mortgage reference demonstrator
 
+**Case study:** [North Star Mortgage: a bounded-AI governance demonstrator](docs/NORTH_STAR_MORTGAGE_CASE_STUDY.md)
+
 The mortgage implementation is confined to `feature/mortgage-reference-demo-v0.1`. It projects only the approved Case Inputs, Fictional Policy, Evidence Inventory, and ERIR Source Seed into static browser-readable modules. Protected Audit data and age are excluded from the implementation schema and UI. The approved DOCX and XLSX artifacts remain external and unchanged.
 
 Run the focused tests:
