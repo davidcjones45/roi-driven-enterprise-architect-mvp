@@ -28,3 +28,9 @@ test('mortgage demo contains no editable case-entry controls or decision actions
   assert.equal(/<(input|textarea|select)\b/i.test(section),false);
   assert.equal(/>\s*(approve|deny|price|waive)\s*</i.test(section),false);
 });
+
+test('the canonical render lifecycle initializes the mortgage demonstrator exactly once',async()=>{
+  const app=await read('app.js');
+  assert.equal((app.match(/function renderAll\(\)/g)||[]).length,1,'duplicate renderAll declarations can suppress mortgage initialization');
+  assert.match(app,/function renderAll\(\)\{[^}]*renderMortgageDemo\(\)/,'canonical renderAll must initialize the mortgage demonstrator');
+});
