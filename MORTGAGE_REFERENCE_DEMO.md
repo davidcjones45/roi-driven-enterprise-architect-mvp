@@ -31,3 +31,11 @@ ROI-EA supplies the read-only decision context. ERIR source records are displaye
 - Credit decision: not made.
 
 These outputs are synthetic architectural evidence only. They do not establish compliance, fairness, model validity, production safety, effectiveness, realized ROI, or a credit outcome.
+
+## Template-controlled spreadsheet ingestion
+
+The demonstrator includes a separate successor import contract, `MTG-IMPORT-V0.2`, distributed as `assets/North-Star-Mortgage-Controlled-Import-Template-v0.2.xlsx`. It does not modify or replace the controlled v0.1 source workbook.
+
+The browser accepts a workbook only when all four approved worksheets, their template sentinel, headers, controlled case-input metadata, and controlled policy metadata match. It rejects formulas, macros, embedded or external components, extra or missing sheets, unapproved columns, unknown case fields, protected-class or age fields, invalid identifiers, unsafe URLs, duplicates, and any candidate that fails the existing mortgage fixture validator.
+
+An accepted workbook is held in session memory only, replaces only the active synthetic projection, retains the reviewed MERCA capability and configuration envelope, calculates a new SHA-256 source fingerprint, and reports accepted sheet and row counts. It imports no protected audit data and creates no approval, denial, eligibility, pricing, notice, waiver, record-writing, or other action authority. Import failure leaves the active case unchanged; the built-in controlled fixture can be restored explicitly.

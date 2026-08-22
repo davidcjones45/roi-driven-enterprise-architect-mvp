@@ -4,11 +4,15 @@ import { PHASES, assessmentReadiness, feoaReport, normalizeAssessment } from './
 import { federationEconomics, federationStability, gateReadiness, healthcareFixture, normalizeWorkspace, reportPayload } from './feoa-workspace.mjs';
 import { MORTGAGE_FIXTURE } from './mortgage-fixture.mjs';
 import { evaluateMortgageCase } from './mortgage-model.mjs';
+import { importMortgageWorkbook } from './mortgage-import.mjs';
 (() => {
   const KEY = 'roi-driven-enterprise-architect-mvp-v1';
   const blank = { opportunity:{}, evidence:[], inventory:[], baseline:{}, risk:{}, authorityEnvelope:{}, authorityEnvelopes:[], architecture:{alternatives:[]}, pilot:{}, results:{}, regulatory:{}, complianceCost:{assumptions:'',activities:[]}, feoa:{assessment:{},handoffs:[],actions:[],baselineMetrics:[],frictions:[],counterfactuals:[],risks:[],readiness:[],gates:[],cognitiveResilience:[],sensitivity:[],pilotObservations:[]} };
   let data = load();
   let selectedAuthorityId = null;
+  let activeMortgageFixture = MORTGAGE_FIXTURE;
+  let activeMortgageImportReport = null;
+  let mortgageImportError = '';
   const $ = (selector, root=document) => root.querySelector(selector);
   const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
   const titles = {overview:'Decision workspace', opportunity:'Opportunity intake', evidence:'Evidence register', inventory:'Architecture inventory', baseline:'ROI baseline', risk:'Agentic risk boundary', authority:'Authority envelope', 'authority-portfolio':'Authority portfolio', authorityEnvelope:'Authority envelope', architecture:'Architecture decision', pilot:'Pilot charter', results:'Pilot review', regulatory:'Regulatory context', 'compliance-cost':'Compliance cost & capacity', feoa:'FEOA workbench', 'mortgage-demo':'Mortgage reference demonstrator', dossier:'Executive decision dossier'};
@@ -71,7 +75,7 @@ import { evaluateMortgageCase } from './mortgage-model.mjs';
   function renderDossier(){ const target=$('#dossier-summary'); const ready=complete('dossier'); $('#dossier-status').textContent=ready?'Ready for qualified review':'Needs inputs'; $('#dossier-status').classList.toggle('complete',ready); const o=data.opportunity,b=calculatedBaseline(),r=data.risk,a=data.architecture,p=data.pilot,choice=preferredAlternative(); target.innerHTML=`<div class="dossier-section"><span class="eyebrow">DECISION POSITION</span><h3>${esc(o.name||'Untitled opportunity')}</h3><p>${esc(o.problem||'Complete opportunity intake to describe the costly work.')}</p><p><span class="label">Requested decision:</span> ${esc(o.decision||'Not stated')}</p><p><span class="label">Sponsor:</span> ${esc(o.sponsor||'Not named')} &nbsp; <span class="label">Deadline:</span> ${esc(o.deadline||'Not set')}</p></div><div class="dossier-section"><h4>Economic baseline</h4><p><span class="label">Current annual cost:</span> ${money(b.current)} &nbsp; <span class="label">Forecast net annual benefit:</span> ${money(b.benefit)}</p><p><span class="label">Value classification:</span> ${esc(data.baseline.valueClass||'Not stated')} &nbsp; <span class="label">Baseline evidence:</span> ${esc(data.baseline.baselineEvidence||'Not stated')}</p></div><div class="dossier-section"><h4>Agentic-risk boundary</h4><p><span class="label">Screen:</span> ${Object.keys(r).length?`${riskScore()} points / ${riskScore()>=10?'High':riskScore()>=5?'Moderate':'Lower'}`:'Not assessed'} &nbsp; <span class="label">Human authority:</span> ${esc(r.decisionAuthority||'Not named')}</p></div><div class="dossier-section"><h4>Architecture decision</h4><p><span class="label">Status:</span> ${esc(a.decisionStatus||'Not recorded')} &nbsp; <span class="label">Preferred alternative:</span> ${esc(choice?.name||'Not selected')}</p><p>${esc(a.conditions||'No decision conditions recorded.')}</p></div><div class="dossier-section"><h4>Pilot recommendation</h4><p><span class="label">Pilot:</span> ${esc(p.pilotName||'Not chartered')} &nbsp; <span class="label">Owner:</span> ${esc(p.pilotOwner||'Not named')}</p><p><span class="label">Go / no-go rule:</span> ${esc(p.goNoGo||'Not recorded')}</p></div><p class="quiet-note">Draft decision-support document. All material claims, assumptions, controls, and forecast benefits require qualified review before approval.</p>`; }
   function mortgageValue(value,unit){ if(unit==='percentage')return `${(Number(value)*100).toFixed(2)}%`; if(unit==='months')return Number(value).toFixed(2); if(unit==='score')return String(value); return money(value); }
   function renderMortgageDemo(){
-    const result=evaluateMortgageCase(MORTGAGE_FIXTURE), pill=$('#mortgage-demo-status');
+    const result=evaluateMortgageCase(activeMortgageFixture), pill=$('#mortgage-demo-status');
     if(!pill)return;
     if(!result.valid){pill.textContent='Fixture invalid';pill.classList.remove('complete');$('#mortgage-evidence-summary').textContent=result.errors.join(' ');return;}
     pill.textContent='Controlled calculation complete'; pill.classList.add('complete');
@@ -86,10 +90,19 @@ import { evaluateMortgageCase } from './mortgage-model.mjs';
     $('#mortgage-gap-list').innerHTML=result.evidenceGaps.length?`<ul class="mortgage-gap-list">${result.evidenceGaps.map((gap,index)=>`<li><strong>${esc(gap.evidenceId)} — ${esc(gap.message)}</strong><span>${esc(result.reviewQuestions[index])}</span></li>`).join('')}</ul>`:'<p>No unresolved evidence in the controlled fixture.</p>';
     $('#mortgage-capability-name').textContent=`${result.capability.name} (${result.capability.id})`;
     $('#mortgage-capability-summary').innerHTML=`<div><b>Reviewed configuration</b><span>${esc(result.capability.reviewedConfigurationId)}</span></div><div><b>Current configuration</b><span>${esc(result.capability.currentConfigurationId)} — ${result.capability.configurationMatch?'matched':'reassessment required'}</span></div><div><b>Permitted purposes</b><span>${esc(result.capability.permittedPurposes.join('; '))}</span></div><div><b>Prohibited actions</b><span>${esc(result.capability.prohibitedActions.join('; '))}</span></div><div><b>Operating context</b><span>${esc(result.capability.operatingContext)}</span></div><div><b>Manual path</b><span>Qualified personnel can reproduce the calculations, evidence checklist, policy comparison, and disposition process without AI.</span></div>`;
-    $('#mortgage-erir-rows').innerHTML=MORTGAGE_FIXTURE.erirSources.map(source=>`<tr><td>${esc(source.id)}</td><td>${source.url?`<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.source)}</a>`:esc(source.source)}</td><td>${esc(source.instrumentType)}</td><td>${esc(source.status)}</td></tr>`).join('');
+    $('#mortgage-erir-rows').innerHTML=activeMortgageFixture.erirSources.map(source=>`<tr><td>${esc(source.id)}</td><td>${source.url?`<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.source)}</a>`:esc(source.source)}</td><td>${esc(source.instrumentType)}</td><td>${esc(source.status)}</td></tr>`).join('');
     $('#mortgage-source-name').textContent=result.sourceArtifact;
     $('#mortgage-source-hash').textContent=result.sourceSha256;
     $('#mortgage-interpretation-limit').textContent=result.interpretationLimit;
+    const importState=$('#mortgage-import-state');
+    if(importState){
+      importState.className=`mortgage-import-state ${mortgageImportError?'error':activeMortgageImportReport?'complete':''}`;
+      importState.innerHTML=mortgageImportError
+        ? `<strong>Import rejected without changing the active case.</strong><span>${esc(mortgageImportError)}</span>`
+        : activeMortgageImportReport
+          ? `<strong>${esc(activeMortgageImportReport.templateId)} accepted in session memory.</strong><span>${esc(activeMortgageImportReport.acceptedRows)} rows accepted from ${esc(activeMortgageImportReport.importedSheets.join(', '))}; protected rows accepted: 0; no credit or action authority created.</span>`
+          : '<strong>Controlled fixture active.</strong><span>Select only the supplied v0.2 template. The workbook is validated before the displayed case changes and is not persisted.</span>';
+    }
   }
   function renderInventory(){ const rows=data.inventory||[], total=rows.reduce((sum,r)=>sum+(+r.annualCost||0),0), critical=rows.filter(r=>['High','Mission critical'].includes(r.criticality)).length; const pill=$('#inventory-status'); pill.textContent=rows.length?`${rows.length} records`:'No records'; pill.classList.toggle('complete',rows.length>0); $('#inventory-summary').textContent=rows.length?`${rows.length} decision-scoped architecture record${rows.length===1?'':'s'}; ${critical} high or mission-critical; ${money(total)} annual cost represented.`:'No architecture records have been added.'; $('#inventory-rows').innerHTML=rows.length?rows.map((r,i)=>`<tr><td>${esc(r.name)}<br><small>${esc(r.type)}</small></td><td>${esc(r.capability)}<br><small>${esc(r.businessOwner)} / ${esc(r.technicalOwner)}</small></td><td>${esc(r.lifecycle||'Not stated')} / ${esc(r.criticality||'Not stated')}</td><td>${r.annualCost?money(r.annualCost):'Not stated'}<br><small>${esc(r.renewalDate||'No date')}</small></td><td>${esc(r.dataClass||'Not stated')}<br><small>${esc(r.dependencies||'No dependency stated')}</small></td><td><button class="delete-evidence" data-inventory-index="${i}">Delete</button></td></tr>`).join(''):`<tr><td colspan="6" class="quiet-note">No architecture records yet.</td></tr>`; $$('[data-inventory-index]').forEach(btn=>btn.addEventListener('click',()=>{data.inventory.splice(+btn.dataset.inventoryIndex,1);persist();toast('Architecture record deleted.');})); }
   function renderResults(){ const r=data.results||{}, pill=$('#results-status'), state=r.resultState||'Not reviewed'; pill.textContent=state; pill.classList.toggle('complete',['Observed','Validated'].includes(state)); }
@@ -144,6 +157,35 @@ import { evaluateMortgageCase } from './mortgage-model.mjs';
   }
   function downloadJson(){ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='roi-ea-working-record.json'; a.click(); URL.revokeObjectURL(a.href); }
   function wireGlobal(){ $$('.nav-link').forEach(el=>el.addEventListener('click',()=>show(el.dataset.view))); $('#load-demo').addEventListener('click',()=>{data=sample(); const draft={id:'AE-SCHED-001',aiSystem:'Scheduling preparation assistant',aiSystemId:'AIS-SCHED-PREP',businessCapability:'Service scheduling',businessCapabilityId:'CAP-SERVICE-SCHEDULING',authorityOwner:'Maya Chen, VP Operations',status:'Active - controlled pilot',effectiveDate:'2026-10-20',reviewDate:'2026-12-18',inventoryRefs:'Scheduling Hub; Field Service Platform API',actionIds:'ACT-READ-RECORDS; ACT-PREPARE-CONTEXT; ACT-DRAFT-SUMMARY',resourceIds:'RES-APPROVED-RECORDS; RES-SCHEDULING-REGION',permittedActions:'Read approved internal records; prepare case context; draft internal coordinator summary.',prohibitedActions:'No scheduling write-back, external communication, customer commitment, or autonomous decision.',resourceScope:'One service region; eligible weekday exceptions; approved internal records only; no production write credential.',evidenceRefs:'MVP evidence: coordinator time-study statement; security design review. ERIR: APP-FTC-001; CTL-CLAIMS-001; EVD-CLAIMS-001.',evidenceRequirement:'A qualified reviewer must assess the privacy/security design evidence and pilot measurement before authority becomes effective.',acceptanceCriterion:'Explicit reviewer assessment records accepted, current evidence and no material unresolved guardrail failure.',evidenceArtifactIds:'MVP-EVD-001; MVP-EVD-002; EVD-CLAIMS-001',evidenceAssessmentState:'not assessed',evidenceValidFrom:'2026-10-20',evidenceValidUntil:'2026-12-18',evidenceReviewer:'Not yet assessed',evidenceReviewAuthority:'Maya Chen, VP Operations',monitoringTriggers:'Measurement owner records preparation time and guardrail exceptions weekly; investigate a material accuracy or privacy concern immediately.',revocationConditions:'Maya Chen may constrain, suspend, or revoke on a material privacy concern, repeated material inaccuracy, unauthorized access attempt, or loss of manual fallback.',decision:'Authorize',decisionDate:'2026-10-20',rationale:'Illustrative controlled-pilot authority only. Required evidence remains subject to qualified review; no control effectiveness or realized benefit is asserted.'}; data.authorityEnvelope=appendDecision(normalizeAuthority(draft,authorityContext()),{decision:'Authorize',decisionAuthority:draft.authorityOwner,decisionDate:draft.effectiveDate,rationale:draft.rationale,resultingState:draft.status,evidenceReferences:draft.evidenceArtifactIds}); data.authorityEnvelopes=[data.authorityEnvelope];persist(); wireForms();toast('Northstar example loaded.');}); $('#reset-data').addEventListener('click',()=>{if(confirm('Reset all locally stored MVP data?')){data=structuredClone(blank);persist();wireForms();toast('Local data reset.');}}); $('#export-html').addEventListener('click',exportDossier); $('#download-json').addEventListener('click',downloadJson); }
-  function wireMortgageDemo(){ const button=$('#rerun-mortgage-demo'); if(button)button.addEventListener('click',()=>{renderMortgageDemo();toast('Deterministic mortgage assessment re-run; no credit decision was made.');}); }
+  function wireMortgageDemo(){
+    const button=$('#rerun-mortgage-demo');
+    if(button)button.addEventListener('click',()=>{renderMortgageDemo();toast('Deterministic mortgage assessment re-run; no credit decision was made.');});
+    const input=$('#mortgage-workbook-input');
+    if(input) input.addEventListener('change',async()=>{
+      const file=input.files?.[0];
+      if(!file)return;
+      try{
+        const imported=await importMortgageWorkbook(await file.arrayBuffer(),file.name);
+        activeMortgageFixture=imported.fixture;
+        activeMortgageImportReport=imported.report;
+        mortgageImportError='';
+        renderMortgageDemo();
+        toast('Controlled workbook accepted in session memory; no credit decision was made.');
+      }catch(error){
+        mortgageImportError=error instanceof Error?error.message:String(error);
+        activeMortgageImportReport=null;
+        renderMortgageDemo();
+        toast('Workbook rejected; the active case was not changed.');
+      }finally{ input.value=''; }
+    });
+    const restore=$('#restore-mortgage-fixture');
+    if(restore) restore.addEventListener('click',()=>{
+      activeMortgageFixture=MORTGAGE_FIXTURE;
+      activeMortgageImportReport=null;
+      mortgageImportError='';
+      renderMortgageDemo();
+      toast('Controlled built-in fixture restored.');
+    });
+  }
   wireForms(); wireEvidence(); wireInventory(); wireComplianceCost(); wireRegulatory(); wireAuthorityViews(); wireGlobal(); wireDemoPortfolio(); wireMortgageDemo(); renderAll();
 })();

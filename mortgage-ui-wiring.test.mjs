@@ -11,11 +11,15 @@ test('mortgage reference demo is exposed as a read-only governed surface',async(
     'Mortgage reference demo',
     'without making a credit decision',
     'Protected-class audit data and age are excluded',
-    'id="rerun-mortgage-demo"'
+    'id="rerun-mortgage-demo"',
+    'id="mortgage-workbook-input"',
+    'Download controlled template',
+    'Restore built-in fixture'
   ]) assert.ok(html.includes(expected),expected);
   for(const expected of [
     "from './mortgage-fixture.mjs'",
     "from './mortgage-model.mjs'",
+    "from './mortgage-import.mjs'",
     'renderMortgageDemo',
     'wireMortgageDemo'
   ]) assert.ok(app.includes(expected),expected);
@@ -25,7 +29,9 @@ test('mortgage demo contains no editable case-entry controls or decision actions
   const html=await read('index.html');
   const section=html.split('<section id="mortgage-demo"')[1]?.split('</section>')[0]??'';
   assert.ok(section,'mortgage demo section');
-  assert.equal(/<(input|textarea|select)\b/i.test(section),false);
+  assert.equal(/<(textarea|select)\b/i.test(section),false);
+  const inputs=[...section.matchAll(/<input\b([^>]*)>/gi)].map(match=>match[1]);
+  assert.deepEqual(inputs.map(attributes=>attributes.match(/type="([^"]+)"/i)?.[1]),['file']);
   assert.equal(/>\s*(approve|deny|price|waive)\s*</i.test(section),false);
 });
 

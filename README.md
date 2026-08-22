@@ -80,7 +80,9 @@ The mortgage implementation is confined to `feature/mortgage-reference-demo-v0.1
 Run the focused tests:
 
 ```powershell
-node --test mortgage-demo.test.mjs mortgage-ui-wiring.test.mjs
+node --test mortgage-demo.test.mjs mortgage-import.test.mjs mortgage-ui-wiring.test.mjs
 ```
 
 The focal output is `INSUFFICIENT EVIDENCE`; MERCA abstains and produces an advisory trace only. See `MORTGAGE_REFERENCE_DEMO.md` for the controlled source hash, calculation results, and explicit non-goals.
+
+The mortgage surface also supports fail-closed, template-controlled XLSX ingestion through `MTG-IMPORT-V0.2`. The supplied workbook lives at `assets/North-Star-Mortgage-Controlled-Import-Template-v0.2.xlsx`; imported data remain in session memory and cannot create credit-decision or action authority.

@@ -334,6 +334,11 @@
     <section id="mortgage-demo" class="view">
       <div class="section-heading"><div><span class="eyebrow">NORTH STAR MORTGAGE / CONTROLLED REFERENCE DEMONSTRATOR v0.1</span><h2>Inspect evidence readiness and fictional policy comparisons without making a credit decision.</h2><p>This read-only synthetic case demonstrates how ROI-EA, ERIR, FACEM, and BACRM can make permitted evidence gaps, calculations, configuration state, and human-review requirements observable. It has no approval, denial, eligibility, pricing, notice, waiver, or record-writing path.</p></div><span class="status-pill" id="mortgage-demo-status">Not evaluated</span></div>
       <div class="mortgage-boundary" role="note"><strong>Controlled boundary:</strong> No real applicant or bank data are used. Protected-class audit data and age are excluded from this implementation projection. The displayed policy is fictional and is not attributed to a real bank, investor, regulator, or product.</div>
+      <div class="card mortgage-import-card">
+        <div><span class="eyebrow">TEMPLATE-CONTROLLED SPREADSHEET INGESTION</span><h3>Load a synthetic case without broadening authority</h3><p class="quiet-note">Only the supplied four-sheet v0.2 XLSX contract is accepted. Validation is fail-closed; formulas, macros, external components, unknown sheets or columns, protected fields, and uncontrolled metadata are rejected before the active case changes.</p></div>
+        <div class="mortgage-import-actions"><a class="button-link" href="assets/North-Star-Mortgage-Controlled-Import-Template-v0.2.xlsx" download>Download controlled template</a><label class="file-button" for="mortgage-workbook-input">Select completed XLSX</label><input id="mortgage-workbook-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button type="button" id="restore-mortgage-fixture" class="secondary">Restore built-in fixture</button></div>
+        <div id="mortgage-import-state" class="mortgage-import-state" role="status" aria-live="polite"></div>
+      </div>
       <div class="metric-grid" id="mortgage-metrics" aria-live="polite"></div>
       <div class="card mortgage-state-grid">
         <div><span class="eyebrow">EVIDENCE STATE</span><strong id="mortgage-evidence-state">Not evaluated</strong><p class="quiet-note" id="mortgage-evidence-summary"></p></div>
