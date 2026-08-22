@@ -14,13 +14,18 @@ test('mortgage reference demo is exposed as a read-only governed surface',async(
     'id="rerun-mortgage-demo"',
     'id="mortgage-workbook-input"',
     'Download controlled template',
-    'Restore built-in fixture'
+    'Restore built-in fixture',
+    'id="execute-mortgage-integration"',
+    'ROI-EA → ERIR → FACEM → BACRM',
+    'id="download-mortgage-trace"'
   ]) assert.ok(html.includes(expected),expected);
   for(const expected of [
     "from './mortgage-fixture.mjs'",
     "from './mortgage-model.mjs'",
     "from './mortgage-import.mjs'",
+    "from './mortgage-integration.mjs'",
     'renderMortgageDemo',
+    'renderMortgageIntegration',
     'wireMortgageDemo'
   ]) assert.ok(app.includes(expected),expected);
 });

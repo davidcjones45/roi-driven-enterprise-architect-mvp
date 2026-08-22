@@ -5,6 +5,7 @@ import { federationEconomics, federationStability, gateReadiness, healthcareFixt
 import { MORTGAGE_FIXTURE } from './mortgage-fixture.mjs';
 import { evaluateMortgageCase } from './mortgage-model.mjs';
 import { importMortgageWorkbook } from './mortgage-import.mjs';
+import { executeMortgageIntegration, recordMortgageErirUnavailable, recordMortgageErirVerification } from './mortgage-integration.mjs';
 (() => {
   const KEY = 'roi-driven-enterprise-architect-mvp-v1';
   const blank = { opportunity:{}, evidence:[], inventory:[], baseline:{}, risk:{}, authorityEnvelope:{}, authorityEnvelopes:[], architecture:{alternatives:[]}, pilot:{}, results:{}, regulatory:{}, complianceCost:{assumptions:'',activities:[]}, feoa:{assessment:{},handoffs:[],actions:[],baselineMetrics:[],frictions:[],counterfactuals:[],risks:[],readiness:[],gates:[],cognitiveResilience:[],sensitivity:[],pilotObservations:[]} };
@@ -13,6 +14,7 @@ import { importMortgageWorkbook } from './mortgage-import.mjs';
   let activeMortgageFixture = MORTGAGE_FIXTURE;
   let activeMortgageImportReport = null;
   let mortgageImportError = '';
+  let activeMortgageExecution = null;
   const $ = (selector, root=document) => root.querySelector(selector);
   const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
   const titles = {overview:'Decision workspace', opportunity:'Opportunity intake', evidence:'Evidence register', inventory:'Architecture inventory', baseline:'ROI baseline', risk:'Agentic risk boundary', authority:'Authority envelope', 'authority-portfolio':'Authority portfolio', authorityEnvelope:'Authority envelope', architecture:'Architecture decision', pilot:'Pilot charter', results:'Pilot review', regulatory:'Regulatory context', 'compliance-cost':'Compliance cost & capacity', feoa:'FEOA workbench', 'mortgage-demo':'Mortgage reference demonstrator', dossier:'Executive decision dossier'};
@@ -103,6 +105,20 @@ import { importMortgageWorkbook } from './mortgage-import.mjs';
           ? `<strong>${esc(activeMortgageImportReport.templateId)} accepted in session memory.</strong><span>${esc(activeMortgageImportReport.acceptedRows)} rows accepted from ${esc(activeMortgageImportReport.importedSheets.join(', '))}; protected rows accepted: 0; no credit or action authority created.</span>`
           : '<strong>Controlled fixture active.</strong><span>Select only the supplied v0.2 template. The workbook is validated before the displayed case changes and is not persisted.</span>';
     }
+    renderMortgageIntegration();
+  }
+  function renderMortgageIntegration(){
+    const pill=$('#mortgage-integration-status'), rows=$('#mortgage-integration-rows'), detail=$('#mortgage-integration-detail'), download=$('#download-mortgage-trace');
+    if(!pill||!rows||!detail)return;
+    if(!activeMortgageExecution){
+      pill.textContent='Not executed';pill.classList.remove('complete');rows.innerHTML='<tr><td colspan="5" class="quiet-note">Run the integrated trace after loading or confirming the controlled case.</td></tr>';detail.innerHTML='<p class="quiet-note">No cross-layer execution artifact exists in this browser session.</p>';if(download)download.disabled=true;return;
+    }
+    const execution=activeMortgageExecution;
+    pill.textContent=execution.finalState;pill.classList.toggle('complete',execution.valid);
+    rows.innerHTML=execution.stages.map(stage=>`<tr><td>${esc(stage.order)}</td><td><strong>${esc(stage.layer)}</strong></td><td>${esc(stage.input)}</td><td>${esc(stage.output)}<br><small>${esc(stage.state)}</small></td><td>${esc(stage.boundary)}</td></tr>`).join('');
+    const facem=execution.facem.states, verification=execution.erir.repositoryVerification, disposition=execution.humanDisposition;
+    detail.innerHTML=`<div class="mortgage-definition-grid"><div><b>ROI-EA result</b><span>${esc(execution.roiEa.outputs.evidenceState)}; ${esc(execution.roiEa.outputs.financialReviewRoute)}</span></div><div><b>ERIR verification</b><span>${esc(verification.state)}; returned ${verification.returnedIds.length}, unresolved/missing ${verification.missingIds.length}. Applicability remains unresolved.</span></div><div><b>FACEM authority</b><span>${esc(facem.authority)}; acceptance: ${esc(facem.acceptance)}; commitment: ${esc(facem.commitment)}.</span></div><div><b>BACRM operating state</b><span>${esc(execution.bacrm.status)}. ${esc(execution.bacrm.recovery)}</span></div><div><b>Federation value: C2 − C1</b><span>${esc(execution.economics.federationIncrement_C2_minus_C1.state)} — ${esc(execution.economics.federationIncrement_C2_minus_C1.reason)}</span></div><div><b>Bounded-AI value: C3 − C2</b><span>${esc(execution.economics.boundedAiIncrement_C3_minus_C2.state)} — ${esc(execution.economics.boundedAiIncrement_C3_minus_C2.reason)}</span></div></div><div class="mortgage-disposition"><span class="eyebrow">HUMAN DISPOSITION RECORD</span><p><b>${esc(disposition.human_disposition)}</b></p><p>${esc(disposition.rationale)}</p><p class="quiet-note">Actor: ${esc(disposition.actor||'not recorded')} | Authority evidence: ${esc(disposition.authority_evidence||'not supplied')} | Effective time: ${esc(disposition.effective_time||'not established')} | Successor state: ${esc(disposition.successor_state)}</p></div><div><span class="eyebrow">NON-AI MANUAL PATH</span><ol class="mortgage-manual-path">${execution.manualPath.map(item=>`<li><strong>${esc(item.id)}</strong> ${esc(item.step)} <span>${esc(item.owner)}</span></li>`).join('')}</ol></div><p class="mortgage-limit">Decision: ${esc(execution.decisionState)}. Fairness: ${esc(execution.fairnessClaim)}. Compliance: ${esc(execution.complianceClaim)}. Protected applicant data: ${esc(execution.protectedDataState)}.</p>`;
+    if(download)download.disabled=false;
   }
   function renderInventory(){ const rows=data.inventory||[], total=rows.reduce((sum,r)=>sum+(+r.annualCost||0),0), critical=rows.filter(r=>['High','Mission critical'].includes(r.criticality)).length; const pill=$('#inventory-status'); pill.textContent=rows.length?`${rows.length} records`:'No records'; pill.classList.toggle('complete',rows.length>0); $('#inventory-summary').textContent=rows.length?`${rows.length} decision-scoped architecture record${rows.length===1?'':'s'}; ${critical} high or mission-critical; ${money(total)} annual cost represented.`:'No architecture records have been added.'; $('#inventory-rows').innerHTML=rows.length?rows.map((r,i)=>`<tr><td>${esc(r.name)}<br><small>${esc(r.type)}</small></td><td>${esc(r.capability)}<br><small>${esc(r.businessOwner)} / ${esc(r.technicalOwner)}</small></td><td>${esc(r.lifecycle||'Not stated')} / ${esc(r.criticality||'Not stated')}</td><td>${r.annualCost?money(r.annualCost):'Not stated'}<br><small>${esc(r.renewalDate||'No date')}</small></td><td>${esc(r.dataClass||'Not stated')}<br><small>${esc(r.dependencies||'No dependency stated')}</small></td><td><button class="delete-evidence" data-inventory-index="${i}">Delete</button></td></tr>`).join(''):`<tr><td colspan="6" class="quiet-note">No architecture records yet.</td></tr>`; $$('[data-inventory-index]').forEach(btn=>btn.addEventListener('click',()=>{data.inventory.splice(+btn.dataset.inventoryIndex,1);persist();toast('Architecture record deleted.');})); }
   function renderResults(){ const r=data.results||{}, pill=$('#results-status'), state=r.resultState||'Not reviewed'; pill.textContent=state; pill.classList.toggle('complete',['Observed','Validated'].includes(state)); }
@@ -169,6 +185,7 @@ import { importMortgageWorkbook } from './mortgage-import.mjs';
         activeMortgageFixture=imported.fixture;
         activeMortgageImportReport=imported.report;
         mortgageImportError='';
+        activeMortgageExecution=null;
         renderMortgageDemo();
         toast('Controlled workbook accepted in session memory; no credit decision was made.');
       }catch(error){
@@ -183,8 +200,29 @@ import { importMortgageWorkbook } from './mortgage-import.mjs';
       activeMortgageFixture=MORTGAGE_FIXTURE;
       activeMortgageImportReport=null;
       mortgageImportError='';
+      activeMortgageExecution=null;
       renderMortgageDemo();
       toast('Controlled built-in fixture restored.');
+    });
+    const execute=$('#execute-mortgage-integration');
+    if(execute)execute.addEventListener('click',async()=>{
+      activeMortgageExecution=executeMortgageIntegration(activeMortgageFixture);
+      renderMortgageIntegration();
+      if(!activeMortgageExecution.valid){toast('Integrated execution rejected because the controlled fixture is invalid.');return;}
+      toast('Local four-layer trace complete; verifying source IDs through read-only ERIR.');
+      try{
+        const response=await fetch(erirTraceUrl(activeMortgageExecution.erir.sourceIds,{}));
+        if(!response.ok)throw new Error(`ERIR API returned ${response.status}`);
+        activeMortgageExecution=recordMortgageErirVerification(activeMortgageExecution,await response.json());
+      }catch(error){activeMortgageExecution=recordMortgageErirUnavailable(activeMortgageExecution,error instanceof Error?error.message:String(error));}
+      renderMortgageIntegration();
+      toast('Integrated trace complete; no credit decision or compliance conclusion was made.');
+    });
+    const download=$('#download-mortgage-trace');
+    if(download)download.addEventListener('click',()=>{
+      if(!activeMortgageExecution)return;
+      const blob=new Blob([JSON.stringify(activeMortgageExecution,null,2)],{type:'application/json'}), link=document.createElement('a');
+      link.href=URL.createObjectURL(blob);link.download='north-star-mortgage-integrated-trace.json';link.click();URL.revokeObjectURL(link.href);
     });
   }
   wireForms(); wireEvidence(); wireInventory(); wireComplianceCost(); wireRegulatory(); wireAuthorityViews(); wireGlobal(); wireDemoPortfolio(); wireMortgageDemo(); renderAll();
