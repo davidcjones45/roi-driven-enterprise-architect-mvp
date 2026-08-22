@@ -339,6 +339,13 @@
         <div class="mortgage-import-actions"><a class="button-link" href="assets/North-Star-Mortgage-Controlled-Import-Template-v0.2.xlsx" download>Download controlled template</a><label class="file-button" for="mortgage-workbook-input">Select completed XLSX</label><input id="mortgage-workbook-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button type="button" id="restore-mortgage-fixture" class="secondary">Restore built-in fixture</button></div>
         <div id="mortgage-import-state" class="mortgage-import-state" role="status" aria-live="polite"></div>
       </div>
+      <div class="card mortgage-bpmn-card">
+        <div class="mortgage-card-heading"><div><span class="eyebrow">CONTROLLED BPMN IMPORT AND BOUNDED-AI ANALYSIS</span><h3>Inspect prospective support points without executing the workflow</h3><p class="quiet-note">The v0.1 importer accepts only a deliberately limited, non-executable BPMN subset. Candidate identification is analytical: it does not establish BPMN conformance, process validity, compliance, effectiveness, implementation suitability, approval, or authority.</p></div></div>
+        <div class="mortgage-import-actions"><a class="button-link" href="assets/North-Star-Mortgage-Workflow-v0.1.bpmn" download>Download reference BPMN</a><button type="button" id="analyze-mortgage-bpmn">Analyze reference BPMN</button><label class="file-button" for="mortgage-bpmn-input">Select BPMN file</label><input id="mortgage-bpmn-input" type="file" accept=".bpmn,.xml,text/xml,application/xml"></div>
+        <div id="mortgage-bpmn-state" class="mortgage-import-state" role="status" aria-live="polite"></div>
+        <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Node</th><th>Prospective support point</th><th>Permitted purpose</th><th>Authority</th><th>Disposition</th></tr></thead><tbody id="mortgage-bpmn-candidates"><tr><td colspan="5" class="quiet-note">No prospective candidate analysis exists in this browser session.</td></tr></tbody></table></div>
+        <div id="mortgage-bpmn-summary"><p class="quiet-note">The controlled subset does not validate arbitrary BPMN, establish process correctness, or authorize implementation.</p></div>
+      </div>
       <div class="metric-grid" id="mortgage-metrics" aria-live="polite"></div>
       <div class="card mortgage-state-grid">
         <div><span class="eyebrow">EVIDENCE STATE</span><strong id="mortgage-evidence-state">Not evaluated</strong><p class="quiet-note" id="mortgage-evidence-summary"></p></div>
