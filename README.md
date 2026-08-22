@@ -89,4 +89,6 @@ The focal output is `INSUFFICIENT EVIDENCE`; MERCA abstains and produces an advi
 
 The mortgage surface also supports fail-closed, template-controlled XLSX ingestion through `MTG-IMPORT-V0.2`. The supplied workbook lives at `assets/North-Star-Mortgage-Controlled-Import-Template-v0.2.xlsx`; imported data remain in session memory and cannot create credit-decision or action authority.
 
+The first BPMN ingestion test fixture is `assets/North-Star-Mortgage-Workflow-v0.1.bpmn`. The deliberately limited `AIHS-BPMN-SUBSET-V0.1` importer and bounded-AI candidate analysis are documented in `docs/NORTH_STAR_MORTGAGE_BPMN_FIXTURE.md`. They do not execute workflows, validate arbitrary BPMN, or confer process validity, compliance, effectiveness, approval, implementation status, or authority.
+
 The active controlled case can then produce a downloadable, nonpersistent ROI-EA → ERIR → FACEM → BACRM execution trace. Live ERIR record return is distinguished from applicability and compliance; FACEM retains authority/accountability boundaries; BACRM preserves abstention, manual fallback, suspension, and controlled recovery. Federation and bounded-AI value increments remain separately labeled and unquantified without measured evidence.
