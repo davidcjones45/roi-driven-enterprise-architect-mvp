@@ -1,8 +1,8 @@
 # BPMN and Federated UI Integration Readiness
 
-**Date:** 2026-08-23  
-**Integration branch:** `feature/bpmn-federated-integration-v0.1`  
-**Accepted federated baseline:** `39a4726`  
+**Date:** 2026-08-23
+**Integration branch:** `feature/bpmn-federated-integration-v0.1`
+**Accepted federated baseline:** `39a4726`
 **Completed BPMN source:** `60c619a`
 
 ## Scope
