@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Defs_Duplicate" targetNamespace="https://www.aiathumanscale.com/synthetic/bpmn">
+  <bpmn:process id="Process_Duplicate" isExecutable="false"><bpmn:task id="Duplicate_1"/><bpmn:task id="Duplicate_1"/></bpmn:process>
+</bpmn:definitions>

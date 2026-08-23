@@ -1,0 +1,19 @@
+{
+  "profile": "ROI-EA-BPMN-FIXTURES-V0.1",
+  "created": "2026-08-23",
+  "classification": "synthetic test data",
+  "fixtures": [
+    { "file": "choreography-deferred.bpmn", "sha256": "c27b540a9162ee4b0f37e6179a375be8f44b74f6af1bad048c6dc344f195ed62", "expected": "STAGED_WITH_DEFERRED_MAPPING" },
+    { "file": "collaboration-lanes.bpmn", "sha256": "d1c5d2267ee58afa77b275e7a6a9d80eefce242eb8f591c2e76743b11a219d20", "expected": "STAGED" },
+    { "file": "core-constructs.bpmn", "sha256": "cfdea5437f73fc68ac8e4cb2eed2b005f756b4e1d41dadf4b85e3c9889e8c6e7", "expected": "STAGED" },
+    { "file": "dangling-reference.bpmn", "sha256": "66652cb9a2440c4b27fb2764d410f67ae21a2020318116977a40a310c4762227", "expected": "STAGED_WITH_ERROR" },
+    { "file": "deferred-and-vendor.bpmn", "sha256": "6f88af3b6f79701afd6c28b141cd0eb31fb18036f7375fa6209b211d58a3af45", "expected": "STAGED_WITH_DEFERRED_MAPPING" },
+    { "file": "diagram-interchange.bpmn", "sha256": "4c01e73d0ee3bec4769091a8f924c25dfb101717ef8b4311e634cfcb05acb3c3", "expected": "STAGED" },
+    { "file": "doctype-entity.xml", "sha256": "511760a57fa7120cad5152fa010cf5a2be61f2632028be305f0a6829ec2c1211", "expected": "SECURITY_REJECTION" },
+    { "file": "duplicate-id.bpmn", "sha256": "6026cb2befad0f327718a734ac8a2cabf38e872dcd6200eea6c64a980fa14566", "expected": "REJECTED" },
+    { "file": "malformed.xml", "sha256": "c68d16028bdafa3013b67d69c5cb0cc4ebd29a29e08999cdce7a863d46b54272", "expected": "SECURITY_REJECTION" },
+    { "file": "minimal-valid.bpmn", "sha256": "35db572f2977085b2ddb5575fc02b29677230b3b38d4aaf79c52b5eedbc620ad", "expected": "STAGED" },
+    { "file": "remote-import.bpmn", "sha256": "eebae7dd1809d8f05ef887fdfa3cfafe0e7b1fd687b1a483e5661894575d15dd", "expected": "SECURITY_REJECTION" },
+    { "file": "unknown-extension.bpmn", "sha256": "a0da69578a4bbb69fabffdf7927dd9edca2273c1bcf14ed25bf7f70f4c17f840", "expected": "STAGED_WITH_DEFERRED_MAPPING" }
+  ]
+}

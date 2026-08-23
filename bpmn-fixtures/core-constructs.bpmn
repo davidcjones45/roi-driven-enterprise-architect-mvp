@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Defs_Core" targetNamespace="https://www.aiathumanscale.com/synthetic/bpmn">
+  <bpmn:error id="Error_1" name="Synthetic error"/>
+  <bpmn:globalTask id="Global_Task_1" name="Modeled reusable activity"/>
+  <bpmn:process id="Process_Core" isExecutable="false">
+    <bpmn:startEvent id="Start_Core"/>
+    <bpmn:userTask id="User_1"/>
+    <bpmn:manualTask id="Manual_1"/>
+    <bpmn:serviceTask id="Service_1"/>
+    <bpmn:businessRuleTask id="Rule_1"/>
+    <bpmn:scriptTask id="Script_1" scriptFormat="text/plain"><bpmn:script>INERT SYNTHETIC TEXT; NEVER EXECUTE</bpmn:script></bpmn:scriptTask>
+    <bpmn:receiveTask id="Receive_1"/>
+    <bpmn:exclusiveGateway id="Gateway_1"/>
+    <bpmn:inclusiveGateway id="Gateway_2"/>
+    <bpmn:parallelGateway id="Gateway_3"/>
+    <bpmn:eventBasedGateway id="Gateway_4"/>
+    <bpmn:subProcess id="Sub_1"><bpmn:task id="Nested_1"/></bpmn:subProcess>
+    <bpmn:callActivity id="Call_1" calledElement="Global_Task_1"/>
+    <bpmn:boundaryEvent id="Boundary_1" attachedToRef="Sub_1"><bpmn:errorEventDefinition errorRef="Error_1"/></bpmn:boundaryEvent>
+    <bpmn:dataObject id="Data_1"/><bpmn:dataObjectReference id="DataRef_1" dataObjectRef="Data_1"/>
+    <bpmn:association id="Association_1" sourceRef="DataRef_1" targetRef="User_1"/>
+    <bpmn:task id="DataTask_1"><bpmn:dataInputAssociation id="DataInput_1"><bpmn:sourceRef>DataRef_1</bpmn:sourceRef></bpmn:dataInputAssociation></bpmn:task>
+    <bpmn:intermediateCatchEvent id="Catch_1"><bpmn:timerEventDefinition id="Timer_1"/></bpmn:intermediateCatchEvent>
+    <bpmn:intermediateThrowEvent id="Throw_1"><bpmn:escalationEventDefinition id="Escalation_1"/></bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="End_Core"/>
+    <bpmn:sequenceFlow id="Core_F1" sourceRef="Start_Core" targetRef="User_1"/>
+    <bpmn:sequenceFlow id="Core_F2" sourceRef="User_1" targetRef="Gateway_1"/>
+    <bpmn:sequenceFlow id="Core_F3" sourceRef="Gateway_1" targetRef="Sub_1"/>
+    <bpmn:sequenceFlow id="Core_F4" sourceRef="Sub_1" targetRef="End_Core"/>
+  </bpmn:process>
+</bpmn:definitions>

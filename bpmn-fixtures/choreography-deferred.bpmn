@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Defs_Choreography" targetNamespace="https://www.aiathumanscale.com/synthetic/bpmn">
+  <bpmn:choreography id="Choreography_1">
+    <bpmn:participant id="Choreo_Party_1"/><bpmn:participant id="Choreo_Party_2"/>
+    <bpmn:startEvent id="Choreo_Start"/>
+    <bpmn:choreographyTask id="Choreo_Task"><bpmn:participantRef>Choreo_Party_1</bpmn:participantRef><bpmn:participantRef>Choreo_Party_2</bpmn:participantRef></bpmn:choreographyTask>
+    <bpmn:endEvent id="Choreo_End"/>
+    <bpmn:sequenceFlow id="Choreo_Flow_1" sourceRef="Choreo_Start" targetRef="Choreo_Task"/>
+    <bpmn:sequenceFlow id="Choreo_Flow_2" sourceRef="Choreo_Task" targetRef="Choreo_End"/>
+  </bpmn:choreography>
+</bpmn:definitions>

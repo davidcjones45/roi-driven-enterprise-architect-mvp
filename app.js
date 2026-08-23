@@ -2,14 +2,27 @@ import { normalizeAuthority, appendDecision, effectiveAuthorityState, erirImpact
 import { erirTraceUrl, resolveErirApiBase, runtimeErirConfig } from './erir-client-config.mjs';
 import { PHASES, assessmentReadiness, feoaReport, normalizeAssessment } from './feoa-model.mjs';
 import { federationEconomics, federationStability, gateReadiness, healthcareFixture, normalizeWorkspace, reportPayload } from './feoa-workspace.mjs';
+import { MORTGAGE_FIXTURE } from './mortgage-fixture.mjs';
+import { evaluateMortgageCase } from './mortgage-model.mjs';
+import { importMortgageWorkbook, MAX_MORTGAGE_WORKBOOK_BYTES } from './mortgage-import.mjs';
+import { executeMortgageIntegration, recordMortgageErirUnavailable, recordMortgageErirVerification } from './mortgage-integration.mjs';
+import { importMortgageBpmn, analyzeBoundedAiOpportunities, MAX_MORTGAGE_BPMN_BYTES } from './mortgage-bpmn.mjs';
+import { createBpmnReviewController } from './bpmn-review-ui.mjs';
 (() => {
   const KEY = 'roi-driven-enterprise-architect-mvp-v1';
   const blank = { opportunity:{}, evidence:[], inventory:[], baseline:{}, risk:{}, authorityEnvelope:{}, authorityEnvelopes:[], architecture:{alternatives:[]}, pilot:{}, results:{}, regulatory:{}, complianceCost:{assumptions:'',activities:[]}, feoa:{assessment:{},handoffs:[],actions:[],baselineMetrics:[],frictions:[],counterfactuals:[],risks:[],readiness:[],gates:[],cognitiveResilience:[],sensitivity:[],pilotObservations:[]} };
   let data = load();
   let selectedAuthorityId = null;
+  let activeMortgageFixture = MORTGAGE_FIXTURE;
+  let activeMortgageImportReport = null;
+  let mortgageImportError = '';
+  let activeMortgageExecution = null;
+  let activeMortgageBpmn = null;
+  let activeMortgageBpmnAnalysis = null;
+  let mortgageBpmnError = '';
   const $ = (selector, root=document) => root.querySelector(selector);
   const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
-  const titles = {overview:'Decision workspace', opportunity:'Opportunity intake', evidence:'Evidence register', inventory:'Architecture inventory', baseline:'ROI baseline', risk:'Agentic risk boundary', authority:'Authority envelope', 'authority-portfolio':'Authority portfolio', authorityEnvelope:'Authority envelope', architecture:'Architecture decision', pilot:'Pilot charter', results:'Pilot review', regulatory:'Regulatory context', 'compliance-cost':'Compliance cost & capacity', feoa:'FEOA workbench', federated:'Federated Enterprise', dossier:'Executive decision dossier'};
+  const titles = {overview:'Decision workspace', opportunity:'Opportunity intake', evidence:'Evidence register', inventory:'Architecture inventory', baseline:'ROI baseline', risk:'Agentic risk boundary', authority:'Authority envelope', 'authority-portfolio':'Authority portfolio', authorityEnvelope:'Authority envelope', architecture:'Architecture decision', pilot:'Pilot charter', results:'Pilot review', regulatory:'Regulatory context', 'compliance-cost':'Compliance cost & capacity', feoa:'FEOA workbench', federated:'Federated Enterprise', 'mortgage-demo':'Mortgage reference demonstrator', dossier:'Executive decision dossier'};
   const workflow = [
     ['opportunity','Opportunity','Define costly work and decision'],
     ['baseline','ROI baseline','Calculate current cost and forecast value'],
@@ -67,7 +80,72 @@ import { federationEconomics, federationStability, gateReadiness, healthcareFixt
   function collectAlternatives(){ return $$('.alternative').map(item=>Object.fromEntries($$('[data-field]',item).map(el=>[el.dataset.field,el.value]))); }
   function preferredAlternative(){ const alts=data.architecture.alternatives||[]; return alts[+data.architecture.preferredAlternative] || null; }
   function renderDossier(){ const target=$('#dossier-summary'); const ready=complete('dossier'); $('#dossier-status').textContent=ready?'Ready for qualified review':'Needs inputs'; $('#dossier-status').classList.toggle('complete',ready); const o=data.opportunity,b=calculatedBaseline(),r=data.risk,a=data.architecture,p=data.pilot,choice=preferredAlternative(); target.innerHTML=`<div class="dossier-section"><span class="eyebrow">DECISION POSITION</span><h3>${esc(o.name||'Untitled opportunity')}</h3><p>${esc(o.problem||'Complete opportunity intake to describe the costly work.')}</p><p><span class="label">Requested decision:</span> ${esc(o.decision||'Not stated')}</p><p><span class="label">Sponsor:</span> ${esc(o.sponsor||'Not named')} &nbsp; <span class="label">Deadline:</span> ${esc(o.deadline||'Not set')}</p></div><div class="dossier-section"><h4>Economic baseline</h4><p><span class="label">Current annual cost:</span> ${money(b.current)} &nbsp; <span class="label">Forecast net annual benefit:</span> ${money(b.benefit)}</p><p><span class="label">Value classification:</span> ${esc(data.baseline.valueClass||'Not stated')} &nbsp; <span class="label">Baseline evidence:</span> ${esc(data.baseline.baselineEvidence||'Not stated')}</p></div><div class="dossier-section"><h4>Agentic-risk boundary</h4><p><span class="label">Screen:</span> ${Object.keys(r).length?`${riskScore()} points / ${riskScore()>=10?'High':riskScore()>=5?'Moderate':'Lower'}`:'Not assessed'} &nbsp; <span class="label">Human authority:</span> ${esc(r.decisionAuthority||'Not named')}</p></div><div class="dossier-section"><h4>Architecture decision</h4><p><span class="label">Status:</span> ${esc(a.decisionStatus||'Not recorded')} &nbsp; <span class="label">Preferred alternative:</span> ${esc(choice?.name||'Not selected')}</p><p>${esc(a.conditions||'No decision conditions recorded.')}</p></div><div class="dossier-section"><h4>Pilot recommendation</h4><p><span class="label">Pilot:</span> ${esc(p.pilotName||'Not chartered')} &nbsp; <span class="label">Owner:</span> ${esc(p.pilotOwner||'Not named')}</p><p><span class="label">Go / no-go rule:</span> ${esc(p.goNoGo||'Not recorded')}</p></div><p class="quiet-note">Draft decision-support document. All material claims, assumptions, controls, and forecast benefits require qualified review before approval.</p>`; }
-  function renderAll(){ renderProgress(); renderBaseline(); renderRisk(); renderAuthority(); renderDossier(); updatePill('opportunity-status',complete('opportunity')); updatePill('baseline-status',complete('baseline')); updatePill('risk-status',complete('risk')); updatePill('architecture-status',complete('architecture')); updatePill('pilot-status',complete('pilot')); }
+  function mortgageValue(value,unit){ if(unit==='percentage')return `${(Number(value)*100).toFixed(2)}%`; if(unit==='months')return Number(value).toFixed(2); if(unit==='score')return String(value); return money(value); }
+  function renderMortgageDemo(){
+    const result=evaluateMortgageCase(activeMortgageFixture), pill=$('#mortgage-demo-status');
+    if(!pill)return;
+    if(!result.valid){pill.textContent='Fixture invalid';pill.classList.remove('complete');$('#mortgage-evidence-summary').textContent=result.errors.join(' ');return;}
+    pill.textContent='Controlled calculation complete'; pill.classList.add('complete');
+    $('#mortgage-metrics').innerHTML=[['DTI',`${(result.metrics.totalDti*100).toFixed(2)}%`],['LTV',`${(result.metrics.combinedLtv*100).toFixed(2)}%`],['Reserve months',result.metrics.reserveMonths.toFixed(2)],['Base-only DTI',`${(result.metrics.baseOnlyDti*100).toFixed(2)}%`]].map(([label,value])=>`<article class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong></article>`).join('');
+    $('#mortgage-evidence-state').textContent=result.evidenceState;
+    $('#mortgage-evidence-summary').textContent=`${result.evidenceGaps.length} unresolved evidence item${result.evidenceGaps.length===1?'':'s'}; no completion or decision is inferred.`;
+    $('#mortgage-review-route').textContent=result.financialReviewRoute;
+    $('#mortgage-ai-state').textContent=result.aiActionState;
+    $('#mortgage-authority-state').textContent=`${result.authorityState}. Credit decision: ${result.decisionState}. Fairness claim: ${result.fairnessClaim}.`;
+    const metricByName=Object.fromEntries(result.metricTrace.map(item=>[item.metric,item]));
+    $('#mortgage-policy-rows').innerHTML=result.policyTrace.map(item=>`<tr><td>${esc(item.metric)}</td><td>${esc(mortgageValue(item.value,item.unit))}</td><td>${esc((metricByName[item.metric]?.inputIds||item.inputIds).join(' | '))}</td><td>${esc(item.policyId)}</td><td><span class="mortgage-band ${esc(item.band)}">${esc(item.state)}</span></td></tr>`).join('');
+    $('#mortgage-gap-list').innerHTML=result.evidenceGaps.length?`<ul class="mortgage-gap-list">${result.evidenceGaps.map((gap,index)=>`<li><strong>${esc(gap.evidenceId)} — ${esc(gap.message)}</strong><span>${esc(result.reviewQuestions[index])}</span></li>`).join('')}</ul>`:'<p>No unresolved evidence in the controlled fixture.</p>';
+    $('#mortgage-capability-name').textContent=`${result.capability.name} (${result.capability.id})`;
+    $('#mortgage-capability-summary').innerHTML=`<div><b>Reviewed configuration</b><span>${esc(result.capability.reviewedConfigurationId)}</span></div><div><b>Current configuration</b><span>${esc(result.capability.currentConfigurationId)} — ${result.capability.configurationMatch?'matched':'reassessment required'}</span></div><div><b>Permitted purposes</b><span>${esc(result.capability.permittedPurposes.join('; '))}</span></div><div><b>Prohibited actions</b><span>${esc(result.capability.prohibitedActions.join('; '))}</span></div><div><b>Operating context</b><span>${esc(result.capability.operatingContext)}</span></div><div><b>Manual path</b><span>Qualified personnel can reproduce the calculations, evidence checklist, policy comparison, and disposition process without AI.</span></div>`;
+    $('#mortgage-erir-rows').innerHTML=activeMortgageFixture.erirSources.map(source=>`<tr><td>${esc(source.id)}</td><td>${source.url?`<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.source)}</a>`:esc(source.source)}</td><td>${esc(source.instrumentType)}</td><td>${esc(source.status)}</td></tr>`).join('');
+    $('#mortgage-source-name').textContent=result.sourceArtifact;
+    $('#mortgage-source-hash').textContent=result.sourceSha256;
+    $('#mortgage-interpretation-limit').textContent=result.interpretationLimit;
+    const importState=$('#mortgage-import-state');
+    if(importState){
+      importState.className=`mortgage-import-state ${mortgageImportError?'error':activeMortgageImportReport?'complete':''}`;
+      importState.innerHTML=mortgageImportError
+        ? `<strong>Import rejected without changing the active case.</strong><span>${esc(mortgageImportError)}</span>`
+        : activeMortgageImportReport
+          ? `<strong>${esc(activeMortgageImportReport.templateId)} accepted in session memory.</strong><span>${esc(activeMortgageImportReport.acceptedRows)} rows accepted from ${esc(activeMortgageImportReport.importedSheets.join(', '))}; protected rows accepted: 0; no credit or action authority created.</span>`
+          : '<strong>Controlled fixture active.</strong><span>Select only the supplied v0.2 template. The workbook is validated before the displayed case changes and is not persisted.</span>';
+    }
+    renderMortgageIntegration();
+  }
+  function renderMortgageIntegration(){
+    const pill=$('#mortgage-integration-status'), rows=$('#mortgage-integration-rows'), detail=$('#mortgage-integration-detail'), download=$('#download-mortgage-trace');
+    if(!pill||!rows||!detail)return;
+    if(!activeMortgageExecution){
+      pill.textContent='Not executed';pill.classList.remove('complete');rows.innerHTML='<tr><td colspan="5" class="quiet-note">Run the integrated trace after loading or confirming the controlled case.</td></tr>';detail.innerHTML='<p class="quiet-note">No cross-layer execution artifact exists in this browser session.</p>';if(download)download.disabled=true;return;
+    }
+    const execution=activeMortgageExecution;
+    pill.textContent=execution.finalState;pill.classList.toggle('complete',execution.valid);
+    rows.innerHTML=execution.stages.map(stage=>`<tr><td>${esc(stage.order)}</td><td><strong>${esc(stage.layer)}</strong></td><td>${esc(stage.input)}</td><td>${esc(stage.output)}<br><small>${esc(stage.state)}</small></td><td>${esc(stage.boundary)}</td></tr>`).join('');
+    const facem=execution.facem.states, verification=execution.erir.repositoryVerification, disposition=execution.humanDisposition;
+    detail.innerHTML=`<div class="mortgage-definition-grid"><div><b>ROI-EA result</b><span>${esc(execution.roiEa.outputs.evidenceState)}; ${esc(execution.roiEa.outputs.financialReviewRoute)}</span></div><div><b>ERIR verification</b><span>${esc(verification.state)}; returned ${verification.returnedIds.length}, unresolved/missing ${verification.missingIds.length}. Applicability remains unresolved.</span></div><div><b>FACEM authority</b><span>${esc(facem.authority)}; acceptance: ${esc(facem.acceptance)}; commitment: ${esc(facem.commitment)}.</span></div><div><b>BACRM operating state</b><span>${esc(execution.bacrm.status)}. ${esc(execution.bacrm.recovery)}</span></div><div><b>Federation value: C2 − C1</b><span>${esc(execution.economics.federationIncrement_C2_minus_C1.state)} — ${esc(execution.economics.federationIncrement_C2_minus_C1.reason)}</span></div><div><b>Bounded-AI value: C3 − C2</b><span>${esc(execution.economics.boundedAiIncrement_C3_minus_C2.state)} — ${esc(execution.economics.boundedAiIncrement_C3_minus_C2.reason)}</span></div></div><div class="mortgage-disposition"><span class="eyebrow">HUMAN DISPOSITION RECORD</span><p><b>${esc(disposition.human_disposition)}</b></p><p>${esc(disposition.rationale)}</p><p class="quiet-note">Actor: ${esc(disposition.actor||'not recorded')} | Authority evidence: ${esc(disposition.authority_evidence||'not supplied')} | Effective time: ${esc(disposition.effective_time||'not established')} | Successor state: ${esc(disposition.successor_state)}</p></div><div><span class="eyebrow">NON-AI MANUAL PATH</span><ol class="mortgage-manual-path">${execution.manualPath.map(item=>`<li><strong>${esc(item.id)}</strong> ${esc(item.step)} <span>${esc(item.owner)}</span></li>`).join('')}</ol></div><p class="mortgage-limit">Decision: ${esc(execution.decisionState)}. Fairness: ${esc(execution.fairnessClaim)}. Compliance: ${esc(execution.complianceClaim)}. Protected applicant data: ${esc(execution.protectedDataState)}.</p>`;
+    if(download)download.disabled=false;
+  }
+  function renderMortgageBpmn(){
+    const state=$('#mortgage-bpmn-state'), rows=$('#mortgage-bpmn-candidates'), summary=$('#mortgage-bpmn-summary');
+    if(!state||!rows||!summary)return;
+    if(mortgageBpmnError){
+      state.className='mortgage-import-state error';
+      state.innerHTML=`<strong>BPMN rejected without changing the active analysis.</strong><span>${esc(mortgageBpmnError)}</span>`;
+      return;
+    }
+    if(!activeMortgageBpmn||!activeMortgageBpmnAnalysis){
+      state.className='mortgage-import-state';
+      state.innerHTML='<strong>No BPMN analysis loaded.</strong><span>Analyze the supplied non-executable fixture or select a BPMN XML file. No workflow will be executed.</span>';
+      rows.innerHTML='<tr><td colspan="5" class="quiet-note">No prospective candidate analysis exists in this browser session.</td></tr>';
+      summary.innerHTML='<p class="quiet-note">The controlled subset does not validate arbitrary BPMN, establish process correctness, or authorize implementation.</p>';
+      return;
+    }
+    const analysis=activeMortgageBpmnAnalysis;
+    state.className='mortgage-import-state complete';
+    state.innerHTML=`<strong>${esc(activeMortgageBpmn.process.name||activeMortgageBpmn.process.id)} analyzed as ${esc(activeMortgageBpmn.limits.profile)}.</strong><span>${analysis.candidates.length} prospective bounded-support candidates; ${analysis.protectedHumanNodes.length} human tasks preserved; ${analysis.decisionGateways.length} gateways receive no AI authority.</span>`;
+    rows.innerHTML=analysis.candidates.map(candidate=>`<tr><td>${esc(candidate.nodeId)}</td><td>${esc(candidate.name)}</td><td>${esc(candidate.purpose)}</td><td>${esc(candidate.authority)}</td><td>${esc(candidate.disposition)}</td></tr>`).join('');
+    summary.innerHTML=`<div class="mortgage-definition-grid"><div><b>Process execution</b><span>PROHIBITED—fixture declares isExecutable=false</span></div><div><b>Full BPMN conformance</b><span>NOT ESTABLISHED—controlled subset only</span></div><div><b>Human tasks preserved</b><span>${esc(analysis.protectedHumanNodes.map(item=>item.name).join('; '))}</span></div><div><b>Decision gateways</b><span>${esc(analysis.decisionGateways.map(item=>item.name).join('; '))}; no AI authority assigned</span></div></div><p class="mortgage-limit">${esc(analysis.conclusion)}</p>`;
+  }
   function renderInventory(){ const rows=data.inventory||[], total=rows.reduce((sum,r)=>sum+(+r.annualCost||0),0), critical=rows.filter(r=>['High','Mission critical'].includes(r.criticality)).length; const pill=$('#inventory-status'); pill.textContent=rows.length?`${rows.length} records`:'No records'; pill.classList.toggle('complete',rows.length>0); $('#inventory-summary').textContent=rows.length?`${rows.length} decision-scoped architecture record${rows.length===1?'':'s'}; ${critical} high or mission-critical; ${money(total)} annual cost represented.`:'No architecture records have been added.'; $('#inventory-rows').innerHTML=rows.length?rows.map((r,i)=>`<tr><td>${esc(r.name)}<br><small>${esc(r.type)}</small></td><td>${esc(r.capability)}<br><small>${esc(r.businessOwner)} / ${esc(r.technicalOwner)}</small></td><td>${esc(r.lifecycle||'Not stated')} / ${esc(r.criticality||'Not stated')}</td><td>${r.annualCost?money(r.annualCost):'Not stated'}<br><small>${esc(r.renewalDate||'No date')}</small></td><td>${esc(r.dataClass||'Not stated')}<br><small>${esc(r.dependencies||'No dependency stated')}</small></td><td><button class="delete-evidence" data-inventory-index="${i}">Delete</button></td></tr>`).join(''):`<tr><td colspan="6" class="quiet-note">No architecture records yet.</td></tr>`; $$('[data-inventory-index]').forEach(btn=>btn.addEventListener('click',()=>{data.inventory.splice(+btn.dataset.inventoryIndex,1);persist();toast('Architecture record deleted.');})); }
   function renderResults(){ const r=data.results||{}, pill=$('#results-status'), state=r.resultState||'Not reviewed'; pill.textContent=state; pill.classList.toggle('complete',['Observed','Validated'].includes(state)); }
   function regulatoryIds(){ const r=data.regulatory||{}; return ['sourceId','obligationId','assessmentId','controlId','evidenceId'].map(key=>r[key]).filter(Boolean); }
@@ -91,7 +169,7 @@ import { federationEconomics, federationStability, gateReadiness, healthcareFixt
   function renderFeoaSurface(surface='home'){const w=data.feoa, target=$('#feoa-guided-surface'); if(!target)return; const map={home:['Assessment Home','Clarify the decision, evidence gaps, and next action.',[{name:w.assessment.name,id:w.assessment.id,phase:w.assessment.currentPhase,decision:w.assessment.decision}],[['id','Assessment ID'],['name','Assessment'],['phase','Phase'],['decision','Decision']]],participants:['Participants & Value Propositions','Confirm who must participate and why.',w.participants,[['id','ID'],['name','Participant'],['indispensability','Indispensable'],['alignment','Alignment'],['dependency','Dependency'],['substitutability','Substitutability']]],stream:['Current-State Value Stream','Capture the current sequence, ownership, metrics, and linked handoffs.',w.processSteps,[['id','Step ID'],['name','Process step'],['valueStreamId','Value stream'],['ownerParticipantId','Owner']]],handoffs:['Handoffs & Consequential Actions','Keep communication, responsibility, and authority visibly separate.',w.handoffs,[['id','Handoff ID'],['name','Handoff'],['communicationState','Communication'],['responsibilityState','Responsibility'],['authorityState','Authority'],['actionIds','Actions']]],authority:['Authority / Evidence / Constraints','Evidence supports review; it never alone grants authority.',w.actions,[['id','Action ID'],['name','Action'],['performer','Performer'],['decisionAuthority','Decision authority'],['residualAccountableOrganization','Residual accountability'],['authoritySource','Authority source']]],baseline:['Baseline Metrics & Friction','See the baseline and whether a friction claim is a required control or recoverable issue.',w.metrics,[['id','Metric ID'],['name','Metric'],['value','Value'],['unit','Unit'],['classification','Evidence class']]],economics:['Counterfactual Economics','Compare Case 0, Case 1, and Case 2; internal transfers are excluded only from consolidated value.',w.economicFlows,[['id','Flow ID'],['name','Flow'],['caseId','Case'],['type','Type'],['direction','Direction'],['amount','Amount']]],viability:['Participant Deal Viability & Federation Stability','Positive federation value does not establish participant alignment.',w.participantEconomicCases,[['id','Case ID'],['participantId','Participant'],['alignment','Alignment'],['valueCreated','Created'],['valueAllocated','Allocated'],['downside','Downside']]],readiness:['Technical & Operational Readiness','Review the seven dimensions and remediation links without a maturity score.',w.readinessGaps,[['id','Gap ID'],['dimension','Dimension'],['finding','Finding'],['remediation','Remediation'],['remediationOwner','Owner'],['schedule','Schedule']]],gates:['Gate Decisions','Mandatory evidence conditions must be met before a decision can be ready.',w.gates,[['id','Gate ID'],['gateNumber','Gate'],['status','Lifecycle'],['evidenceStatus','Evidence'],['decision','Decision'],['confidence','Confidence']]],ai:['AI Capability Case','AI is optional; compare its incremental case to the conventional federation.',w.aiCases,[['id','AI Case ID'],['name','Case'],['case1Id','Case 1'],['case2Id','Case 2'],['incrementalBenefit','AI benefit'],['incrementalCost','AI cost']]],resilience:['Cognitive Resilience','Retain an acceptable degraded operating path and withdrawal history.',w.cognitiveResilience,[['id','Requirement ID'],['name','Requirement'],['normalOperatingCapacity','Normal'],['degradedOperatingCapacity','Degraded'],['fallbackOperatingPath','Fallback'],['withdrawalTriggers','Withdrawal trigger']]],sensitivity:['Sensitivity / Breakpoints','Test named assumptions and identify pilot-validation priorities.',w.sensitivities,[['id','Scenario ID'],['name','Scenario'],['variable','Variable'],['breakpoint','Breakpoint'],['pilotPriority','Pilot priority']]],pilot:['Pilot Evidence & Variance','Preserve baseline, modeled target, observed result, and decision separately.',w.pilotMeasurements,[['id','Measurement ID'],['name','Measurement'],['baseline','Baseline'],['modeledTarget','Modeled target'],['decision','Decision']]],reports:['Reports','Generate or print a decision-oriented report from the persisted assessment.',w.reports,[['id','Report ID'],['type','Report type'],['assessmentId','Assessment'],['generatedAt','Generated']]]}; const item=map[surface]||map.home; const reportButtons=surface==='reports'?`<div class="form-actions">${w.reports.map(r=>`<button type="button" class="print-feoa-report" data-report-id="${esc(r.id)}">Print ${esc(r.type)}</button>`).join('')||'<button type="button" id="generate-feoa-reports-inline">Generate seven FEOA reports</button>'}</div>`:''; target.innerHTML=`<span class="eyebrow">${esc(item[0])}</span><h3>${esc(item[0])}</h3><p>${esc(item[1])}</p>${feoaRows(item[2],item[3])}${reportButtons}`; if(surface==='reports'){$$('.print-feoa-report',target).forEach(button=>button.addEventListener('click',()=>printFeoaReport(button.dataset.reportId)));$('#generate-feoa-reports-inline')?.addEventListener('click',()=>$('#generate-feoa-reports').click());}}
   function printFeoaReport(reportId){const w=data.feoa, report=(w.reports||[]).find(r=>r.id===reportId), title=report?.type||'FEOA Executive Decision Report', case1=w.counterfactuals.find(c=>c.caseName==='Case 1 — Conventional Federation'), econ=case1?federationEconomics(w,case1.id):null;const rows=(label,value)=>`<tr><th>${esc(label)}</th><td>${esc(value||'Not recorded')}</td></tr>`;const html=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font:11pt Arial,sans-serif;max-width:7.2in;margin:.65in auto;color:#172b3a}h1{font-size:26pt}h2{border-bottom:1px solid #9ab;padding-bottom:4px;margin-top:24px}.eyebrow{color:#077;font-weight:bold;letter-spacing:1px}table{border-collapse:collapse;width:100%;margin:10px 0}th,td{border:1px solid #bdcbd3;padding:7px;text-align:left;vertical-align:top}th{background:#eef4f6;width:33%}.note{background:#f6f1e6;padding:10px;border-left:4px solid #b8812d}@media print{body{margin:.45in auto}}</style></head><body><p class="eyebrow">FEOA v0.2.3 / DRAFT FOR QUALIFIED REVIEW</p><h1>${esc(title)}</h1><p>Version 1 | ${new Date().toLocaleDateString()} | ${esc(report?.id||'Unpersisted report')}</p><h2>Assessment and decision position</h2><table>${rows('Assessment',`${w.assessment.name||'Untitled'} (${w.assessment.id})`)}${rows('Opportunity',w.assessment.opportunityId)}${rows('Phase',w.assessment.currentPhase)}${rows('Required next action',w.assessment.requiredNextAction)}${rows('Current gate',w.gates.map(g=>`Gate ${g.gateNumber}: ${g.decision}`).join('; '))}</table><h2>Evidence, gaps, and limitations</h2><table>${rows('Evidence',w.evidence.map(e=>`${e.id} — ${e.classification}`).join('; '))}${rows('Material gaps',w.evidenceGaps.map(g=>g.id).join('; ')||'See gate conditions')}${rows('Specialist dependencies',w.constraints.filter(c=>c.type==='Unresolved').map(c=>c.id).join('; ')||'None recorded')}</table><h2>Participants and economics</h2><table>${rows('Participants',w.participants.map(p=>`${p.name} (${p.alignment})`).join('; '))}${rows('Case 1 consolidated value',econ?money(econ.gross):'Not calculated')}${rows('Internal transfer elimination',econ?money(econ.transferElimination):'Not calculated')}${rows('Risk-adjusted federation value',econ?money(econ.riskAdjusted):'Not calculated')}</table><p class="note">This report supports structured professional judgment. It does not issue legal, regulatory, clinical, tax, fiduciary, valuation, or other specialist conclusions. Valid evidence is not authorization.</p></body></html>`;const win=window.open('','_blank');if(!win){toast('Popup blocked. Allow popups to print the FEOA report.');return;}win.document.write(html);win.document.close();win.focus();setTimeout(()=>win.print(),250);}
   function renderFeoa(){ const w=data.feoa=normalizeWorkspace(data.feoa||{},data), form=$('#feoa-assessment-form'); if(!form)return; setForm(form,{name:w.assessment.name||'',currentPhase:w.assessment.currentPhase,valueProposition:w.assessment.federationContext.valueProposition||'',participantsText:w.participants.map(p=>p.name).join('; '),evidenceIds:w.evidence.map(e=>e.id).join('; '),majorGapIds:(w.assessment.majorGapIds||[]).join('; '),requiredNextAction:w.assessment.requiredNextAction||''}); const gate=w.gates.find(x=>x.gateNumber===3), gateState=gate?gateReadiness(gate,w.evidence):null, case1=w.counterfactuals.find(c=>c.caseName==='Case 1 — Conventional Federation'), economics=case1?federationEconomics(w,case1.id):null, stability=federationStability(w); const status=$('#feoa-status'); status.textContent=gateState?.canBeDecisionReady?'Decision ready':gateState?'Evidence gaps remain':'Draft'; status.classList.toggle('complete',!!gateState?.canBeDecisionReady); $('#feoa-summary').innerHTML=`<div class="metric-grid"><article class="metric"><span>Assessment</span><strong>${esc(w.assessment.id)}</strong></article><article class="metric"><span>Participants</span><strong>${w.participants.length}</strong></article><article class="metric"><span>Case 1</span><strong>${economics?money(economics.gross):'Draft'}</strong></article><article class="metric"><span>Gate 3</span><strong>${esc(gateState?.canBeDecisionReady?'Ready':'Blocked / draft')}</strong></article></div><p><b>Federation stability:</b> ${stability.stable?'Stable':'Not stable'}.</p>`; renderFeoaSurface(window.fEOASurface||'home'); const editor=$('#feoa-record-json'); if(editor&&!editor.value) editor.value='{"name":"New record"}'; }
-  function renderAll(){ renderProgress(); renderEvidence(); renderInventory(); renderBaseline(); renderComplianceCost(); renderRisk(); renderAuthority(); renderResults(); renderRegulatory(); renderFeoa(); renderDossier(); updatePill('opportunity-status',complete('opportunity')); updatePill('baseline-status',complete('baseline')); updatePill('risk-status',complete('risk')); updatePill('architecture-status',complete('architecture')); updatePill('pilot-status',complete('pilot')); }
+  function renderAll(){ renderProgress(); renderEvidence(); renderInventory(); renderBaseline(); renderComplianceCost(); renderRisk(); renderAuthority(); renderResults(); renderRegulatory(); renderFeoa(); renderDossier(); renderMortgageDemo(); renderMortgageBpmn(); updatePill('opportunity-status',complete('opportunity')); updatePill('baseline-status',complete('baseline')); updatePill('risk-status',complete('risk')); updatePill('architecture-status',complete('architecture')); updatePill('pilot-status',complete('pilot')); }
   function wireEvidence(){ const form=$('#evidence-form'); form.addEventListener('submit',e=>{e.preventDefault(); const record=getForm(form),base=stableId(record.claim||record.source||'evidence','EVD'),used=new Set((data.evidence||[]).map(x=>x.id)),id=used.has(base)?`${base}-${(data.evidence||[]).filter(x=>String(x.id||'').startsWith(base)).length+1}`:base; data.evidence.push({...record,id,recordedAt:new Date().toISOString()}); data.feoa=normalizeWorkspace({...data.feoa,evidence:data.evidence},data); form.reset(); persist(); toast('Evidence record added with stable ID.');}); }
   function wireInventory(){ const form=$('#inventory-form'); form.addEventListener('submit',e=>{e.preventDefault(); data.inventory.push({...getForm(form),recordedAt:new Date().toISOString()}); form.reset(); persist(); toast('Architecture record added.');}); }
   function wireComplianceCost(){ const assumptions=$('#compliance-assumptions-form'), activity=$('#compliance-activity-form'); assumptions.addEventListener('submit',e=>{e.preventDefault(); data.complianceCost={...(data.complianceCost||{activities:[]}),assumptions:getForm(assumptions).assumptions||''}; persist(); toast('Compliance model assumptions saved.');}); activity.addEventListener('submit',e=>{e.preventDefault(); const record={...getForm(activity),recordedAt:new Date().toISOString()}; data.complianceCost={...(data.complianceCost||{assumptions:'',activities:[]}),activities:[...(data.complianceCost?.activities||[]),record]}; activity.reset(); persist(); toast('Compliance cost activity added.');}); }
@@ -122,5 +200,93 @@ import { federationEconomics, federationStability, gateReadiness, healthcareFixt
   function downloadJson(){ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='roi-ea-working-record.json'; a.click(); URL.revokeObjectURL(a.href); }
   function wireFederated(){ const buttons=$$('.federated-tab'), panels=$$('[data-federated-panel]'); buttons.forEach(button=>button.addEventListener('click',()=>{ const view=button.dataset.federatedView; buttons.forEach(item=>item.classList.toggle('active',item===button)); panels.forEach(panel=>{ const active=panel.dataset.federatedPanel===view; panel.classList.toggle('active',active); panel.hidden=!active; }); })); }
   function wireGlobal(){ $$('.nav-link').forEach(el=>el.addEventListener('click',()=>show(el.dataset.view))); $('#load-demo').addEventListener('click',()=>{data=sample(); const draft={id:'AE-SCHED-001',aiSystem:'Scheduling preparation assistant',aiSystemId:'AIS-SCHED-PREP',businessCapability:'Service scheduling',businessCapabilityId:'CAP-SERVICE-SCHEDULING',authorityOwner:'Maya Chen, VP Operations',status:'Active - controlled pilot',effectiveDate:'2026-10-20',reviewDate:'2026-12-18',inventoryRefs:'Scheduling Hub; Field Service Platform API',actionIds:'ACT-READ-RECORDS; ACT-PREPARE-CONTEXT; ACT-DRAFT-SUMMARY',resourceIds:'RES-APPROVED-RECORDS; RES-SCHEDULING-REGION',permittedActions:'Read approved internal records; prepare case context; draft internal coordinator summary.',prohibitedActions:'No scheduling write-back, external communication, customer commitment, or autonomous decision.',resourceScope:'One service region; eligible weekday exceptions; approved internal records only; no production write credential.',evidenceRefs:'MVP evidence: coordinator time-study statement; security design review. ERIR: APP-FTC-001; CTL-CLAIMS-001; EVD-CLAIMS-001.',evidenceRequirement:'A qualified reviewer must assess the privacy/security design evidence and pilot measurement before authority becomes effective.',acceptanceCriterion:'Explicit reviewer assessment records accepted, current evidence and no material unresolved guardrail failure.',evidenceArtifactIds:'MVP-EVD-001; MVP-EVD-002; EVD-CLAIMS-001',evidenceAssessmentState:'not assessed',evidenceValidFrom:'2026-10-20',evidenceValidUntil:'2026-12-18',evidenceReviewer:'Not yet assessed',evidenceReviewAuthority:'Maya Chen, VP Operations',monitoringTriggers:'Measurement owner records preparation time and guardrail exceptions weekly; investigate a material accuracy or privacy concern immediately.',revocationConditions:'Maya Chen may constrain, suspend, or revoke on a material privacy concern, repeated material inaccuracy, unauthorized access attempt, or loss of manual fallback.',decision:'Authorize',decisionDate:'2026-10-20',rationale:'Illustrative controlled-pilot authority only. Required evidence remains subject to qualified review; no control effectiveness or realized benefit is asserted.'}; data.authorityEnvelope=appendDecision(normalizeAuthority(draft,authorityContext()),{decision:'Authorize',decisionAuthority:draft.authorityOwner,decisionDate:draft.effectiveDate,rationale:draft.rationale,resultingState:draft.status,evidenceReferences:draft.evidenceArtifactIds}); data.authorityEnvelopes=[data.authorityEnvelope];persist(); wireForms();toast('Northstar example loaded.');}); $('#reset-data').addEventListener('click',()=>{if(confirm('Reset all locally stored MVP data?')){data=structuredClone(blank);persist();wireForms();toast('Local data reset.');}}); $('#export-html').addEventListener('click',exportDossier); $('#download-json').addEventListener('click',downloadJson); }
-  wireForms(); wireEvidence(); wireInventory(); wireComplianceCost(); wireRegulatory(); wireAuthorityViews(); wireFederated(); wireGlobal(); wireDemoPortfolio(); renderAll();
+  function wireMortgageDemo(){
+    const button=$('#rerun-mortgage-demo');
+    if(button)button.addEventListener('click',()=>{renderMortgageDemo();toast('Deterministic mortgage assessment re-run; no credit decision was made.');});
+    const input=$('#mortgage-workbook-input');
+    if(input) input.addEventListener('change',async()=>{
+      const file=input.files?.[0];
+      if(!file)return;
+      try{
+        if(file.size>MAX_MORTGAGE_WORKBOOK_BYTES)throw new Error(`Workbook exceeds the ${MAX_MORTGAGE_WORKBOOK_BYTES.toLocaleString()}-byte controlled import limit.`);
+        const imported=await importMortgageWorkbook(await file.arrayBuffer(),file.name);
+        activeMortgageFixture=imported.fixture;
+        activeMortgageImportReport=imported.report;
+        mortgageImportError='';
+        activeMortgageExecution=null;
+        renderMortgageDemo();
+        toast('Controlled workbook accepted in session memory; no credit decision was made.');
+      }catch(error){
+        mortgageImportError=error instanceof Error?error.message:String(error);
+        activeMortgageImportReport=null;
+        renderMortgageDemo();
+        toast('Workbook rejected; the active case was not changed.');
+      }finally{ input.value=''; }
+    });
+    const restore=$('#restore-mortgage-fixture');
+    if(restore) restore.addEventListener('click',()=>{
+      activeMortgageFixture=MORTGAGE_FIXTURE;
+      activeMortgageImportReport=null;
+      mortgageImportError='';
+      activeMortgageExecution=null;
+      renderMortgageDemo();
+      toast('Controlled built-in fixture restored.');
+    });
+    const execute=$('#execute-mortgage-integration');
+    if(execute)execute.addEventListener('click',async()=>{
+      activeMortgageExecution=executeMortgageIntegration(activeMortgageFixture);
+      renderMortgageIntegration();
+      if(!activeMortgageExecution.valid){toast('Integrated execution rejected because the controlled fixture is invalid.');return;}
+      toast('Local four-layer trace complete; verifying source IDs through read-only ERIR.');
+      try{
+        const response=await fetch(erirTraceUrl(activeMortgageExecution.erir.sourceIds,{}));
+        if(!response.ok)throw new Error(`ERIR API returned ${response.status}`);
+        activeMortgageExecution=recordMortgageErirVerification(activeMortgageExecution,await response.json());
+      }catch(error){activeMortgageExecution=recordMortgageErirUnavailable(activeMortgageExecution,error instanceof Error?error.message:String(error));}
+      renderMortgageIntegration();
+      toast('Integrated trace complete; no credit decision or compliance conclusion was made.');
+    });
+    const download=$('#download-mortgage-trace');
+    if(download)download.addEventListener('click',()=>{
+      if(!activeMortgageExecution)return;
+      const blob=new Blob([JSON.stringify(activeMortgageExecution,null,2)],{type:'application/json'}), link=document.createElement('a');
+      link.href=URL.createObjectURL(blob);link.download='north-star-mortgage-integrated-trace.json';link.click();URL.revokeObjectURL(link.href);
+    });
+    const analyzeBpmn=(xml,label)=>{
+      const candidate=importMortgageBpmn(xml);
+      if(!candidate.valid)throw new Error(candidate.errors.join(' '));
+      const analysis=analyzeBoundedAiOpportunities(candidate);
+      if(!analysis.valid)throw new Error(analysis.errors.join(' '));
+      activeMortgageBpmn=candidate;
+      activeMortgageBpmnAnalysis=analysis;
+      mortgageBpmnError='';
+      renderMortgageBpmn();
+      toast(`${label} analyzed; prospective candidates only, with no workflow execution or authority.`);
+    };
+    const builtInBpmn=$('#analyze-mortgage-bpmn');
+    if(builtInBpmn)builtInBpmn.addEventListener('click',async()=>{
+      try{
+        const response=await fetch('assets/North-Star-Mortgage-Workflow-v0.1.bpmn');
+        if(!response.ok)throw new Error(`Reference BPMN returned ${response.status}.`);
+        analyzeBpmn(await response.text(),'Controlled BPMN fixture');
+      }catch(error){mortgageBpmnError=error instanceof Error?error.message:String(error);renderMortgageBpmn();toast('BPMN analysis failed closed.');}
+    });
+    const bpmnInput=$('#mortgage-bpmn-input');
+    if(bpmnInput)bpmnInput.addEventListener('change',async()=>{
+      const file=bpmnInput.files?.[0];
+      if(!file)return;
+      try{
+        if(file.size>MAX_MORTGAGE_BPMN_BYTES)throw new Error(`BPMN XML exceeds the ${MAX_MORTGAGE_BPMN_BYTES}-byte controlled limit.`);
+        analyzeBpmn(await file.text(),file.name);
+      }
+      catch(error){mortgageBpmnError=error instanceof Error?error.message:String(error);renderMortgageBpmn();toast('BPMN rejected; the prior analysis was preserved.');}
+      finally{bpmnInput.value='';}
+    });
+  }
+  wireForms(); wireEvidence(); wireInventory(); wireComplianceCost(); wireRegulatory(); wireAuthorityViews(); wireFederated(); wireGlobal(); wireDemoPortfolio(); wireMortgageDemo(); renderAll();
+  createBpmnReviewController({
+    getWorkspace: () => data.feoa,
+    setWorkspace: (workspace) => { data.feoa = workspace; persist(); },
+    notify: toast,
+  });
 })();

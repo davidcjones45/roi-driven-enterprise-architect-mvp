@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:vendor="https://example.invalid/synthetic-vendor" id="Defs_Ext" targetNamespace="https://www.aiathumanscale.com/synthetic/bpmn">
+  <bpmn:process id="Process_Ext" isExecutable="false" vendor:reviewState="synthetic">
+    <bpmn:extensionElements><vendor:advisory marker="inert">Do not execute</vendor:advisory></bpmn:extensionElements>
+    <bpmn:task id="Task_Ext" vendor:classification="modeled"/>
+  </bpmn:process>
+</bpmn:definitions>
