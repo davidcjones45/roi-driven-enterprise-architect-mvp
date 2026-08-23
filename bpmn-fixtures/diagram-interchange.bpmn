@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" id="Defs_DI" targetNamespace="https://www.aiathumanscale.com/synthetic/bpmn">
+  <bpmn:process id="Process_DI" isExecutable="false"><bpmn:startEvent id="Start_DI"/></bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_1"><bpmndi:BPMNPlane id="Plane_1" bpmnElement="Process_DI"><bpmndi:BPMNShape id="Shape_1" bpmnElement="Start_DI"><dc:Bounds x="10" y="10" width="36" height="36"/></bpmndi:BPMNShape></bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>

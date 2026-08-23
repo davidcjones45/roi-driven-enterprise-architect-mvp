@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Defs_Collaboration" targetNamespace="https://www.aiathumanscale.com/synthetic/bpmn">
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_A" name="Modeled bank" processRef="Process_A"/>
+    <bpmn:participant id="Participant_B" name="Modeled external party" processRef="Process_B"/>
+    <bpmn:messageFlow id="Message_1" sourceRef="Send_A" targetRef="Receive_B"/>
+  </bpmn:collaboration>
+  <bpmn:process id="Process_A" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_A"><bpmn:lane id="Lane_A"><bpmn:childLaneSet id="NestedLaneSet_A"><bpmn:lane id="NestedLane_A"><bpmn:flowNodeRef>Send_A</bpmn:flowNodeRef></bpmn:lane></bpmn:childLaneSet></bpmn:lane></bpmn:laneSet>
+    <bpmn:sendTask id="Send_A" name="Offer information"/>
+  </bpmn:process>
+  <bpmn:process id="Process_B" isExecutable="false"><bpmn:receiveTask id="Receive_B" name="Receive modeled information"/></bpmn:process>
+</bpmn:definitions>

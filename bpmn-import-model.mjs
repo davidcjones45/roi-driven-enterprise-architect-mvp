@@ -1,0 +1,58 @@
+export const BPMN_IMPORT_PROFILE = 'ROI-EA-BPMN-IMPORT-V0.1';
+export const BPMN_IMPORT_LIMITS = Object.freeze({
+  maxBytes: 250_000,
+  maxDepth: 64,
+  maxElements: 10_000,
+  maxAttributes: 50_000,
+  maxValueLength: 32_768,
+  maxDiagnostics: 500,
+});
+
+const DIAGNOSTIC_PATTERN = /^BPMN-[A-Z]+-[0-9]{3}$/;
+
+export function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+export function deterministicImportProjection(model) {
+  return {
+    profile: model.profile,
+    source: { sha256: model.source.sha256, byteLength: model.source.byteLength, mediaType: model.source.mediaType, localOnly: model.source.localOnly },
+    parser: model.parser,
+    definitions: model.definitions,
+    elements: model.elements,
+    relationships: model.relationships,
+    diagnostics: model.diagnostics,
+    mappingCandidates: model.mappingCandidates,
+    status: model.status,
+  };
+}
+
+export function assertNormalizedImportModel(model) {
+  if (!model || model.profile !== BPMN_IMPORT_PROFILE) throw new TypeError('Invalid BPMN import profile');
+  if (!model.source?.localOnly || !/^[a-f0-9]{64}$/.test(model.source.sha256 || '')) throw new TypeError('Invalid source provenance');
+  if (!model.source.importedAt || Number.isNaN(Date.parse(model.source.importedAt))) throw new TypeError('Invalid import timestamp');
+  if (model.source.byteLength < 1 || model.source.byteLength > BPMN_IMPORT_LIMITS.maxBytes) throw new TypeError('Invalid source byte length');
+  if (model.parser?.library !== 'bpmn-moddle' || model.parser.libraryVersion !== '10.1.0') throw new TypeError('Unexpected parser identity');
+  if (!Array.isArray(model.elements) || model.elements.length > BPMN_IMPORT_LIMITS.maxElements) throw new TypeError('Invalid element inventory');
+  if (!Array.isArray(model.relationships) || model.relationships.length > 20_000) throw new TypeError('Invalid relationship inventory');
+  if (!Array.isArray(model.diagnostics) || model.diagnostics.length > BPMN_IMPORT_LIMITS.maxDiagnostics) throw new TypeError('Invalid diagnostics');
+  if (!['REJECTED', 'STAGED', 'REVIEWED_PARTIAL', 'REVIEWED_COMPLETE'].includes(model.status)) throw new TypeError('Invalid import status');
+
+  const ids = new Set();
+  for (const element of model.elements) {
+    if (!element.sourceId || ids.has(element.sourceId)) throw new TypeError(`Duplicate normalized source ID: ${element.sourceId}`);
+    ids.add(element.sourceId);
+    if (!String(element.bpmnType).startsWith('bpmn:') && !String(element.bpmnType).startsWith('bpmndi:') && !String(element.bpmnType).startsWith('di:') && !String(element.bpmnType).startsWith('dc:')) {
+      if (element.supportState !== 'PRESERVED_UNMAPPED') throw new TypeError(`Unqualified element type: ${element.bpmnType}`);
+    }
+  }
+  for (const diagnostic of model.diagnostics) {
+    if (!DIAGNOSTIC_PATTERN.test(diagnostic.code)) throw new TypeError(`Invalid diagnostic code: ${diagnostic.code}`);
+  }
+  return model;
+}
