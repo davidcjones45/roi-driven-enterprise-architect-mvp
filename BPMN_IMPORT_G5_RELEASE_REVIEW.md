@@ -2,7 +2,7 @@
 
 **Baseline:** G4 commit `103de396bf964ef4cba12794077af6a7bdc75675`  
 **Review date:** 2026-08-23  
-**Gate:** `G5 REQUIRES BOUNDED BROWSER VISUAL QA`
+**Gate:** `G5 COMPLETE—BPMN IMPORT v0.1 READY FOR CONTROLLED RELEASE DECISION`
 
 ## Verified results
 
@@ -23,10 +23,20 @@
 
 The review found no open Critical or Material code defect after remediation. This is a bounded current-state review, not certification or proof that no vulnerability exists.
 
-## Outstanding acceptance item
+## Browser visual and functional QA closeout
 
-The local application server started successfully, but the available cloud-browser environment rejected `http://127.0.0.1:8766/index.html` with `ERR_BLOCKED_BY_CLIENT`. Static DOM assertions and automated tests passed, but they are not represented as visual inspection.
+The automated cloud-browser environment rejected localhost and was not treated as visual evidence. On 2026-08-23, the packaged G5 build was instead served locally on Windows at `http://127.0.0.1:8766/index.html` and inspected in Chrome 151 with the user present.
 
-To close G5, inspect the BPMN review surface in a local browser served from `http://127.0.0.1:8766/` and verify: staging feedback, candidate table layout, reviewer fields, confirmation enable/clear behavior, commit button state, normalized/report downloads, and narrow/mobile layout. Record the browser/version, viewport(s), observed result, and any defect disposition.
+The initial run reused cached JavaScript from an older snapshot at the same origin. A cache-bypassing reload corrected that environmental condition; the current G5 controls then executed without a BPMN-related Console error. The only observed Console error was a missing favicon (`404`), a nonblocking cosmetic issue.
+
+Verified results:
+
+- Both BPMN sections, controls, status regions, tables, reviewer fields, and qualification text rendered without clipping, overlap, corruption, or unresolved placeholders at the normal desktop width and a narrower DevTools-constrained viewport.
+- The legacy reference analysis produced four bounded-support candidates, preserved four human tasks, and assigned no AI authority to two gateways.
+- The standards-aware reference import staged successfully and populated the review workspace.
+- Review/confirmation state transitions completed: confirmation remained unavailable before complete review, became available after final dispositions, cleared when the reviewed state changed or was restaged, and permitted a separately confirmed bounded commit after reconfirmation.
+- Normalized JSON and import-report exports both downloaded successfully.
+
+No Critical or Material defect remains open. The missing favicon and slightly awkward native file-input wrapping are nonblocking cosmetic observations and do not affect the controlled BPMN workflow.
 
 No merge, push, deployment, or production release is authorized by this review.
