@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.aiathumanscale.com/schemas/roi-ea/bpmn-import-model-v0.1.schema.json",
+  "title": "ROI-EA BPMN Import Model v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile", "source", "parser", "definitions", "elements", "relationships", "diagnostics", "mappingCandidates", "status"],
+  "properties": {
+    "profile": { "const": "ROI-EA-BPMN-IMPORT-V0.1" },
+    "source": { "$ref": "#/$defs/source" },
+    "parser": { "$ref": "#/$defs/parser" },
+    "definitions": { "$ref": "#/$defs/definitions" },
+    "elements": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/element" }
+    },
+    "relationships": {
+      "type": "array",
+      "maxItems": 20000,
+      "items": { "$ref": "#/$defs/relationship" }
+    },
+    "diagnostics": {
+      "type": "array",
+      "maxItems": 500,
+      "items": { "$ref": "#/$defs/diagnostic" }
+    },
+    "mappingCandidates": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/mappingCandidate" }
+    },
+    "status": { "enum": ["REJECTED", "STAGED", "REVIEWED_PARTIAL", "REVIEWED_COMPLETE"] }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "sha256", "byteLength", "mediaType", "localOnly"],
+      "properties": {
+        "fileName": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "byteLength": { "type": "integer", "minimum": 1, "maximum": 250000 },
+        "mediaType": { "enum": ["application/xml", "text/xml", "application/bpmn+xml"] },
+        "localOnly": { "const": true }
+      }
+    },
+    "parser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapterVersion", "library", "libraryVersion", "mappingVersion"],
+      "properties": {
+        "adapterVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "library": { "const": "bpmn-moddle" },
+        "libraryVersion": { "const": "10.1.0" },
+        "mappingVersion": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "definitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "targetNamespace", "rootElementIds"],
+      "properties": {
+        "id": { "anyOf": [{ "$ref": "#/$defs/identifier" }, { "type": "null" }] },
+        "targetNamespace": { "anyOf": [{ "type": "string", "maxLength": 2048 }, { "type": "null" }] },
+        "exporter": { "anyOf": [{ "type": "string", "maxLength": 512 }, { "type": "null" }] },
+        "exporterVersion": { "anyOf": [{ "type": "string", "maxLength": 128 }, { "type": "null" }] },
+        "rootElementIds": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/identifier" } }
+      }
+    },
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "bpmnType", "containerId", "attributes", "extensionAttributes", "supportState"],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/identifier" },
+        "bpmnType": { "type": "string", "pattern": "^bpmn:" },
+        "name": { "anyOf": [{ "type": "string", "maxLength": 32768 }, { "type": "null" }] },
+        "containerId": { "anyOf": [{ "$ref": "#/$defs/identifier" }, { "type": "null" }] },
+        "attributes": { "type": "object", "maxProperties": 200, "additionalProperties": { "anyOf": [{ "type": "string", "maxLength": 32768 }, { "type": "number" }, { "type": "boolean" }, { "type": "null" }] } },
+        "extensionAttributes": { "type": "object", "maxProperties": 200, "additionalProperties": { "anyOf": [{ "type": "string", "maxLength": 32768 }, { "type": "number" }, { "type": "boolean" }, { "type": "null" }] } },
+        "supportState": { "enum": ["SUPPORTED", "PRESERVED_UNMAPPED", "UNSUPPORTED"] }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "sourceId", "targetId", "sourceProperty"],
+      "properties": {
+        "kind": { "enum": ["CONTAINMENT", "REFERENCE", "SEQUENCE_FLOW", "MESSAGE_FLOW", "ASSOCIATION", "DATA_ASSOCIATION", "LANE_ALLOCATION", "DI_LINK"] },
+        "sourceId": { "$ref": "#/$defs/identifier" },
+        "targetId": { "$ref": "#/$defs/identifier" },
+        "sourceProperty": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "message", "sourceId"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^BPMN-[A-Z]+-[0-9]{3}$" },
+        "severity": { "enum": ["INFO", "WARNING", "ERROR", "FATAL"] },
+        "message": { "type": "string", "minLength": 1, "maxLength": 32768 },
+        "sourceId": { "anyOf": [{ "$ref": "#/$defs/identifier" }, { "type": "null" }] }
+      }
+    },
+    "mappingCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateId", "sourceId", "candidateType", "ruleId", "qualificationFlags", "disposition"],
+      "properties": {
+        "candidateId": { "$ref": "#/$defs/identifier" },
+        "sourceId": { "$ref": "#/$defs/identifier" },
+        "candidateType": { "enum": ["PARTICIPANT", "EXTERNAL_PARTY", "VALUE_STREAM", "PROCESS_STEP", "HANDOFF", "ACTION", "DEPENDENCY", "EVIDENCE_GAP", "DECISION_POINT", "EXCEPTION_RECOVERY", "TECHNICAL_CAPABILITY"] },
+        "ruleId": { "type": "string", "pattern": "^BPMN-MAP-[0-9]{3}$" },
+        "qualificationFlags": { "type": "array", "uniqueItems": true, "items": { "type": "string", "maxLength": 128 } },
+        "disposition": { "enum": ["PENDING_REVIEW", "ACCEPTED", "REJECTED", "REVISED"] },
+        "reviewerNote": { "anyOf": [{ "type": "string", "maxLength": 32768 }, { "type": "null" }] }
+      }
+    }
+  }
+}
