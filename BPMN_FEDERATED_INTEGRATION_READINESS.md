@@ -27,14 +27,19 @@ The merge produced overlaps in `app.js`, `index.html`, and `styles.css`. They we
 - HTML identifier check: 140 identifiers; 0 duplicates.
 - Integration-specific regression: verifies both navigation entries, both sections, all five federated panels, both BPMN entry points, one title map, one federated initialization, one mortgage initialization, and no merge markers.
 
-## Remaining gate
+## Combined browser acceptance
 
-Automated integration is complete. A combined browser review remains required before a controlled release decision. The reviewer should confirm in one browser session that:
+The user completed the combined browser review on 2026-08-23 and confirmed that all four requested tests passed:
 
 1. Federated Enterprise navigation opens the five accepted panels.
 2. Mortgage Reference opens and its deterministic reference case remains functional.
 3. Reference BPMN analysis displays four bounded-support candidates, preserves four human tasks, and grants no AI authority to the two gateways.
 4. Standards-aware staging, review state transitions, bounded commit confirmation, normalized JSON export, and import-report export remain functional.
-5. No visible navigation, layout, overlap, or stale-cache defect exists at the intended viewport.
 
-**Gate:** `COMBINED IMPLEMENTATION AUTOMATED CHECKS PASSED—BOUNDED BROWSER QA REQUIRED`
+No browser defect was reported during this acceptance run.
+
+## Release boundary
+
+The integrated candidate has passed automated and user browser acceptance. This record does not itself push the branch, merge it to `main`, deploy it, or authorize a production release.
+
+**Gate:** `BPMN AND FEDERATED WORKSPACES INTEGRATED—READY FOR CONTROLLED RELEASE DECISION`
