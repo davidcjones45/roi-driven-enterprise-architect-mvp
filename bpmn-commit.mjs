@@ -11,6 +11,22 @@ const TARGETS = Object.freeze({
 });
 
 function suffix(candidateId) { return candidateId.replace(/^BPMN-CAND-/u, '').replace(/[^A-Z0-9-]/giu, '-').toUpperCase(); }
+
+export function bpmnCommitConfirmationBinding(model) {
+  assertNormalizedImportModel(model);
+  return stableJson({
+    sourceSha256: model.source.sha256,
+    status: model.status,
+    candidates: model.mappingCandidates.map((candidate) => ({
+      candidateId: candidate.candidateId,
+      candidateType: candidate.candidateType,
+      candidateLabel: candidate.candidateLabel,
+      disposition: candidate.disposition,
+      reviewHistory: candidate.reviewHistory,
+    })),
+  });
+}
+
 function canonicalRecord(candidate, prefix) {
   const record = {
     id: `${prefix}-BPMN-${suffix(candidate.candidateId)}`,
@@ -36,6 +52,7 @@ export function commitAcceptedBpmnCandidates(model, workspace, options = {}) {
   assertNormalizedImportModel(model);
   if (options.confirmed !== true) throw new TypeError('Explicit confirmed=true is required for canonical commit.');
   if (model.status !== 'REVIEWED_COMPLETE') throw new TypeError('All candidates require a final human disposition before commit.');
+  if (options.confirmationBinding !== bpmnCommitConfirmationBinding(model)) throw new TypeError('Canonical commit confirmation does not match the current reviewed BPMN source and dispositions.');
   if (model.mappingCandidates.some((item) => item.qualificationFlags.includes('SOURCE_HAS_STRUCTURAL_ERRORS'))) throw new TypeError('Structurally defective BPMN sources cannot be committed.');
   const committedAt = String(options.committedAt || '');
   const committedBy = String(options.committedBy || '').trim();

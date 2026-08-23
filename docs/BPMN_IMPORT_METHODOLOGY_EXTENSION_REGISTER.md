@@ -18,5 +18,8 @@
 | BPMN-ME-011 | Conservative state initialization | A committed handoff begins at communication Created, responsibility Not Offered, and authority Pending; a service task remains a technical capability with AI classification unresolved. | Retain for later methodology reconciliation |
 | BPMN-ME-012 | Structural-error commit prohibition | A parsed source with structural errors may support diagnosis and review but cannot create canonical records. | Retain for later methodology reconciliation |
 | BPMN-ME-013 | Explicit local commit event | Canonical persistence requires a named committer, UTC event time, explicit confirmation, complete candidate disposition, and an inspectable commit record. | Retain for later methodology reconciliation |
+| BPMN-ME-014 | State-bound confirmation | A confirmation is valid only for the exact source version and reviewed disposition state presented to the confirmer; later staging or review change invalidates it. | Retain for later methodology reconciliation |
+| BPMN-ME-015 | Pre-materialization resource gate | Declared upload size must be checked before browser materialization, and decompression must be bounded by measured output rather than trusted archive metadata alone. | Retain for later methodology reconciliation |
+| BPMN-ME-016 | Local write-origin boundary | A localhost-only service is not a sufficient browser write boundary; state-changing requests require an exact approved local web origin in addition to explicit intent and schema validation. | Retain for later methodology reconciliation |
 
 No entry changes the frozen FEOA baseline, assigns authority, establishes acceptance, or authorizes canonical persistence.

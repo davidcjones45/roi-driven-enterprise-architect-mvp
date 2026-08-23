@@ -4,9 +4,9 @@ import { PHASES, assessmentReadiness, feoaReport, normalizeAssessment } from './
 import { federationEconomics, federationStability, gateReadiness, healthcareFixture, normalizeWorkspace, reportPayload } from './feoa-workspace.mjs';
 import { MORTGAGE_FIXTURE } from './mortgage-fixture.mjs';
 import { evaluateMortgageCase } from './mortgage-model.mjs';
-import { importMortgageWorkbook } from './mortgage-import.mjs';
+import { importMortgageWorkbook, MAX_MORTGAGE_WORKBOOK_BYTES } from './mortgage-import.mjs';
 import { executeMortgageIntegration, recordMortgageErirUnavailable, recordMortgageErirVerification } from './mortgage-integration.mjs';
-import { importMortgageBpmn, analyzeBoundedAiOpportunities } from './mortgage-bpmn.mjs';
+import { importMortgageBpmn, analyzeBoundedAiOpportunities, MAX_MORTGAGE_BPMN_BYTES } from './mortgage-bpmn.mjs';
 import { createBpmnReviewController } from './bpmn-review-ui.mjs';
 (() => {
   const KEY = 'roi-driven-enterprise-architect-mvp-v1';
@@ -207,6 +207,7 @@ import { createBpmnReviewController } from './bpmn-review-ui.mjs';
       const file=input.files?.[0];
       if(!file)return;
       try{
+        if(file.size>MAX_MORTGAGE_WORKBOOK_BYTES)throw new Error(`Workbook exceeds the ${MAX_MORTGAGE_WORKBOOK_BYTES.toLocaleString()}-byte controlled import limit.`);
         const imported=await importMortgageWorkbook(await file.arrayBuffer(),file.name);
         activeMortgageFixture=imported.fixture;
         activeMortgageImportReport=imported.report;
@@ -273,7 +274,10 @@ import { createBpmnReviewController } from './bpmn-review-ui.mjs';
     if(bpmnInput)bpmnInput.addEventListener('change',async()=>{
       const file=bpmnInput.files?.[0];
       if(!file)return;
-      try{analyzeBpmn(await file.text(),file.name);}
+      try{
+        if(file.size>MAX_MORTGAGE_BPMN_BYTES)throw new Error(`BPMN XML exceeds the ${MAX_MORTGAGE_BPMN_BYTES}-byte controlled limit.`);
+        analyzeBpmn(await file.text(),file.name);
+      }
       catch(error){mortgageBpmnError=error instanceof Error?error.message:String(error);renderMortgageBpmn();toast('BPMN rejected; the prior analysis was preserved.');}
       finally{bpmnInput.value='';}
     });

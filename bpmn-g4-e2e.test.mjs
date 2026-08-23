@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import { parseAndValidateBpmn } from './bpmn-import-pipeline.mjs';
 import { mapBpmnToFeoaCandidates } from './bpmn-feoa-mapper.mjs';
 import { reviewBpmnCandidate } from './bpmn-review.mjs';
-import { commitAcceptedBpmnCandidates } from './bpmn-commit.mjs';
+import { bpmnCommitConfirmationBinding, commitAcceptedBpmnCandidates } from './bpmn-commit.mjs';
 import { buildBpmnImportReport } from './bpmn-import-report.mjs';
 
 test('G4 reference flow runs from secure intake through review, commit, and report', async () => {
@@ -15,7 +15,7 @@ test('G4 reference flow runs from secure intake through review, commit, and repo
     const supported = ['VALUE_STREAM', 'PROCESS_STEP', 'TECHNICAL_CAPABILITY', 'EVIDENCE_GAP'].includes(candidate.candidateType);
     model = reviewBpmnCandidate(model, candidate.candidateId, { action: supported ? 'ACCEPT' : 'REJECT', reviewer: 'G4 acceptance reviewer', reviewedAt: importedAt, note: supported ? 'Eligible for bounded modeled-record commit.' : 'No justified canonical target in the controlled flow.' });
   }
-  const result = commitAcceptedBpmnCandidates(model, { name: 'G4 reference workspace' }, { confirmed: true, committedBy: 'G4 acceptance reviewer', committedAt: importedAt });
+  const result = commitAcceptedBpmnCandidates(model, { name: 'G4 reference workspace' }, { confirmed: true, confirmationBinding: bpmnCommitConfirmationBinding(model), committedBy: 'G4 acceptance reviewer', committedAt: importedAt });
   const report = buildBpmnImportReport(model, result.commitRecord);
   assert.equal(model.status, 'REVIEWED_COMPLETE');
   assert.equal(report.source.sha256, result.commitRecord.sourceSha256);

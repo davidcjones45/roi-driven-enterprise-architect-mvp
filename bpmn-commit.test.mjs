@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import { parseAndValidateBpmn } from './bpmn-import-pipeline.mjs';
 import { mapBpmnToFeoaCandidates } from './bpmn-feoa-mapper.mjs';
 import { reviewBpmnCandidate } from './bpmn-review.mjs';
-import { commitAcceptedBpmnCandidates } from './bpmn-commit.mjs';
+import { bpmnCommitConfirmationBinding, commitAcceptedBpmnCandidates } from './bpmn-commit.mjs';
 import { stableJson } from './bpmn-import-model.mjs';
 import { normalizeWorkspace } from './feoa-workspace.mjs';
 
@@ -19,7 +19,7 @@ async function reviewed(name = 'core-constructs.bpmn') {
 test('G4 explicit commit writes only supported records with conservative defaults', async () => {
   const model = await reviewed(), workspace = normalizeWorkspace({ name: 'G4 test' }), before = stableJson(workspace);
   assert.throws(() => commitAcceptedBpmnCandidates(model, workspace, { committedBy: 'Reviewer', committedAt: TIME }), /confirmed/u);
-  const result = commitAcceptedBpmnCandidates(model, workspace, { confirmed: true, committedBy: 'Reviewer', committedAt: TIME });
+  const result = commitAcceptedBpmnCandidates(model, workspace, { confirmed: true, confirmationBinding: bpmnCommitConfirmationBinding(model), committedBy: 'Reviewer', committedAt: TIME });
   assert.equal(stableJson(workspace), before);
   assert.ok(result.workspace.valueStreams.length);
   assert.ok(result.workspace.processSteps.length);
@@ -31,7 +31,7 @@ test('G4 explicit commit writes only supported records with conservative default
 
 test('G4 handoff commit never infers responsibility acceptance or authority', async () => {
   const model = await reviewed('collaboration-lanes.bpmn');
-  const result = commitAcceptedBpmnCandidates(model, normalizeWorkspace({ name: 'handoff' }), { confirmed: true, committedBy: 'Reviewer', committedAt: TIME });
+  const result = commitAcceptedBpmnCandidates(model, normalizeWorkspace({ name: 'handoff' }), { confirmed: true, confirmationBinding: bpmnCommitConfirmationBinding(model), committedBy: 'Reviewer', committedAt: TIME });
   assert.ok(result.workspace.handoffs.length);
   assert.ok(result.workspace.handoffs.every((item) => item.communicationState === 'Created' && item.responsibilityState === 'Not Offered' && item.authorityState === 'Pending'));
   assert.ok(result.workspace.participants.every((item) => item.alignment === 'Unknown'));
@@ -39,13 +39,24 @@ test('G4 handoff commit never infers responsibility acceptance or authority', as
 
 test('G4 structural errors remain non-committable', async () => {
   const model = await reviewed('dangling-reference.bpmn');
-  assert.throws(() => commitAcceptedBpmnCandidates(model, {}, { confirmed: true, committedBy: 'Reviewer', committedAt: TIME }), /Structurally defective/u);
+  assert.throws(() => commitAcceptedBpmnCandidates(model, {}, { confirmed: true, confirmationBinding: bpmnCommitConfirmationBinding(model), committedBy: 'Reviewer', committedAt: TIME }), /Structurally defective/u);
 });
 
 test('G4 commit is idempotent for identical provenance', async () => {
   const model = await reviewed('minimal-valid.bpmn');
-  const first = commitAcceptedBpmnCandidates(model, {}, { confirmed: true, committedBy: 'Reviewer', committedAt: TIME });
-  const second = commitAcceptedBpmnCandidates(model, first.workspace, { confirmed: true, committedBy: 'Reviewer', committedAt: TIME });
+  const confirmationBinding = bpmnCommitConfirmationBinding(model);
+  const first = commitAcceptedBpmnCandidates(model, {}, { confirmed: true, confirmationBinding, committedBy: 'Reviewer', committedAt: TIME });
+  const second = commitAcceptedBpmnCandidates(model, first.workspace, { confirmed: true, confirmationBinding, committedBy: 'Reviewer', committedAt: TIME });
   assert.equal(stableJson(second.workspace), stableJson(first.workspace));
   assert.ok(second.commitRecord.skipped.some((item) => item.reason === 'IDEMPOTENT_ALREADY_COMMITTED'));
+});
+
+test('G5 canonical confirmation is bound to the exact reviewed source and dispositions', async () => {
+  const firstModel = await reviewed('minimal-valid.bpmn');
+  const secondModel = await reviewed('core-constructs.bpmn');
+  const staleBinding = bpmnCommitConfirmationBinding(firstModel);
+  assert.throws(
+    () => commitAcceptedBpmnCandidates(secondModel, {}, { confirmed: true, confirmationBinding: staleBinding, committedBy: 'Reviewer', committedAt: TIME }),
+    /does not match the current reviewed BPMN source and dispositions/u,
+  );
 });

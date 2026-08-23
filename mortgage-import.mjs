@@ -12,7 +12,7 @@ const REQUIRED_SHEETS = Object.freeze({
 });
 const FORBIDDEN_ARCHIVE_PATHS = [/vbaProject\.bin$/i, /xl\/externalLinks\//i, /xl\/embeddings\//i, /xl\/connections\.xml$/i];
 const FORBIDDEN_TERMS = /(^|[_\s-])(age|race|ethnicity|sex|gender|protected[ _-]?class|hmda[ _-]?demographic)([_\s-]|$)/i;
-const MAX_FILE_BYTES = 2_000_000;
+export const MAX_MORTGAGE_WORKBOOK_BYTES = 2_000_000;
 const MAX_UNCOMPRESSED_BYTES = 6_000_000;
 
 const textDecoder = new TextDecoder('utf-8');
@@ -35,15 +35,35 @@ function columnIndex(reference) {
   return result - 1;
 }
 
-async function inflateRaw(bytes) {
+async function inflateRaw(bytes, maximumBytes) {
   if (typeof DecompressionStream !== 'function') throw new Error('This browser does not support controlled XLSX decompression.');
   const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  const reader = stream.getReader();
+  const chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maximumBytes) {
+        await reader.cancel('Controlled XLSX expansion limit exceeded.');
+        throw new Error('Workbook expands beyond the controlled import limit or an entry misstates its size.');
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const output = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.byteLength; }
+  return output;
 }
 
 async function unzipXlsx(arrayBuffer) {
   const bytes = new Uint8Array(arrayBuffer);
-  if (bytes.byteLength > MAX_FILE_BYTES) throw new Error(`Workbook exceeds the ${MAX_FILE_BYTES.toLocaleString()}-byte controlled import limit.`);
+  if (bytes.byteLength > MAX_MORTGAGE_WORKBOOK_BYTES) throw new Error(`Workbook exceeds the ${MAX_MORTGAGE_WORKBOOK_BYTES.toLocaleString()}-byte controlled import limit.`);
   const view = new DataView(arrayBuffer);
   let eocd = -1;
   for (let offset = Math.max(0, bytes.length - 65_557); offset <= bytes.length - 22; offset += 1) {
@@ -54,6 +74,7 @@ async function unzipXlsx(arrayBuffer) {
   let cursor = readU32(view, eocd + 16);
   const entries = new Map();
   let totalUncompressed = 0;
+  let totalInflatedActual = 0;
   for (let index = 0; index < entryCount; index += 1) {
     if (readU32(view, cursor) !== 0x02014b50) throw new Error('The XLSX directory is malformed.');
     const method = readU16(view, cursor + 10);
@@ -74,9 +95,11 @@ async function unzipXlsx(arrayBuffer) {
     const compressed = bytes.subarray(start, start + compressedSize);
     let content;
     if (method === 0) content = compressed.slice();
-    else if (method === 8) content = await inflateRaw(compressed);
+    else if (method === 8) content = await inflateRaw(compressed, Math.min(uncompressedSize || MAX_UNCOMPRESSED_BYTES, MAX_UNCOMPRESSED_BYTES - totalInflatedActual));
     else throw new Error(`Unsupported XLSX compression method ${method}.`);
-    if (uncompressedSize && content.byteLength !== uncompressedSize) throw new Error(`XLSX entry size mismatch: ${name}`);
+    totalInflatedActual += content.byteLength;
+    if (totalInflatedActual > MAX_UNCOMPRESSED_BYTES) throw new Error('Workbook expands beyond the controlled import limit.');
+    if (content.byteLength !== uncompressedSize) throw new Error(`XLSX entry size mismatch: ${name}`);
     entries.set(name.replace(/^\//, ''), content);
     cursor += 46 + nameLength + extraLength + commentLength;
   }

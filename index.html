@@ -352,7 +352,7 @@
         <div class="form-grid bpmn-review-fields"><label>Reviewer<input id="bpmn-reviewer" type="text" maxlength="256" autocomplete="name" placeholder="Named qualified reviewer"></label><label>Disposition rationale<input id="bpmn-review-note" type="text" maxlength="32768" placeholder="Required reason for accept, revise, or reject"></label></div>
         <div id="bpmn-review-state" class="mortgage-import-state" role="status" aria-live="polite"></div>
         <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Source element</th><th>Candidate / revised label</th><th>Unresolved qualifications</th><th>Disposition</th><th>Human review action</th></tr></thead><tbody id="bpmn-review-candidates"></tbody></table></div>
-        <div class="mortgage-import-actions"><label><input id="bpmn-commit-confirm" type="checkbox"> I explicitly confirm this bounded canonical commit</label><button type="button" id="commit-bpmn-review" disabled>Commit accepted supported candidates</button></div>
+        <div class="mortgage-import-actions"><label><input id="bpmn-commit-confirm" type="checkbox" disabled> I explicitly confirm this bounded canonical commit</label><button type="button" id="commit-bpmn-review" disabled>Commit accepted supported candidates</button></div>
         <p class="quiet-note">Unsupported candidate types remain in the report with <code>NO_CANONICAL_TARGET_V0_2_3</code>. Structural-error sources cannot be committed. All imported labels are rendered as text.</p>
       </div>
       <div class="metric-grid" id="mortgage-metrics" aria-live="polite"></div>

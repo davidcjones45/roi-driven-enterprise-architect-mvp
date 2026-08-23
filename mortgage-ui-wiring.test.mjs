@@ -70,3 +70,11 @@ test('the canonical render lifecycle initializes the mortgage demonstrator exact
   assert.equal((app.match(/function renderAll\(\)/g)||[]).length,1,'duplicate renderAll declarations can suppress mortgage initialization');
   assert.match(app,/function renderAll\(\)\{[^}]*renderMortgageDemo\(\)/,'canonical renderAll must initialize the mortgage demonstrator');
 });
+
+test('upload UI enforces byte limits before browser file materialization',async()=>{
+  const app=await read('app.js');
+  const review=await read('bpmn-review-ui.mjs');
+  assert.match(app,/file\.size>MAX_MORTGAGE_WORKBOOK_BYTES[\s\S]{0,240}file\.arrayBuffer\(\)/u);
+  assert.match(app,/file\.size>MAX_MORTGAGE_BPMN_BYTES[\s\S]{0,240}file\.text\(\)/u);
+  assert.match(review,/file\.size > BPMN_IMPORT_LIMITS\.maxBytes[\s\S]{0,300}file\.arrayBuffer\(\)/u);
+});

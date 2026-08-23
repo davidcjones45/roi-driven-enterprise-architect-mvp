@@ -34,3 +34,18 @@ test('non-XLSX content fails closed', async () => {
   const bytes = new TextEncoder().encode('not an xlsx');
   await assert.rejects(() => importMortgageWorkbook(bytes.buffer, 'bad.xlsx'), /not a readable XLSX archive/);
 });
+
+test('XLSX decompression stops when an entry expands beyond its declared bound', async () => {
+  const source = Uint8Array.from(await readFile(templateUrl));
+  const view = new DataView(source.buffer);
+  let eocd = -1;
+  for (let offset = Math.max(0, source.length - 65_557); offset <= source.length - 22; offset += 1) {
+    if (view.getUint32(offset, true) === 0x06054b50) eocd = offset;
+  }
+  assert.ok(eocd >= 0);
+  const central = view.getUint32(eocd + 16, true);
+  assert.equal(view.getUint32(central, true), 0x02014b50);
+  assert.equal(view.getUint16(central + 10, true), 8);
+  view.setUint32(central + 24, 1, true);
+  await assert.rejects(() => importMortgageWorkbook(source.buffer, 'forged-size.xlsx'), /expands beyond the controlled import limit|misstates its size/);
+});

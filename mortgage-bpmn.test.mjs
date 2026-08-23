@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {importMortgageBpmn, analyzeBoundedAiOpportunities} from './mortgage-bpmn.mjs';
+import {importMortgageBpmn, analyzeBoundedAiOpportunities, MAX_MORTGAGE_BPMN_BYTES} from './mortgage-bpmn.mjs';
 
 const fixtureUrl=new URL('./assets/North-Star-Mortgage-Workflow-v0.1.bpmn', import.meta.url);
 
@@ -46,4 +46,9 @@ test('analysis rejects consequential authority disguised as an AI candidate',()=
   assert.equal(analysis.valid,false);
   assert.equal(analysis.errors.some(error=>error.includes('authority="none"')),true);
   assert.equal(analysis.errors.some(error=>error.includes('consequential')),true);
+});
+
+test('legacy parser fails closed immediately on an oversized BPMN source',()=>{
+  const model=importMortgageBpmn('x'.repeat(MAX_MORTGAGE_BPMN_BYTES+1));
+  assert.deepEqual(model,{valid:false,errors:[`BPMN XML exceeds the ${MAX_MORTGAGE_BPMN_BYTES}-byte controlled limit.`]});
 });

@@ -1,4 +1,4 @@
-const MAX_XML_BYTES = 250_000;
+export const MAX_MORTGAGE_BPMN_BYTES = 250_000;
 const FLOW_NODE_TYPES = new Set(['startEvent','endEvent','userTask','manualTask','serviceTask','businessRuleTask','exclusiveGateway']);
 const SUPPORTED_TAGS = [...FLOW_NODE_TYPES, 'sequenceFlow'];
 const PROHIBITED_XML = [
@@ -29,7 +29,9 @@ function tags(xml) {
 export function importMortgageBpmn(xml='') {
   const errors=[];
   if (typeof xml!=='string' || !xml.trim()) return {valid:false, errors:['BPMN XML is required.']};
-  if (new TextEncoder().encode(xml).length>MAX_XML_BYTES) errors.push(`BPMN XML exceeds the ${MAX_XML_BYTES}-byte controlled limit.`);
+  if (new TextEncoder().encode(xml).length>MAX_MORTGAGE_BPMN_BYTES) {
+    return {valid:false, errors:[`BPMN XML exceeds the ${MAX_MORTGAGE_BPMN_BYTES}-byte controlled limit.`]};
+  }
   if (!/xmlns:bpmn=["']http:\/\/www\.omg\.org\/spec\/BPMN\/20100524\/MODEL["']/.test(xml)) errors.push('The BPMN 2.0 model namespace is required.');
   for (const rule of PROHIBITED_XML) if (rule.pattern.test(xml)) errors.push(rule.message);
   const processMatches=[...xml.matchAll(/<(?:\w+:)?process\b([^>]*)>/g)];
