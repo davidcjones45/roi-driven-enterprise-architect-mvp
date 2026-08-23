@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Defs_Deferred" targetNamespace="https://www.aiathumanscale.com/synthetic/bpmn">
+  <bpmn:collaboration id="Collaboration_Deferred"><bpmn:participant id="Conversation_Party_1" name="Synthetic party"/><bpmn:conversation id="Conversation_1" name="Modeled conversation"><bpmn:participantRef>Conversation_Party_1</bpmn:participantRef></bpmn:conversation></bpmn:collaboration>
+  <bpmn:process id="Process_Vendor" isExecutable="false"><bpmn:serviceTask id="Vendor_Task_1" camunda:type="external" camunda:topic="synthetic-topic"/></bpmn:process>
+</bpmn:definitions>

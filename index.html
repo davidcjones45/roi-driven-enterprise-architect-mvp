@@ -25,6 +25,8 @@
       <button class="nav-link" data-view="regulatory"><span>10</span> Regulatory context</button>
       <button class="nav-link" data-view="compliance-cost"><span>11</span> Compliance cost &amp; capacity</button>
       <button class="nav-link" data-view="feoa"><span>F</span> FEOA workbench</button>
+      <button class="nav-link" data-view="federated"><span>FE</span> Federated Enterprise</button>
+      <button class="nav-link" data-view="mortgage-demo"><span>M</span> Mortgage reference demo</button>
       <button class="nav-link" data-view="dossier"><span>12</span> Executive dossier</button>
     </nav>
     <div class="sidebar-note">Design-partner MVP<br><small>Stored in this browser only.</small><small class="copyright-notice">© 2026 David C. Jones. All rights reserved.<br>AI at Human Scale.</small></div>
@@ -240,9 +242,9 @@
     </section>
 
     <section id="regulatory" class="view">
-      <div class="section-heading"><div><span class="eyebrow">REGULATORY CONTEXT / READ-ONLY TRACEABILITY</span><h2>Link a decision to reviewed regulatory intelligence without turning it into a legal conclusion.</h2><p>ERIR remains the authority for source review and applicability approval. This panel links decision context, displays the repository’s current record status, and can submit an explicitly requested draft package for ERIR review.</p></div><span class="status-pill" id="regulatory-status">No links</span></div>
+      <div class="section-heading"><div><span class="eyebrow">REGULATORY CONTEXT / READ-ONLY TRACEABILITY</span><h2>Link a decision to reviewed regulatory intelligence without turning it into a legal conclusion.</h2><p>ERIR remains the authority for source review and applicability approval. This public reference demo retrieves read-only traceability only; it does not submit or change ERIR records.</p><p class="quiet-note">Data entered here remains in this browser unless you export it. The public demo has no authentication, tenancy, production authorization, or compliance-certification capability.</p></div><span class="status-pill" id="regulatory-status">No links</span></div>
       <form id="regulatory-form" class="form-grid card">
-        <label>ERIR gateway URL<input name="gatewayUrl" value="http://127.0.0.1:8766" placeholder="Local gateway URL"></label>
+        <label>ERIR read-only API URL<input name="gatewayUrl" placeholder="Configured public API or local development gateway"></label>
         <label>Subject asset ID<input name="subjectAssetId" placeholder="e.g., SYS-DEMO-001"></label>
         <label>Regulatory source ID<input name="sourceId" placeholder="e.g., SRC-FTC-2026-001"></label>
         <label>Obligation ID<input name="obligationId" placeholder="e.g., OBL-FTC-001"></label>
@@ -256,7 +258,7 @@
         <div class="form-actions full"><button type="submit">Save regulatory links</button><button type="button" id="load-erir-trace" class="secondary">Load ERIR traceability</button><button type="button" id="download-erir-handoff" class="secondary">Download ERIR handoff</button></div>
       </form>
       <div class="card evidence-table-wrap"><div class="evidence-summary" id="regulatory-summary">No ERIR records linked.</div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>ERIR record</th><th>Status / review</th><th>Source / citation</th><th>Relationship</th></tr></thead><tbody id="regulatory-rows"><tr><td colspan="4" class="quiet-note">Connect a local gateway and load linked record IDs to display read-only traceability.</td></tr></tbody></table></div></div>
-      <div class="card regulatory-draft">
+      <div class="card regulatory-draft" id="local-erir-draft-panel">
         <span class="eyebrow">EXPLICIT DRAFT REQUEST / NOT AN APPROVAL</span><h3>Propose a control draft for ERIR review.</h3><p class="quiet-note">The gateway accepts only a schema-valid draft. It does not create a compliance determination, attach evidence, or modify reviewed repository records.</p>
         <div class="form-grid">
           <label>Draft control ID<input id="draft-control-id" placeholder="e.g., CTL-ROI-EA-001"></label>
@@ -330,6 +332,97 @@
       <div class="card" id="feoa-summary" aria-live="polite"></div>
     </section>
 
+    <section id="federated" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FROZEN PRE-UI CANDIDATE BASELINE / FEDERATED ENTERPRISE</span><h2>North Star synthetic-case demonstration</h2><p>Follow the accepted chain from form assessment through collective value, operating governance, bounded AI, and the comparator-aware value loopback. This is a read-only display of synthetic/modelled process-test outputs.</p></div><span class="status-pill">Synthetic / modeled</span></div>
+      <div class="federated-caveat" role="note"><strong>Synthetic / modeled process-test case.</strong> Not real-world validation, legal advice, compliance determination, clinical decision support, or guaranteed ROI. Analytical results are not implementation authorization; evidence support and permission are not authority; AI readiness is not release authorization.</div>
+      <nav class="federated-nav" aria-label="Federated Enterprise views">
+        <button type="button" class="federated-tab active" data-federated-view="fofa">1. Opportunity &amp; Form — FOFA</button>
+        <button type="button" class="federated-tab" data-federated-view="mcvsm">2. Member &amp; Collective Value — MCVSM</button>
+        <button type="button" class="federated-tab" data-federated-view="facem">3. Authority, Commitment &amp; Evidence — FACEM</button>
+        <button type="button" class="federated-tab" data-federated-view="bacrm">4. Bounded AI &amp; Recovery — BACRM</button>
+        <button type="button" class="federated-tab" data-federated-view="north-star">5. Integrated Decision / North Star</button>
+      </nav>
+
+      <article class="federated-panel active" data-federated-panel="fofa">
+        <span class="eyebrow">FOFA / OPPORTUNITY &amp; FORM</span><h3>Compare credible alternatives before considering a governed federation.</h3>
+        <p>FOFA asks whether federation is preferable to credible alternatives. The ranking is analytical only; it does not approve a form, admit a member, authorize work, or implement a capability.</p>
+        <div class="table-scroll"><table class="evidence-table federated-table"><thead><tr><th>Alternative</th><th>Evidence-adjusted score</th><th>Position</th></tr></thead><tbody><tr><td>Governed federation</td><td>3.57</td><td>Highest-ranked analytical alternative</td></tr><tr><td>Acquisition / common ownership</td><td>3.0855</td><td>Alternative</td></tr><tr><td>Governed network</td><td>2.9495</td><td>Strongest non-federation comparator</td></tr><tr><td>Joint venture</td><td>2.941</td><td>Alternative</td></tr><tr><td>Bilateral contract</td><td>2.7625</td><td>Alternative</td></tr><tr><td>Independence</td><td>2.3375</td><td>Alternative</td></tr></tbody></table></div>
+        <p class="quiet-note"><strong>Decision status:</strong> analytical ranking only. Critical conditions, evidence limitations, legal/economic review, and accountable disposition remain required.</p>
+      </article>
+
+      <article class="federated-panel" data-federated-panel="mcvsm" hidden>
+        <span class="eyebrow">MCVSM / MEMBER &amp; COLLECTIVE VALUE</span><h3>Comparator-aware economics and required-member viability</h3>
+        <p>MCVSM asks whether collective value is sustainable for the collective and every required member. Positive collective economics do not override a required member failure.</p>
+        <div class="metric-grid"><article class="metric"><span>C2 − C1 / canonical attribution</span><strong>FEDERATION_INCREMENT</strong></article><article class="metric"><span>Year-1 risk-adjusted increment</span><strong>$289,200</strong></article><article class="metric"><span>NPV / ROI / BCR</span><strong>$770,525.48 / 71.1439% / 1.7114</strong></article><article class="metric"><span>Required-member viability</span><strong>PASS</strong></article></div>
+        <div class="metric-grid"><article class="metric"><span>C3 − C2 / canonical attribution</span><strong>BOUNDED_AI_INCREMENT</strong></article><article class="metric"><span>Year-1 incremental value</span><strong>$83,780</strong></article><article class="metric"><span>NPV / ROI / BCR</span><strong>$193,580.99 / 33.2593% / 1.3326</strong></article><article class="metric"><span>C3 − C1</span><strong>Not labeled as AI increment</strong></article></div>
+        <div class="card compact-card"><h4>Frozen calculation assumptions</h4><p>Five operating years after Y0; 3% annual growth; 8% discount rate; pre-tax; real / no inflation escalation; ROI denominator rule <code>TOTAL_DISCOUNTED_COST</code>. Incremental ratios are derived from selected-minus-comparator schedules, not from case-level ratio arithmetic.</p></div>
+        <div class="card compact-card"><h4>Required-member stress</h4><p><strong>Meridian Remote Care LLC — FAIL in the synthetic downside stress.</strong> The stressed case does not pass required-member viability even if collective economics remain positive. Reviewed member NPV values, where shown, are synthetic and conditional on an accepted allocation basis; they are not newly derived by this UI.</p></div>
+      </article>
+
+      <article class="federated-panel" data-federated-panel="facem" hidden>
+        <span class="eyebrow">FACEM / AUTHORITY, COMMITMENT &amp; EVIDENCE</span><h3>Operating governance remains explicit and reconstructable.</h3>
+        <div class="federated-columns"><div class="card compact-card"><h4>Admitted members</h4><ul><li>Meridian Remote Care LLC</li><li>Apex Clinical Staffing LLC</li><li>Harbor Home Health LLC</li></ul></div><div class="card compact-card"><h4>Governed dependencies — not members</h4><ul><li>Shared Interoperability Service</li><li>Staffing Platform Service</li><li>ERIR Regulatory Intelligence Service</li></ul></div></div>
+        <div class="card compact-card"><h4>Authority, permission, evidence</h4><p>Use the canonical effective Authority Envelope state in the underlying model. Permission does not create authority; valid evidence does not create authorization. ERIR remains read-only/external authoritative context and is not mutated here.</p></div>
+        <div class="card compact-card"><h4>Commitment and handoff lifecycle</h4><p><strong>request → offer → acceptance → execution → completion</strong></p><p>Transmission, receipt, validation, and acceptance remain separate handoff dimensions. Source/evidence references and correction/supersession relationships retain lineage rather than rewriting earlier records.</p></div>
+      </article>
+
+      <article class="federated-panel" data-federated-panel="bacrm" hidden>
+        <span class="eyebrow">BACRM / BOUNDED AI &amp; RECOVERY</span><h3><code>CAP-RANK-001 / 1.0-synthetic</code></h3>
+        <p><strong>Purpose:</strong> Rank already-eligible staffing/service-coordination options for accountable human review.</p>
+        <div class="federated-columns"><div class="card compact-card"><h4>Permitted functions</h4><ul><li>Approved-constraint filtering</li><li>Ranking eligible options</li><li>Reasons/explanation and uncertainty</li><li>Missing-data flags</li></ul></div><div class="card compact-card"><h4>Prohibited functions</h4><ul><li>Diagnosis or eligibility/referral decision</li><li>Staff assignment or scheduling</li><li>Messaging or commitment</li><li>Legal/compliance decision</li><li>Autonomous record updates except audit logging</li></ul></div></div>
+        <div class="metric-grid"><article class="metric"><span>Analytical readiness</span><strong>READY_FOR_BOUNDED_RELEASE_DECISION</strong></article><article class="metric"><span>Release authorization</span><strong>Separate accountable decision required</strong></article><article class="metric"><span>Lifecycle state</span><strong>SUSPENDED preserves history</strong></article></div>
+        <div class="card compact-card"><h4>Abstention, fallback, suspension, recovery</h4><p>Missing prerequisites cause abstention and a governed non-AI fallback; they do not create a decision or action. Monitoring can trigger accountable suspension with <code>newUseBlocked</code> while historical outputs remain preserved. Recovery gates are <strong>TECHNICAL</strong>, <strong>AUTHORITY_ACCEPTANCE</strong>, and <strong>PERSON_CENTERED</strong>. Recovery gate completion does not automatically reactivate the capability; a later accountable release/reactivation decision is required.</p></div>
+      </article>
+
+      <article class="federated-panel" data-federated-panel="north-star" hidden>
+        <span class="eyebrow">INTEGRATED DECISION / NORTH STAR</span><h3>A sequential assessment with controlled reassessment loopback</h3>
+        <ol class="north-star-chain"><li><strong>FOFA:</strong> governed federation ranks highest analytically.</li><li><strong>MCVSM:</strong> C2 − C1 passes collective and required-member viability in the synthetic base case.</li><li><strong>FACEM:</strong> establishes the authority, commitment, handoff, and evidence architecture.</li><li><strong>BACRM:</strong> bounds <code>CAP-RANK-001</code>; readiness remains distinct from accountable release.</li><li><strong>MCVSM loopback:</strong> C3 − C2 quantifies the bounded-AI increment only after the bounded capability case.</li><li><strong>Stress:</strong> member failure can block progression despite a positive collective result.</li></ol>
+        <div class="federated-caveat"><strong>Sequential, not automatic.</strong> Reassessment can loop backward from operating evidence, AI monitoring, a failed member threshold, or a recovery condition. No displayed result authorizes implementation, substitutes for qualified review, or demonstrates real-world effectiveness.</div>
+      </article>
+    </section>
+    <section id="mortgage-demo" class="view">
+      <div class="section-heading"><div><span class="eyebrow">NORTH STAR MORTGAGE / CONTROLLED REFERENCE DEMONSTRATOR v0.1</span><h2>Inspect evidence readiness and fictional policy comparisons without making a credit decision.</h2><p>This read-only synthetic case demonstrates how ROI-EA, ERIR, FACEM, and BACRM can make permitted evidence gaps, calculations, configuration state, and human-review requirements observable. It has no approval, denial, eligibility, pricing, notice, waiver, or record-writing path.</p></div><span class="status-pill" id="mortgage-demo-status">Not evaluated</span></div>
+      <div class="mortgage-boundary" role="note"><strong>Controlled boundary:</strong> No real applicant or bank data are used. Protected-class audit data and age are excluded from this implementation projection. The displayed policy is fictional and is not attributed to a real bank, investor, regulator, or product.</div>
+      <div class="card mortgage-import-card">
+        <div><span class="eyebrow">TEMPLATE-CONTROLLED SPREADSHEET INGESTION</span><h3>Load a synthetic case without broadening authority</h3><p class="quiet-note">Only the supplied four-sheet v0.2 XLSX contract is accepted. Validation is fail-closed; formulas, macros, external components, unknown sheets or columns, protected fields, and uncontrolled metadata are rejected before the active case changes.</p></div>
+        <div class="mortgage-import-actions"><a class="button-link" href="assets/North-Star-Mortgage-Controlled-Import-Template-v0.2.xlsx" download>Download controlled template</a><label class="file-button" for="mortgage-workbook-input">Select completed XLSX</label><input id="mortgage-workbook-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button type="button" id="restore-mortgage-fixture" class="secondary">Restore built-in fixture</button></div>
+        <div id="mortgage-import-state" class="mortgage-import-state" role="status" aria-live="polite"></div>
+      </div>
+      <div class="card mortgage-bpmn-card">
+        <div class="mortgage-card-heading"><div><span class="eyebrow">CONTROLLED BPMN IMPORT AND BOUNDED-AI ANALYSIS</span><h3>Inspect prospective support points without executing the workflow</h3><p class="quiet-note">The v0.1 importer accepts only a deliberately limited, non-executable BPMN subset. Candidate identification is analytical: it does not establish BPMN conformance, process validity, compliance, effectiveness, implementation suitability, approval, or authority.</p></div></div>
+        <div class="mortgage-import-actions"><a class="button-link" href="assets/North-Star-Mortgage-Workflow-v0.1.bpmn" download>Download reference BPMN</a><button type="button" id="analyze-mortgage-bpmn">Analyze reference BPMN</button><label class="file-button" for="mortgage-bpmn-input">Select BPMN file</label><input id="mortgage-bpmn-input" type="file" accept=".bpmn,.xml,text/xml,application/xml"></div>
+        <div id="mortgage-bpmn-state" class="mortgage-import-state" role="status" aria-live="polite"></div>
+        <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Node</th><th>Prospective support point</th><th>Permitted purpose</th><th>Authority</th><th>Disposition</th></tr></thead><tbody id="mortgage-bpmn-candidates"><tr><td colspan="5" class="quiet-note">No prospective candidate analysis exists in this browser session.</td></tr></tbody></table></div>
+        <div id="mortgage-bpmn-summary"><p class="quiet-note">The controlled subset does not validate arbitrary BPMN, establish process correctness, or authorize implementation.</p></div>
+      </div>
+      <div class="card mortgage-bpmn-card" id="bpmn-standards-review">
+        <div class="mortgage-card-heading"><div><span class="eyebrow">STANDARDS-AWARE BPMN REVIEW WORKSPACE / G4</span><h3>Review source-traceable candidates before an explicit bounded commit</h3><p class="quiet-note">Parsing, structural validation, candidate review, and canonical commit are separate events. Accepting a candidate does not establish operating truth, authority, accountability, acceptance, compliance, federation membership, AI classification, or implementation.</p></div></div>
+        <div class="mortgage-import-actions"><button type="button" id="stage-reference-bpmn">Stage reference BPMN</button><label class="file-button" for="bpmn-standards-input">Select BPMN for review</label><input id="bpmn-standards-input" type="file" accept=".bpmn,.xml,text/xml,application/xml,application/bpmn+xml"><button type="button" id="download-bpmn-normalized" class="secondary">Export normalized JSON</button><button type="button" id="download-bpmn-report" class="secondary">Export import report</button></div>
+        <div class="form-grid bpmn-review-fields"><label>Reviewer<input id="bpmn-reviewer" type="text" maxlength="256" autocomplete="name" placeholder="Named qualified reviewer"></label><label>Disposition rationale<input id="bpmn-review-note" type="text" maxlength="32768" placeholder="Required reason for accept, revise, or reject"></label></div>
+        <div id="bpmn-review-state" class="mortgage-import-state" role="status" aria-live="polite"></div>
+        <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Source element</th><th>Candidate / revised label</th><th>Unresolved qualifications</th><th>Disposition</th><th>Human review action</th></tr></thead><tbody id="bpmn-review-candidates"></tbody></table></div>
+        <div class="mortgage-import-actions"><label><input id="bpmn-commit-confirm" type="checkbox" disabled> I explicitly confirm this bounded canonical commit</label><button type="button" id="commit-bpmn-review" disabled>Commit accepted supported candidates</button></div>
+        <p class="quiet-note">Unsupported candidate types remain in the report with <code>NO_CANONICAL_TARGET_V0_2_3</code>. Structural-error sources cannot be committed. All imported labels are rendered as text.</p>
+      </div>
+      <div class="metric-grid" id="mortgage-metrics" aria-live="polite"></div>
+      <div class="card mortgage-state-grid">
+        <div><span class="eyebrow">EVIDENCE STATE</span><strong id="mortgage-evidence-state">Not evaluated</strong><p class="quiet-note" id="mortgage-evidence-summary"></p></div>
+        <div><span class="eyebrow">FINANCIAL COMPARISON ROUTE</span><strong id="mortgage-review-route">Not evaluated</strong><p class="quiet-note">A comparison route is not approval, denial, eligibility, pricing, or a recommendation.</p></div>
+        <div><span class="eyebrow">AI / AUTHORITY STATE</span><strong id="mortgage-ai-state">Not evaluated</strong><p class="quiet-note" id="mortgage-authority-state"></p></div>
+      </div>
+      <div class="card"><div class="mortgage-card-heading"><div><span class="eyebrow">DETERMINISTIC TRACE</span><h3>Calculations and fictional policy comparisons</h3></div><button type="button" id="rerun-mortgage-demo" class="secondary">Re-run deterministic assessment</button></div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Metric</th><th>Calculated value</th><th>Input trace</th><th>Fictional policy</th><th>Comparison</th></tr></thead><tbody id="mortgage-policy-rows"></tbody></table></div></div>
+      <div class="card"><span class="eyebrow">ABSTENTION AND HUMAN REVIEW</span><h3>Unresolved evidence</h3><div id="mortgage-gap-list"></div></div>
+      <div class="card mortgage-integration-card">
+        <div class="mortgage-card-heading"><div><span class="eyebrow">INTEGRATED CONTROLLED EXECUTION</span><h3>ROI-EA → ERIR → FACEM → BACRM</h3><p class="quiet-note">The active synthetic case is evaluated across four distinct layers. ERIR retrieval, when available, verifies record return only; applicability and every accountable disposition remain unresolved until qualified review.</p></div><span class="status-pill" id="mortgage-integration-status">Not executed</span></div>
+        <div class="mortgage-import-actions"><button type="button" id="execute-mortgage-integration">Run integrated trace</button><button type="button" id="download-mortgage-trace" class="secondary" disabled>Download trace JSON</button></div>
+        <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Stage</th><th>Layer</th><th>Controlled input</th><th>Artifact and state</th><th>Boundary</th></tr></thead><tbody id="mortgage-integration-rows"><tr><td colspan="5" class="quiet-note">Run the integrated trace after loading or confirming the controlled case.</td></tr></tbody></table></div>
+        <div id="mortgage-integration-detail"><p class="quiet-note">No cross-layer execution artifact exists in this browser session.</p></div>
+      </div>
+      <div class="card"><span class="eyebrow">BACRM CAPABILITY ENVELOPE</span><h3 id="mortgage-capability-name">MERCA</h3><div class="mortgage-definition-grid" id="mortgage-capability-summary"></div></div>
+      <div class="card"><span class="eyebrow">ERIR / READ-ONLY SOURCE SEED</span><h3>Source candidates and unresolved applicability</h3><p class="quiet-note">These links identify source candidates. Their presence does not establish applicability, legal sufficiency, compliance, control effectiveness, or organizational authorization.</p><div class="table-scroll"><table class="evidence-table"><thead><tr><th>ID</th><th>Source</th><th>Instrument type</th><th>Status</th></tr></thead><tbody id="mortgage-erir-rows"></tbody></table></div></div>
+      <div class="card"><span class="eyebrow">SOURCE AND INTERPRETATION CONTROL</span><p><b>Fixture:</b> <span id="mortgage-source-name"></span></p><p><b>SHA-256:</b> <code id="mortgage-source-hash"></code></p><p class="mortgage-limit" id="mortgage-interpretation-limit"></p></div>
+    </section>
+
     <section id="dossier" class="view">
       <div class="section-heading"><div><span class="eyebrow">06 / EXECUTIVE DECISION DOSSIER</span><h2>Export a concise, evidence-aware decision package.</h2><p>The dossier records the current decision position. It must be reviewed by the named decision authority before any action is approved.</p></div><span class="status-pill" id="dossier-status">Needs inputs</span></div>
       <div class="card dossier-summary" id="dossier-summary"></div>
@@ -339,6 +432,7 @@
     <footer class="application-footer">© 2026 David C. Jones. All rights reserved. AI at Human Scale.</footer>
   </main>
   <div id="toast" role="status" aria-live="polite"></div>
+  <script src="demo-config.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

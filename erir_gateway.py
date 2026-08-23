@@ -45,6 +45,10 @@ ALLOWED_DRAFT_TYPES = {"subject_profile", "control", "evidence", "applicability_
 ID_PATTERN = re.compile(r"^[A-Z][A-Z0-9_-]{2,63}$")
 
 
+def allowed_browser_origins(port: int) -> set[str]:
+    return {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
+
+
 def now() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -186,18 +190,27 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
         print("[gateway] " + (format % args))
 
+    def _approved_browser_origin(self) -> str | None:
+        origin = self.headers.get("Origin")
+        return origin if origin in allowed_browser_origins(self.server.server_port) else None
+
     def _json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = json.dumps(payload, indent=2).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "null")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        origin = self._approved_browser_origin()
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
         self.wfile.write(body)
 
     def do_OPTIONS(self) -> None:
+        if not self._approved_browser_origin():
+            return self._json({"ok": False, "error": "Browser origin is not permitted."}, HTTPStatus.FORBIDDEN)
         self._json({"ok": True})
 
     def do_GET(self) -> None:
@@ -212,6 +225,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         if urlparse(self.path).path != "/api/v1/draft-packages":
             return self._json({"error": "Not found"}, HTTPStatus.NOT_FOUND)
+        if not self._approved_browser_origin():
+            return self._json({"accepted": False, "error": "Draft submission requires an approved local browser origin."}, HTTPStatus.FORBIDDEN)
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if length <= 0 or length > 1_000_000:

@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE bpmn:definitions [<!ENTITY synthetic "unsafe">]>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Defs_Entity" targetNamespace="https://www.aiathumanscale.com/synthetic/bpmn"><bpmn:process id="Process_Entity" name="&synthetic;"/></bpmn:definitions>

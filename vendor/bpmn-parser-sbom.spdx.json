@@ -1,0 +1,49 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "ROI-EA standards-aware BPMN parser bundle 0.1.0",
+  "documentNamespace": "https://www.aiathumanscale.com/spdx/roi-ea-bpmn-parser/0.1.0/2026-08-23",
+  "creationInfo": {
+    "created": "2026-08-23T12:00:00Z",
+    "creators": ["Organization: AI at Human Scale"]
+  },
+  "packages": [
+    {
+      "name": "roi-ea-bpmn-parser-bundle",
+      "SPDXID": "SPDXRef-Package-Bundle",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [{ "algorithm": "SHA256", "checksumValue": "9d77bba092d062d9e457a4430e17233473cd368ff16e4626eaf2fde70a5d45ce" }]
+    },
+    {
+      "name": "bpmn-moddle", "SPDXID": "SPDXRef-Package-bpmn-moddle", "versionInfo": "10.1.0", "downloadLocation": "https://registry.npmjs.org/bpmn-moddle/-/bpmn-moddle-10.1.0.tgz", "filesAnalyzed": false, "licenseConcluded": "MIT", "licenseDeclared": "MIT", "copyrightText": "NOASSERTION", "externalRefs": [{ "referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": "pkg:npm/bpmn-moddle@10.1.0" }]
+    },
+    {
+      "name": "moddle", "SPDXID": "SPDXRef-Package-moddle", "versionInfo": "8.2.1", "downloadLocation": "https://registry.npmjs.org/moddle/-/moddle-8.2.1.tgz", "filesAnalyzed": false, "licenseConcluded": "MIT", "licenseDeclared": "MIT", "copyrightText": "NOASSERTION", "externalRefs": [{ "referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": "pkg:npm/moddle@8.2.1" }]
+    },
+    {
+      "name": "moddle-xml", "SPDXID": "SPDXRef-Package-moddle-xml", "versionInfo": "12.1.0", "downloadLocation": "https://registry.npmjs.org/moddle-xml/-/moddle-xml-12.1.0.tgz", "filesAnalyzed": false, "licenseConcluded": "MIT", "licenseDeclared": "MIT", "copyrightText": "NOASSERTION", "externalRefs": [{ "referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": "pkg:npm/moddle-xml@12.1.0" }]
+    },
+    {
+      "name": "min-dash", "SPDXID": "SPDXRef-Package-min-dash", "versionInfo": "5.1.0", "downloadLocation": "https://registry.npmjs.org/min-dash/-/min-dash-5.1.0.tgz", "filesAnalyzed": false, "licenseConcluded": "MIT", "licenseDeclared": "MIT", "copyrightText": "NOASSERTION", "externalRefs": [{ "referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": "pkg:npm/min-dash@5.1.0" }]
+    },
+    {
+      "name": "saxen", "SPDXID": "SPDXRef-Package-saxen", "versionInfo": "11.1.1", "downloadLocation": "https://registry.npmjs.org/saxen/-/saxen-11.1.1.tgz", "filesAnalyzed": false, "licenseConcluded": "MIT", "licenseDeclared": "MIT", "copyrightText": "NOASSERTION", "externalRefs": [{ "referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": "pkg:npm/saxen@11.1.1" }]
+    }
+  ],
+  "relationships": [
+    { "spdxElementId": "SPDXRef-DOCUMENT", "relationshipType": "DESCRIBES", "relatedSpdxElement": "SPDXRef-Package-Bundle" },
+    { "spdxElementId": "SPDXRef-Package-Bundle", "relationshipType": "DEPENDS_ON", "relatedSpdxElement": "SPDXRef-Package-bpmn-moddle" },
+    { "spdxElementId": "SPDXRef-Package-bpmn-moddle", "relationshipType": "DEPENDS_ON", "relatedSpdxElement": "SPDXRef-Package-moddle" },
+    { "spdxElementId": "SPDXRef-Package-bpmn-moddle", "relationshipType": "DEPENDS_ON", "relatedSpdxElement": "SPDXRef-Package-moddle-xml" },
+    { "spdxElementId": "SPDXRef-Package-bpmn-moddle", "relationshipType": "DEPENDS_ON", "relatedSpdxElement": "SPDXRef-Package-min-dash" },
+    { "spdxElementId": "SPDXRef-Package-moddle", "relationshipType": "DEPENDS_ON", "relatedSpdxElement": "SPDXRef-Package-min-dash" },
+    { "spdxElementId": "SPDXRef-Package-moddle-xml", "relationshipType": "DEPENDS_ON", "relatedSpdxElement": "SPDXRef-Package-min-dash" },
+    { "spdxElementId": "SPDXRef-Package-moddle-xml", "relationshipType": "DEPENDS_ON", "relatedSpdxElement": "SPDXRef-Package-saxen" }
+  ]
+}

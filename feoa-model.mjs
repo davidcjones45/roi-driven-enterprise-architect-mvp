@@ -21,11 +21,15 @@ export function normalizeAssessment(raw={}, data={}){
 }
 export function assessmentReadiness(a,evidence=[]){ const refs=(a.evidenceIds||[]).map(x=>evidence.find(e=>e.id===x)).filter(Boolean); const gaps=[...(a.majorGapIds||[])]; if(!a.federationContext?.valueProposition) gaps.push('Federated value proposition is not stated.'); if(!a.participants?.length) gaps.push('No participant is recorded.'); if(!refs.length) gaps.push('No assessment evidence is linked.'); return {ready:a.readiness==='Ready'&&gaps.length===0,evidence:refs.map(normalizeEvidence),gaps:unique(gaps),nextAction:a.requiredNextAction||'Resolve material gaps before proceeding.'};
 }
-export function normalizeHandoff(raw={}){ const h={...raw,id:raw.id||id(raw.name||raw.purpose||'handoff','HOF')}; for(const [axis,states] of Object.entries(HANDOFF_STATES)) h[`${axis}State`]=states.includes(h[`${axis}State`])?h[`${axis}State`]:states[0]; return h; }
+export function normalizeHandoff(raw={}){ const h={...raw,id:raw.id||id(raw.name||raw.purpose||'handoff','HOF')}; for(const [axis,states] of Object.entries(HANDOFF_STATES)) h[`${axis}State`]=states.includes(h[`${axis}State`])?h[`${axis}State`]:states[0]; h.transmissionEventId=h.transmissionEventId||''; h.receiptEventId=h.receiptEventId||''; h.validationEventId=h.validationEventId||''; h.acceptanceEventId=h.acceptanceEventId||''; h.acceptingAuthorityId=h.acceptingAuthorityId||''; h.provenanceIds=unique(list(h.provenanceIds)); h.supersedesHandoffId=h.supersedesHandoffId||''; h.correctionReason=h.correctionReason||''; return h; }
 export function normalizeAction(raw={}){ return {...raw,id:raw.id||id(raw.name||raw.action||'action','ACT'),performer:raw.performer||'',decisionAuthority:raw.decisionAuthority||'',accountableOrganization:raw.accountableOrganization||'',residualAccountableOrganization:raw.residualAccountableOrganization||'',jurisdiction:raw.jurisdiction||'',aiEligibility:raw.aiEligibility||'Not assessed',authorityEnvelopeId:raw.authorityEnvelopeId||'',evidenceRequirementIds:unique(list(raw.evidenceRequirementIds)),constraintIds:unique(list(raw.constraintIds))}; }
 
 export const COST_POOL_TYPES=['Operating Cost','Implementation Cost','Technology Cost','Compliance Cost','Risk Cost','Internal Transfer'];
 export const CASES=['Case 0 — Current / Independent','Case 1 — Conventional Federation','Case 2 — AI-Enabled Federation'];
+export const SCENARIO_CASE_TYPES=['CURRENT','BEST_NON_FEDERATION','FEDERATION_NON_AI','FEDERATION_BOUNDED_AI','CUSTOM'];
+const legacyCaseType=caseName=>({
+  [CASES[0]]:'CURRENT', [CASES[1]]:'FEDERATION_NON_AI', [CASES[2]]:'FEDERATION_BOUNDED_AI',
+}[caseName]||'CUSTOM');
 
 export function normalizeBaselineMetric(raw={}){
   return {...raw,id:raw.id||id(raw.name||raw.metric||'baseline-metric','MET'),name:raw.name||raw.metric||'',value:Number(raw.value||0),unit:raw.unit||'',period:raw.period||'',sourceEvidenceIds:unique(list(raw.sourceEvidenceIds)),classification:EVIDENCE_CLASSIFICATIONS.includes(raw.classification)?raw.classification:'Reported'};
@@ -39,7 +43,15 @@ export function normalizeEconomicLine(raw={}){
 }
 export function normalizeCounterfactual(raw={}){
   const c={...raw,id:raw.id||id(raw.name||raw.case||'counterfactual','CASE')};
-  c.caseName=CASES.includes(c.caseName)?c.caseName:CASES[0]; c.status=c.status||'Draft'; c.economicLines=(c.economicLines||[]).map(normalizeEconomicLine); c.assumptionIds=unique(list(c.assumptionIds)); c.evidenceIds=unique(list(c.evidenceIds)); return c;
+  // Preserve legacy case names while allowing arbitrary, comparator-linked scenarios.
+  const hasExplicitType=SCENARIO_CASE_TYPES.includes(c.caseType);
+  const hasScenarioLabel=Boolean(c.caseName||c.name||c.case);
+  // An empty legacy record retains its pre-Increment-1 Case 0 normalization.
+  c.caseName=hasScenarioLabel?(c.caseName||c.name||c.case||''):(!hasExplicitType?CASES[0]:''); c.name=c.name||c.caseName||'';
+  c.caseType=SCENARIO_CASE_TYPES.includes(c.caseType)?c.caseType:legacyCaseType(c.caseName);
+  c.comparatorCaseId=c.comparatorCaseId||''; c.organizationalFormId=c.organizationalFormId||''; c.aiCapabilityId=c.aiCapabilityId||'';
+  c.status=c.status||'Draft'; c.flowIds=unique(list(c.flowIds)); c.benefitIds=unique(list(c.benefitIds)); c.costPoolIds=unique(list(c.costPoolIds));
+  c.economicLines=(c.economicLines||[]).map(normalizeEconomicLine); c.assumptionIds=unique(list(c.assumptionIds)); c.evidenceIds=unique(list(c.evidenceIds)); return c;
 }
 export function validateEconomicLine(line, metrics=[], evidence=[]){
   const issues=[];
