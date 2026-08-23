@@ -86,6 +86,7 @@ export async function mapBpmnToFeoaCandidates(model) {
       qualificationFlags,
       disposition: 'PENDING_REVIEW',
       reviewerNote: null,
+      reviewHistory: [],
     });
   }
   candidates.sort((left, right) => left.candidateId.localeCompare(right.candidateId));

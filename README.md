@@ -92,3 +92,6 @@ The mortgage surface also supports fail-closed, template-controlled XLSX ingesti
 The first BPMN ingestion test fixture is `assets/North-Star-Mortgage-Workflow-v0.1.bpmn`. The deliberately limited `AIHS-BPMN-SUBSET-V0.1` importer and bounded-AI candidate analysis are documented in `docs/NORTH_STAR_MORTGAGE_BPMN_FIXTURE.md`. They do not execute workflows, validate arbitrary BPMN, or confer process validity, compliance, effectiveness, approval, implementation status, or authority.
 
 The active controlled case can then produce a downloadable, nonpersistent ROI-EA → ERIR → FACEM → BACRM execution trace. Live ERIR record return is distinguished from applicability and compliance; FACEM retains authority/accountability boundaries; BACRM preserves abstention, manual fallback, suspension, and controlled recovery. Federation and bounded-AI value increments remain separately labeled and unquantified without measured evidence.
+# BPMN import extension status
+
+G4 adds a browser-local, standards-aware BPMN review workflow with append-only candidate dispositions, separately confirmed bounded canonicalization, and deterministic exports. See [BPMN_IMPORT_G4_READINESS.md](BPMN_IMPORT_G4_READINESS.md). The optional diagram viewer and independent release review remain deferred to G5.

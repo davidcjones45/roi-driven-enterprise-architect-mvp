@@ -71,6 +71,13 @@ export function assertNormalizedImportModel(model) {
     if (!candidate.candidateLabel || candidate.candidateLabel.length > 512) throw new TypeError(`Invalid mapping candidate label: ${candidate.candidateId}`);
     if (!Array.isArray(candidate.relatedSourceIds) || !Array.isArray(candidate.qualificationFlags) || new Set(candidate.qualificationFlags).size !== candidate.qualificationFlags.length) throw new TypeError(`Invalid mapping candidate qualifications: ${candidate.candidateId}`);
     if (!['PENDING_REVIEW', 'ACCEPTED', 'REJECTED', 'REVISED'].includes(candidate.disposition)) throw new TypeError(`Invalid mapping disposition: ${candidate.candidateId}`);
+    if (!Array.isArray(candidate.reviewHistory)) throw new TypeError(`Invalid mapping review history: ${candidate.candidateId}`);
+    let priorSequence = 0;
+    for (const entry of candidate.reviewHistory) {
+      if (!Number.isInteger(entry.sequence) || entry.sequence !== priorSequence + 1) throw new TypeError(`Invalid mapping review sequence: ${candidate.candidateId}`);
+      priorSequence = entry.sequence;
+      if (!['ACCEPT', 'REJECT', 'REVISE'].includes(entry.action) || !entry.reviewer || !entry.note || Number.isNaN(Date.parse(entry.reviewedAt))) throw new TypeError(`Invalid mapping review entry: ${candidate.candidateId}`);
+    }
     if (model.status === 'STAGED' && candidate.disposition !== 'PENDING_REVIEW') throw new TypeError(`Staged mapping candidate is not review-pending: ${candidate.candidateId}`);
   }
   return model;

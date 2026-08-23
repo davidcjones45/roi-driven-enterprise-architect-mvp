@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.aiathumanscale.com/schemas/roi-ea/bpmn-import-report-v0.1.schema.json",
+  "title": "ROI-EA BPMN Import Report v0.1",
+  "type": "object",
+  "required": ["reportProfile", "source", "parser", "importStatus", "inventory", "diagnostics", "mapping", "unresolved", "commit", "limitations"],
+  "properties": {
+    "reportProfile": { "const": "ROI-EA-BPMN-IMPORT-REPORT-V0.1" },
+    "source": { "type": "object" },
+    "parser": { "type": "object" },
+    "importStatus": { "enum": ["REJECTED", "STAGED", "REVIEWED_PARTIAL", "REVIEWED_COMPLETE"] },
+    "inventory": { "type": "object" },
+    "diagnostics": { "type": "object" },
+    "mapping": { "type": "object" },
+    "unresolved": { "type": "array" },
+    "commit": { "type": ["object", "null"] },
+    "limitations": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

@@ -7,6 +7,7 @@ import { evaluateMortgageCase } from './mortgage-model.mjs';
 import { importMortgageWorkbook } from './mortgage-import.mjs';
 import { executeMortgageIntegration, recordMortgageErirUnavailable, recordMortgageErirVerification } from './mortgage-integration.mjs';
 import { importMortgageBpmn, analyzeBoundedAiOpportunities } from './mortgage-bpmn.mjs';
+import { createBpmnReviewController } from './bpmn-review-ui.mjs';
 (() => {
   const KEY = 'roi-driven-enterprise-architect-mvp-v1';
   const blank = { opportunity:{}, evidence:[], inventory:[], baseline:{}, risk:{}, authorityEnvelope:{}, authorityEnvelopes:[], architecture:{alternatives:[]}, pilot:{}, results:{}, regulatory:{}, complianceCost:{assumptions:'',activities:[]}, feoa:{assessment:{},handoffs:[],actions:[],baselineMetrics:[],frictions:[],counterfactuals:[],risks:[],readiness:[],gates:[],cognitiveResilience:[],sensitivity:[],pilotObservations:[]} };
@@ -278,4 +279,9 @@ import { importMortgageBpmn, analyzeBoundedAiOpportunities } from './mortgage-bp
     });
   }
   wireForms(); wireEvidence(); wireInventory(); wireComplianceCost(); wireRegulatory(); wireAuthorityViews(); wireGlobal(); wireDemoPortfolio(); wireMortgageDemo(); renderAll();
+  createBpmnReviewController({
+    getWorkspace: () => data.feoa,
+    setWorkspace: (workspace) => { data.feoa = workspace; persist(); },
+    notify: toast,
+  });
 })();
