@@ -109,11 +109,15 @@
     "mappingCandidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["candidateId", "sourceId", "candidateType", "ruleId", "qualificationFlags", "disposition"],
+      "required": ["candidateId", "sourceId", "sourceSha256", "sourceBpmnType", "candidateType", "candidateLabel", "relatedSourceIds", "ruleId", "qualificationFlags", "disposition", "reviewerNote"],
       "properties": {
         "candidateId": { "$ref": "#/$defs/identifier" },
         "sourceId": { "$ref": "#/$defs/identifier" },
-        "candidateType": { "enum": ["PARTICIPANT", "EXTERNAL_PARTY", "VALUE_STREAM", "PROCESS_STEP", "HANDOFF", "ACTION", "DEPENDENCY", "EVIDENCE_GAP", "DECISION_POINT", "EXCEPTION_RECOVERY", "TECHNICAL_CAPABILITY"] },
+        "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "sourceBpmnType": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*:[A-Za-z_][A-Za-z0-9_.-]*$" },
+        "candidateType": { "enum": ["PARTICIPANT", "EXTERNAL_PARTY", "PERFORMER_ROLE", "VALUE_STREAM", "PROCESS_STEP", "TRANSITION", "HANDOFF", "ACTION", "DEPENDENCY", "EVIDENCE_GAP", "DECISION_POINT", "CONTROL_POINT", "EXCEPTION_RECOVERY", "TECHNICAL_CAPABILITY"] },
+        "candidateLabel": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "relatedSourceIds": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/identifier" } },
         "ruleId": { "type": "string", "pattern": "^BPMN-MAP-[0-9]{3}$" },
         "qualificationFlags": { "type": "array", "uniqueItems": true, "items": { "type": "string", "maxLength": 128 } },
         "disposition": { "enum": ["PENDING_REVIEW", "ACCEPTED", "REJECTED", "REVISED"] },

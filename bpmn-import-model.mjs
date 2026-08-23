@@ -9,6 +9,7 @@ export const BPMN_IMPORT_LIMITS = Object.freeze({
 });
 
 const DIAGNOSTIC_PATTERN = /^BPMN-[A-Z]+-[0-9]{3}$/;
+const CANDIDATE_TYPES = new Set(['PARTICIPANT', 'EXTERNAL_PARTY', 'PERFORMER_ROLE', 'VALUE_STREAM', 'PROCESS_STEP', 'TRANSITION', 'HANDOFF', 'ACTION', 'DEPENDENCY', 'EVIDENCE_GAP', 'DECISION_POINT', 'CONTROL_POINT', 'EXCEPTION_RECOVERY', 'TECHNICAL_CAPABILITY']);
 
 export function stableJson(value) {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
@@ -41,18 +42,36 @@ export function assertNormalizedImportModel(model) {
   if (!Array.isArray(model.elements) || model.elements.length > BPMN_IMPORT_LIMITS.maxElements) throw new TypeError('Invalid element inventory');
   if (!Array.isArray(model.relationships) || model.relationships.length > 20_000) throw new TypeError('Invalid relationship inventory');
   if (!Array.isArray(model.diagnostics) || model.diagnostics.length > BPMN_IMPORT_LIMITS.maxDiagnostics) throw new TypeError('Invalid diagnostics');
+  if (!Array.isArray(model.mappingCandidates) || model.mappingCandidates.length > BPMN_IMPORT_LIMITS.maxElements) throw new TypeError('Invalid mapping candidate inventory');
   if (!['REJECTED', 'STAGED', 'REVIEWED_PARTIAL', 'REVIEWED_COMPLETE'].includes(model.status)) throw new TypeError('Invalid import status');
 
   const ids = new Set();
+  const elementsById = new Map();
   for (const element of model.elements) {
     if (!element.sourceId || ids.has(element.sourceId)) throw new TypeError(`Duplicate normalized source ID: ${element.sourceId}`);
     ids.add(element.sourceId);
+    elementsById.set(element.sourceId, element);
     if (!String(element.bpmnType).startsWith('bpmn:') && !String(element.bpmnType).startsWith('bpmndi:') && !String(element.bpmnType).startsWith('di:') && !String(element.bpmnType).startsWith('dc:')) {
       if (element.supportState !== 'PRESERVED_UNMAPPED') throw new TypeError(`Unqualified element type: ${element.bpmnType}`);
     }
   }
   for (const diagnostic of model.diagnostics) {
     if (!DIAGNOSTIC_PATTERN.test(diagnostic.code)) throw new TypeError(`Invalid diagnostic code: ${diagnostic.code}`);
+  }
+  const candidateIds = new Set();
+  for (const candidate of model.mappingCandidates) {
+    if (!candidate.candidateId || candidateIds.has(candidate.candidateId)) throw new TypeError(`Duplicate mapping candidate ID: ${candidate.candidateId}`);
+    candidateIds.add(candidate.candidateId);
+    if (candidate.sourceSha256 !== model.source.sha256) throw new TypeError(`Mapping candidate source hash mismatch: ${candidate.candidateId}`);
+    const sourceElement = elementsById.get(candidate.sourceId);
+    if (!sourceElement) throw new TypeError(`Mapping candidate source element is missing: ${candidate.sourceId}`);
+    if (candidate.sourceBpmnType !== sourceElement.bpmnType) throw new TypeError(`Mapping candidate source type mismatch: ${candidate.candidateId}`);
+    if (!CANDIDATE_TYPES.has(candidate.candidateType)) throw new TypeError(`Invalid mapping candidate type: ${candidate.candidateId}`);
+    if (!/^BPMN-MAP-[0-9]{3}$/u.test(candidate.ruleId || '')) throw new TypeError(`Invalid mapping rule: ${candidate.candidateId}`);
+    if (!candidate.candidateLabel || candidate.candidateLabel.length > 512) throw new TypeError(`Invalid mapping candidate label: ${candidate.candidateId}`);
+    if (!Array.isArray(candidate.relatedSourceIds) || !Array.isArray(candidate.qualificationFlags) || new Set(candidate.qualificationFlags).size !== candidate.qualificationFlags.length) throw new TypeError(`Invalid mapping candidate qualifications: ${candidate.candidateId}`);
+    if (!['PENDING_REVIEW', 'ACCEPTED', 'REJECTED', 'REVISED'].includes(candidate.disposition)) throw new TypeError(`Invalid mapping disposition: ${candidate.candidateId}`);
+    if (model.status === 'STAGED' && candidate.disposition !== 'PENDING_REVIEW') throw new TypeError(`Staged mapping candidate is not review-pending: ${candidate.candidateId}`);
   }
   return model;
 }
