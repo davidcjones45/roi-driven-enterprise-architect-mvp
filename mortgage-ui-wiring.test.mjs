@@ -67,6 +67,12 @@ test('G4 BPMN review UI renders imported labels as text and never injects source
   assert.equal(/insertAdjacentHTML/u.test(ui),false);
 });
 
+test('BPMN diagram viewer retains its calculated native dimensions for readable scrolling',async()=>{
+  const [ui,css]=await Promise.all([read('bpmn-review-ui.mjs'),read('styles.css')]);
+  assert.match(ui,/viewBox: `0 0 \$\{diagram\.width\} \$\{diagram\.height\}`, width: diagram\.width, height: diagram\.height/u);
+  assert.match(css,/\.bpmn-diagram-canvas\{[^}]*overflow:auto/u);
+});
+
 test('the canonical render lifecycle initializes the mortgage demonstrator exactly once',async()=>{
   const app=await read('app.js');
   assert.equal((app.match(/function renderAll\(\)/g)||[]).length,1,'duplicate renderAll declarations can suppress mortgage initialization');

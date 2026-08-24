@@ -29,7 +29,7 @@ function renderDiagram(model, host, state) {
   state.textContent = diagram.layout === 'SOURCE_DI'
     ? 'Read-only source BPMN-DI coordinates are displayed. The diagram is not process execution or validation.'
     : 'Read-only deterministic layout is displayed because the staged source contains no usable BPMN-DI coordinates. The diagram is not process execution or validation.';
-  const drawing = svg('svg', { viewBox: `0 0 ${diagram.width} ${diagram.height}`, role: 'img', 'aria-label': `Read-only BPMN diagram for ${model.source.fileName}` });
+  const drawing = svg('svg', { viewBox: `0 0 ${diagram.width} ${diagram.height}`, width: diagram.width, height: diagram.height, role: 'img', 'aria-label': `Read-only BPMN diagram for ${model.source.fileName}` });
   const definitions = svg('defs'); const marker = svg('marker', { id: 'bpmn-diagram-arrow', markerWidth: 8, markerHeight: 8, refX: 7, refY: 4, orient: 'auto' }); marker.append(svg('path', { d: 'M0,0 L8,4 L0,8 Z', class: 'bpmn-diagram-arrowhead' })); definitions.append(marker); drawing.append(definitions);
   const nodes = new Map(diagram.nodes.map((node) => [node.id, node]));
   for (const edge of diagram.edges) { const source = nodes.get(edge.sourceId), target = nodes.get(edge.targetId); if (source && target) drawing.append(svg('line', { x1: source.x + source.width, y1: source.y + source.height / 2, x2: target.x, y2: target.y + target.height / 2, class: 'bpmn-diagram-edge', 'marker-end': 'url(#bpmn-diagram-arrow)' })); }
