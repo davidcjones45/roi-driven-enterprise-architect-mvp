@@ -29,36 +29,42 @@ function sequenceEdges(model) {
 function sourceBounds(model) {
   const elements = byId(model);
   const bounds = new Map();
+  const boundsByShape = new Map();
+  for (const relationship of model.relationships) {
+    if (relationship.kind !== 'CONTAINMENT') continue;
+    const value = elements.get(relationship.targetId);
+    if (value?.bpmnType !== 'dc:Bounds') continue;
+    const { x, y, width, height } = value.attributes || {};
+    const normalized = [x, y, width, height].map(Number);
+    if (normalized.every(Number.isFinite) && normalized[2] > 0 && normalized[3] > 0) boundsByShape.set(relationship.sourceId, { x: normalized[0], y: normalized[1], width: normalized[2], height: normalized[3] });
+  }
   for (const relationship of model.relationships) {
     if (relationship.kind !== 'DI_LINK') continue;
     const shape = elements.get(relationship.sourceId);
     if (shape?.bpmnType !== 'bpmndi:BPMNShape') continue;
-    const bound = model.relationships.find((candidate) => candidate.kind === 'CONTAINMENT' && candidate.sourceId === shape.sourceId && elements.get(candidate.targetId)?.bpmnType === 'dc:Bounds');
-    const value = bound && elements.get(bound.targetId)?.attributes;
-    if (!value) continue;
-    const x = Number(value.x), y = Number(value.y), width = Number(value.width), height = Number(value.height);
-    if ([x, y, width, height].every(Number.isFinite) && width > 0 && height > 0) bounds.set(relationship.targetId, { x, y, width, height });
+    const value = boundsByShape.get(shape.sourceId);
+    if (value) bounds.set(relationship.targetId, value);
   }
   return bounds;
 }
 
 function layout(nodes, edges, inputBounds) {
-  if (inputBounds.size) return { layout: 'SOURCE_DI', nodes: nodes.map((node) => ({ ...node, ...(inputBounds.get(node.id) || {}) })) };
+  if (nodes.length && nodes.every((node) => inputBounds.has(node.id))) return { layout: 'SOURCE_DI', nodes: nodes.map((node) => ({ ...node, ...inputBounds.get(node.id) })) };
   const outgoing = new Map(nodes.map((node) => [node.id, []]));
   const indegree = new Map(nodes.map((node) => [node.id, 0]));
   for (const edge of edges) if (outgoing.has(edge.sourceId) && indegree.has(edge.targetId)) { outgoing.get(edge.sourceId).push(edge.targetId); indegree.set(edge.targetId, indegree.get(edge.targetId) + 1); }
   const depth = new Map(nodes.map((node) => [node.id, 0]));
   const queue = nodes.filter((node) => indegree.get(node.id) === 0).map((node) => node.id).sort();
-  const ordered = [];
-  while (queue.length) {
-    const id = queue.shift(); ordered.push(id);
+  const ordered = new Set();
+  for (let cursor = 0; cursor < queue.length; cursor += 1) {
+    const id = queue[cursor]; ordered.add(id);
     for (const targetId of outgoing.get(id).sort()) {
       depth.set(targetId, Math.max(depth.get(targetId), depth.get(id) + 1));
       indegree.set(targetId, indegree.get(targetId) - 1);
-      if (indegree.get(targetId) === 0) { queue.push(targetId); queue.sort(); }
+      if (indegree.get(targetId) === 0) queue.push(targetId);
     }
   }
-  const cyclicIds = nodes.map((node) => node.id).filter((id) => !ordered.includes(id)).sort();
+  const cyclicIds = nodes.map((node) => node.id).filter((id) => !ordered.has(id)).sort();
   const finalDepth = Math.max(0, ...depth.values()) + 1;
   cyclicIds.forEach((id, index) => depth.set(id, finalDepth + index));
   const rows = new Map();
