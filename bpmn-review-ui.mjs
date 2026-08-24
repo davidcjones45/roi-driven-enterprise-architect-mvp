@@ -9,6 +9,7 @@ import { evaluateBpmnAssessmentIntake } from './bpmn-assessment-intake.mjs';
 import { assessBpmnHandoffs } from './bpmn-assessment-handoff.mjs';
 import { assessBpmnObligationsAndControls } from './bpmn-assessment-obligation-control.mjs';
 import { assessBpmnBoundedAiCandidates } from './bpmn-assessment-bounded-ai.mjs';
+import { buildBpmnAssessmentDossier } from './bpmn-assessment-dossier.mjs';
 
 function cell(row, value) { const td = document.createElement('td'); td.textContent = String(value ?? ''); row.append(td); return td; }
 function button(label, action, candidateId) { const item = document.createElement('button'); item.type = 'button'; item.textContent = label; item.dataset.bpmnReviewAction = action; item.dataset.candidateId = candidateId; return item; }
@@ -91,9 +92,25 @@ function renderBoundedAiAssessment(model, state, rows, reviewReferences) {
     const capability = assessment.capabilityCases.find((item) => item.sourceCandidateId === candidate.candidateId); cell(row, capability ? `${capability.finding.type}; ${capability.candidateSupport.taskState}; ${capability.accountableDisposition.state}` : 'No bounded-AI candidate proposed; non-AI path only.'); rows.append(row);
   }
 }
+function renderDossier(model, state, boundaryRows, riskRows, aiRows, hypothesisRows, context) {
+  if (!state || !boundaryRows || !riskRows || !aiRows || !hypothesisRows) return null;
+  for (const rows of [boundaryRows, riskRows, aiRows, hypothesisRows]) rows.replaceChildren();
+  if (!model) { state.textContent = 'Gate E is waiting for a controlled staged BPMN source.'; return null; }
+  const dossier = buildBpmnAssessmentDossier(model, context);
+  state.textContent = `${dossier.gateLabel}. ${dossier.findings.length} qualified finding${dossier.findings.length === 1 ? '' : 's'} retained; output is read-only and download-only.`;
+  for (const boundary of dossier.processBoundaryMap.boundaries) { const row = document.createElement('tr'); cell(row, boundary.sourceElementId); cell(row, boundary.sourceBpmnType); cell(row, boundary.sourceLabel || 'Unlabeled source boundary'); cell(row, boundary.qualification); boundaryRows.append(row); }
+  for (const handoff of dossier.processBoundaryMap.handoffs) { const row = document.createElement('tr'); cell(row, handoff.sourceMessageFlowId); cell(row, 'MODELED_HANDOFF'); cell(row, `${handoff.sender.participantId || handoff.sender.sourceElementId || 'Unresolved'} → ${handoff.intendedRecipient.participantId || handoff.intendedRecipient.sourceElementId || 'Unresolved'}`); cell(row, `${handoff.lifecycle.transmission}; acceptance ${handoff.lifecycle.accountableAcceptance}`); boundaryRows.append(row); }
+  for (const item of dossier.riskControlMatrix) { const row = document.createElement('tr'); cell(row, item.rowType); cell(row, item.sourceCandidateId); cell(row, item.referenceId); cell(row, item.assessmentState); cell(row, item.evidenceState || item.reviewState || item.requestedAction || 'QUALIFIED_REVIEW_REQUIRED'); riskRows.append(row); }
+  if (!dossier.riskControlMatrix.length) { const row = document.createElement('tr'); cell(row, 'No reviewer-supplied obligation/control references.').colSpan = 5; riskRows.append(row); }
+  for (const capability of dossier.boundedAiSuitability.case0AndCandidateCases) { const row = document.createElement('tr'); cell(row, capability.sourceCandidateId); cell(row, capability.taskType); cell(row, capability.case0.mode); cell(row, capability.candidateSupport.taskState); cell(row, capability.accountableDisposition.state); aiRows.append(row); }
+  if (!dossier.boundedAiSuitability.case0AndCandidateCases.length) { const row = document.createElement('tr'); cell(row, 'No bounded-AI candidate proposed; non-AI path only.').colSpan = 5; aiRows.append(row); }
+  for (const hypothesis of dossier.efficiencyHypotheses) { const row = document.createElement('tr'); cell(row, hypothesis.sourceCandidateId); cell(row, hypothesis.comparator); cell(row, hypothesis.assumptionSummary); cell(row, hypothesis.state); hypothesisRows.append(row); }
+  if (!dossier.efficiencyHypotheses.length) { const row = document.createElement('tr'); cell(row, 'No efficiency hypothesis is available without a fully bounded candidate and explicit assumptions.').colSpan = 4; hypothesisRows.append(row); }
+  return dossier;
+}
 
 export function createBpmnReviewController({ root = document, getWorkspace, setWorkspace, notify = () => {} }) {
-  let model = null, commitRecord = null, confirmationBinding = null, handoffReviewReferences = {}, obligationControlReviewReferences = {}, boundedAiReviewReferences = {};
+  let model = null, commitRecord = null, confirmationBinding = null, handoffReviewReferences = {}, obligationControlReviewReferences = {}, boundedAiReviewReferences = {}, currentDossier = null;
   const find = (selector) => root.querySelector(selector);
   const clearConfirmation = () => {
     confirmationBinding = null;
@@ -101,10 +118,10 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     if (confirmation) confirmation.checked = false;
   };
   const render = () => {
-    const state = find('#bpmn-review-state'), rows = find('#bpmn-review-candidates'), diagramHost = find('#bpmn-diagram-canvas'), diagramState = find('#bpmn-diagram-state'), intakeState = find('#bpmn-intake-state'), handoffState = find('#bpmn-handoff-state'), handoffRows = find('#bpmn-handoff-candidates'), obligationControlState = find('#bpmn-obligation-control-state'), obligationControlRows = find('#bpmn-obligation-control-candidates'), boundedAiState = find('#bpmn-bounded-ai-state'), boundedAiRows = find('#bpmn-bounded-ai-candidates');
+    const state = find('#bpmn-review-state'), rows = find('#bpmn-review-candidates'), diagramHost = find('#bpmn-diagram-canvas'), diagramState = find('#bpmn-diagram-state'), intakeState = find('#bpmn-intake-state'), handoffState = find('#bpmn-handoff-state'), handoffRows = find('#bpmn-handoff-candidates'), obligationControlState = find('#bpmn-obligation-control-state'), obligationControlRows = find('#bpmn-obligation-control-candidates'), boundedAiState = find('#bpmn-bounded-ai-state'), boundedAiRows = find('#bpmn-bounded-ai-candidates'), dossierState = find('#bpmn-dossier-state'), dossierBoundaries = find('#bpmn-dossier-boundaries'), dossierRiskControls = find('#bpmn-dossier-risk-controls'), dossierAi = find('#bpmn-dossier-ai'), dossierHypotheses = find('#bpmn-dossier-hypotheses');
     if (!state || !rows) return;
     rows.replaceChildren();
-    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); renderIntakeAssessment(null, intakeState, {}); renderHandoffAssessment(null, handoffState, handoffRows, {}); renderObligationControlAssessment(null, obligationControlState, obligationControlRows, {}); renderBoundedAiAssessment(null, boundedAiState, boundedAiRows, {}); return; }
+    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); renderIntakeAssessment(null, intakeState, {}); renderHandoffAssessment(null, handoffState, handoffRows, {}); renderObligationControlAssessment(null, obligationControlState, obligationControlRows, {}); renderBoundedAiAssessment(null, boundedAiState, boundedAiRows, {}); currentDossier = renderDossier(null, dossierState, dossierBoundaries, dossierRiskControls, dossierAi, dossierHypotheses, {}); return; }
     state.textContent = `${model.status}: ${model.elements.length} elements, ${model.mappingCandidates.length} candidates, ${model.diagnostics.length} diagnostics. Source ${model.source.sha256.slice(0, 16)}… remains modeled evidence.`;
     for (const candidate of model.mappingCandidates) {
       const row = document.createElement('tr');
@@ -127,6 +144,7 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     renderHandoffAssessment(model, handoffState, handoffRows, handoffReviewReferences);
     renderObligationControlAssessment(model, obligationControlState, obligationControlRows, obligationControlReviewReferences);
     renderBoundedAiAssessment(model, boundedAiState, boundedAiRows, boundedAiReviewReferences);
+    currentDossier = renderDossier(model, dossierState, dossierBoundaries, dossierRiskControls, dossierAi, dossierHypotheses, { intakeContext: { assessmentPurpose: find('#bpmn-assessment-purpose')?.value, customerEndUserScope: find('#bpmn-customer-scope')?.value }, handoffReferences: handoffReviewReferences, obligationControlReferences: obligationControlReviewReferences, boundedAiReferences: boundedAiReviewReferences });
   };
   const stage = async ({ fileName, data, mediaType = '' }) => {
     const parsed = await parseAndValidateBpmn({ fileName, data, mediaType, importedAt: new Date().toISOString() });
@@ -151,6 +169,7 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
   find('#bpmn-handoff-candidates')?.addEventListener('change', (event) => { const target = event.target.closest('[data-bpmn-handoff-field]'); if (!target) return; const existing = handoffReviewReferences[target.dataset.handoffId] || {}; handoffReviewReferences = { ...handoffReviewReferences, [target.dataset.handoffId]: { ...existing, [target.dataset.bpmnHandoffField]: target.value } }; render(); });
   find('#bpmn-obligation-control-candidates')?.addEventListener('change', (event) => { const target = event.target.closest('[data-bpmn-handoff-field]'); if (!target) return; const existing = obligationControlReviewReferences[target.dataset.handoffId] || {}; obligationControlReviewReferences = { ...obligationControlReviewReferences, [target.dataset.handoffId]: { ...existing, [target.dataset.bpmnHandoffField]: target.value } }; render(); });
   find('#bpmn-bounded-ai-candidates')?.addEventListener('change', (event) => { const target = event.target.closest('[data-bpmn-handoff-field]'); if (!target) return; const existing = boundedAiReviewReferences[target.dataset.handoffId] || {}; boundedAiReviewReferences = { ...boundedAiReviewReferences, [target.dataset.handoffId]: { ...existing, [target.dataset.bpmnHandoffField]: target.value } }; render(); });
+  find('#download-bpmn-dossier')?.addEventListener('click', () => { if (currentDossier) download('roi-ea-bpmn-qualified-dossier-v0.1.json', `${stableJson(currentDossier)}\n`); });
   find('#stage-reference-bpmn')?.addEventListener('click', async () => { try { const response = await fetch('assets/North-Star-Mortgage-Workflow-v0.1.bpmn'); if (!response.ok) throw new Error(`Reference BPMN returned ${response.status}.`); await stage({ fileName: 'North-Star-Mortgage-Workflow-v0.1.bpmn', data: await response.arrayBuffer(), mediaType: 'application/bpmn+xml' }); notify('Reference BPMN staged for human review.'); } catch (error) { notify(`BPMN rejected: ${error.message}`); } });
   render();
   return { stage, getModel: () => model, getCommitRecord: () => commitRecord };
