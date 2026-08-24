@@ -34,6 +34,9 @@ test('mortgage reference demo is exposed as a read-only governed surface',async(
     ,'id="bpmn-obligation-control-state"'
     ,'id="bpmn-obligation-control-candidates"'
     ,'Gate C — qualified obligation/control assessment'
+    ,'id="bpmn-bounded-ai-state"'
+    ,'id="bpmn-bounded-ai-candidates"'
+    ,'Gate D — non-AI baseline and bounded support assessment'
     ,'Gate B — qualified handoff assessment'
   ]) assert.ok(html.includes(expected),expected);
   for(const expected of [
@@ -50,6 +53,7 @@ test('mortgage reference demo is exposed as a read-only governed surface',async(
   assert.ok((await read('bpmn-review-ui.mjs')).includes("from './bpmn-assessment-intake.mjs'"));
   assert.ok((await read('bpmn-review-ui.mjs')).includes("from './bpmn-assessment-handoff.mjs'"));
   assert.ok((await read('bpmn-review-ui.mjs')).includes("from './bpmn-assessment-obligation-control.mjs'"));
+  assert.ok((await read('bpmn-review-ui.mjs')).includes("from './bpmn-assessment-bounded-ai.mjs'"));
 });
 
 test('mortgage demo contains no editable case-entry controls or decision actions',async()=>{

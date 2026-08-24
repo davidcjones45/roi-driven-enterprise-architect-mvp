@@ -8,6 +8,7 @@ import { buildBpmnDiagramView } from './bpmn-diagram.mjs';
 import { evaluateBpmnAssessmentIntake } from './bpmn-assessment-intake.mjs';
 import { assessBpmnHandoffs } from './bpmn-assessment-handoff.mjs';
 import { assessBpmnObligationsAndControls } from './bpmn-assessment-obligation-control.mjs';
+import { assessBpmnBoundedAiCandidates } from './bpmn-assessment-bounded-ai.mjs';
 
 function cell(row, value) { const td = document.createElement('td'); td.textContent = String(value ?? ''); row.append(td); return td; }
 function button(label, action, candidateId) { const item = document.createElement('button'); item.type = 'button'; item.textContent = label; item.dataset.bpmnReviewAction = action; item.dataset.candidateId = candidateId; return item; }
@@ -77,9 +78,22 @@ function renderObligationControlAssessment(model, state, rows, reviewReferences)
     const candidateGaps = assessment.gaps.filter((item) => item.sourceCandidateId === candidate.candidateId); cell(row, candidateGaps.map((item) => item.type).join('; ') || 'Review references supplied; qualified review required.'); rows.append(row);
   }
 }
+function renderBoundedAiAssessment(model, state, rows, reviewReferences) {
+  if (!state || !rows) return;
+  rows.replaceChildren();
+  if (!model) { state.textContent = 'Gate D is waiting for a controlled staged BPMN source.'; return; }
+  const assessment = assessBpmnBoundedAiCandidates(model, reviewReferences);
+  state.textContent = `${assessment.gateLabel}. ${assessment.findings.length} qualified finding${assessment.findings.length === 1 ? '' : 's'}; support candidates abstain when safeguards are unresolved and always require human disposition.`;
+  for (const candidate of (model.mappingCandidates || [])) {
+    const row = document.createElement('tr'); const supplied = reviewReferences[candidate.candidateId] || {};
+    cell(row, candidate.sourceId); cell(row, candidate.candidateType);
+    const proposal = cell(row, ''); proposal.append(document.createTextNode('Task type'), inputForHandoff(supplied.taskType || '', 'taskType', candidate.candidateId, `Bounded support task type for ${candidate.sourceId}`), document.createElement('br'), document.createTextNode('Case 0 / non-AI baseline'), inputForHandoff(supplied.nonAiBaseline || '', 'nonAiBaseline', candidate.candidateId, `Non-AI baseline for ${candidate.sourceId}`), document.createElement('br'), document.createTextNode('Permitted inputs'), inputForHandoff(supplied.permittedInputSummary || '', 'permittedInputSummary', candidate.candidateId, `Permitted inputs for ${candidate.sourceId}`), document.createElement('br'), document.createTextNode('Output'), inputForHandoff(supplied.outputSummary || '', 'outputSummary', candidate.candidateId, `Bounded output for ${candidate.sourceId}`), document.createElement('br'), document.createTextNode('Abstention'), inputForHandoff(supplied.abstentionConditions || '', 'abstentionConditions', candidate.candidateId, `Abstention conditions for ${candidate.sourceId}`), document.createElement('br'), document.createTextNode('Manual fallback'), inputForHandoff(supplied.fallback || '', 'fallback', candidate.candidateId, `Manual fallback for ${candidate.sourceId}`), document.createElement('br'), document.createTextNode('Accountable reviewer'), inputForHandoff(supplied.accountableReviewer || '', 'accountableReviewer', candidate.candidateId, `Accountable reviewer for ${candidate.sourceId}`), document.createElement('br'), document.createTextNode('Assumptions'), inputForHandoff(supplied.assumptionSummary || '', 'assumptionSummary', candidate.candidateId, `Assumptions for ${candidate.sourceId}`));
+    const capability = assessment.capabilityCases.find((item) => item.sourceCandidateId === candidate.candidateId); cell(row, capability ? `${capability.finding.type}; ${capability.candidateSupport.taskState}; ${capability.accountableDisposition.state}` : 'No bounded-AI candidate proposed; non-AI path only.'); rows.append(row);
+  }
+}
 
 export function createBpmnReviewController({ root = document, getWorkspace, setWorkspace, notify = () => {} }) {
-  let model = null, commitRecord = null, confirmationBinding = null, handoffReviewReferences = {}, obligationControlReviewReferences = {};
+  let model = null, commitRecord = null, confirmationBinding = null, handoffReviewReferences = {}, obligationControlReviewReferences = {}, boundedAiReviewReferences = {};
   const find = (selector) => root.querySelector(selector);
   const clearConfirmation = () => {
     confirmationBinding = null;
@@ -87,10 +101,10 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     if (confirmation) confirmation.checked = false;
   };
   const render = () => {
-    const state = find('#bpmn-review-state'), rows = find('#bpmn-review-candidates'), diagramHost = find('#bpmn-diagram-canvas'), diagramState = find('#bpmn-diagram-state'), intakeState = find('#bpmn-intake-state'), handoffState = find('#bpmn-handoff-state'), handoffRows = find('#bpmn-handoff-candidates'), obligationControlState = find('#bpmn-obligation-control-state'), obligationControlRows = find('#bpmn-obligation-control-candidates');
+    const state = find('#bpmn-review-state'), rows = find('#bpmn-review-candidates'), diagramHost = find('#bpmn-diagram-canvas'), diagramState = find('#bpmn-diagram-state'), intakeState = find('#bpmn-intake-state'), handoffState = find('#bpmn-handoff-state'), handoffRows = find('#bpmn-handoff-candidates'), obligationControlState = find('#bpmn-obligation-control-state'), obligationControlRows = find('#bpmn-obligation-control-candidates'), boundedAiState = find('#bpmn-bounded-ai-state'), boundedAiRows = find('#bpmn-bounded-ai-candidates');
     if (!state || !rows) return;
     rows.replaceChildren();
-    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); renderIntakeAssessment(null, intakeState, {}); renderHandoffAssessment(null, handoffState, handoffRows, {}); renderObligationControlAssessment(null, obligationControlState, obligationControlRows, {}); return; }
+    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); renderIntakeAssessment(null, intakeState, {}); renderHandoffAssessment(null, handoffState, handoffRows, {}); renderObligationControlAssessment(null, obligationControlState, obligationControlRows, {}); renderBoundedAiAssessment(null, boundedAiState, boundedAiRows, {}); return; }
     state.textContent = `${model.status}: ${model.elements.length} elements, ${model.mappingCandidates.length} candidates, ${model.diagnostics.length} diagnostics. Source ${model.source.sha256.slice(0, 16)}… remains modeled evidence.`;
     for (const candidate of model.mappingCandidates) {
       const row = document.createElement('tr');
@@ -112,10 +126,11 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     renderIntakeAssessment(model, intakeState, { assessmentPurpose: find('#bpmn-assessment-purpose')?.value, customerEndUserScope: find('#bpmn-customer-scope')?.value });
     renderHandoffAssessment(model, handoffState, handoffRows, handoffReviewReferences);
     renderObligationControlAssessment(model, obligationControlState, obligationControlRows, obligationControlReviewReferences);
+    renderBoundedAiAssessment(model, boundedAiState, boundedAiRows, boundedAiReviewReferences);
   };
   const stage = async ({ fileName, data, mediaType = '' }) => {
     const parsed = await parseAndValidateBpmn({ fileName, data, mediaType, importedAt: new Date().toISOString() });
-    model = await mapBpmnToFeoaCandidates(parsed); commitRecord = null; handoffReviewReferences = {}; obligationControlReviewReferences = {}; clearConfirmation(); render(); return model;
+    model = await mapBpmnToFeoaCandidates(parsed); commitRecord = null; handoffReviewReferences = {}; obligationControlReviewReferences = {}; boundedAiReviewReferences = {}; clearConfirmation(); render(); return model;
   };
   const review = (candidateId, action) => {
     const reviewer = find('#bpmn-reviewer')?.value || '', note = find('#bpmn-review-note')?.value || '';
@@ -135,6 +150,7 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
   for (const selector of ['#bpmn-assessment-purpose', '#bpmn-customer-scope']) find(selector)?.addEventListener('input', render);
   find('#bpmn-handoff-candidates')?.addEventListener('change', (event) => { const target = event.target.closest('[data-bpmn-handoff-field]'); if (!target) return; const existing = handoffReviewReferences[target.dataset.handoffId] || {}; handoffReviewReferences = { ...handoffReviewReferences, [target.dataset.handoffId]: { ...existing, [target.dataset.bpmnHandoffField]: target.value } }; render(); });
   find('#bpmn-obligation-control-candidates')?.addEventListener('change', (event) => { const target = event.target.closest('[data-bpmn-handoff-field]'); if (!target) return; const existing = obligationControlReviewReferences[target.dataset.handoffId] || {}; obligationControlReviewReferences = { ...obligationControlReviewReferences, [target.dataset.handoffId]: { ...existing, [target.dataset.bpmnHandoffField]: target.value } }; render(); });
+  find('#bpmn-bounded-ai-candidates')?.addEventListener('change', (event) => { const target = event.target.closest('[data-bpmn-handoff-field]'); if (!target) return; const existing = boundedAiReviewReferences[target.dataset.handoffId] || {}; boundedAiReviewReferences = { ...boundedAiReviewReferences, [target.dataset.handoffId]: { ...existing, [target.dataset.bpmnHandoffField]: target.value } }; render(); });
   find('#stage-reference-bpmn')?.addEventListener('click', async () => { try { const response = await fetch('assets/North-Star-Mortgage-Workflow-v0.1.bpmn'); if (!response.ok) throw new Error(`Reference BPMN returned ${response.status}.`); await stage({ fileName: 'North-Star-Mortgage-Workflow-v0.1.bpmn', data: await response.arrayBuffer(), mediaType: 'application/bpmn+xml' }); notify('Reference BPMN staged for human review.'); } catch (error) { notify(`BPMN rejected: ${error.message}`); } });
   render();
   return { stage, getModel: () => model, getCommitRecord: () => commitRecord };
