@@ -29,6 +29,9 @@ test('mortgage reference demo is exposed as a read-only governed surface',async(
     ,'id="bpmn-assessment-purpose"'
     ,'id="bpmn-customer-scope"'
     ,'id="bpmn-intake-state"'
+    ,'id="bpmn-handoff-state"'
+    ,'id="bpmn-handoff-candidates"'
+    ,'Gate B — qualified handoff assessment'
   ]) assert.ok(html.includes(expected),expected);
   for(const expected of [
     "from './mortgage-fixture.mjs'",
@@ -42,6 +45,7 @@ test('mortgage reference demo is exposed as a read-only governed surface',async(
     'wireMortgageDemo'
   ]) assert.ok(app.includes(expected),expected);
   assert.ok((await read('bpmn-review-ui.mjs')).includes("from './bpmn-assessment-intake.mjs'"));
+  assert.ok((await read('bpmn-review-ui.mjs')).includes("from './bpmn-assessment-handoff.mjs'"));
 });
 
 test('mortgage demo contains no editable case-entry controls or decision actions',async()=>{

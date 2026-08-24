@@ -6,6 +6,7 @@ import { exportBpmnImportReport } from './bpmn-import-report.mjs';
 import { BPMN_IMPORT_LIMITS, stableJson } from './bpmn-import-model.mjs';
 import { buildBpmnDiagramView } from './bpmn-diagram.mjs';
 import { evaluateBpmnAssessmentIntake } from './bpmn-assessment-intake.mjs';
+import { assessBpmnHandoffs } from './bpmn-assessment-handoff.mjs';
 
 function cell(row, value) { const td = document.createElement('td'); td.textContent = String(value ?? ''); row.append(td); return td; }
 function button(label, action, candidateId) { const item = document.createElement('button'); item.type = 'button'; item.textContent = label; item.dataset.bpmnReviewAction = action; item.dataset.candidateId = candidateId; return item; }
@@ -43,9 +44,28 @@ function renderIntakeAssessment(model, state, context) {
   const assessment = evaluateBpmnAssessmentIntake(model, context);
   state.textContent = `${assessment.gateLabel}. ${assessment.findings.length} qualified finding${assessment.findings.length === 1 ? '' : 's'}; no authority, compliance, or implementation conclusion is created.`;
 }
+function inputForHandoff(value, field, handoffId, label) {
+  const input = document.createElement('input'); input.type = 'text'; input.maxLength = 512; input.value = value; input.dataset.bpmnHandoffField = field; input.dataset.handoffId = handoffId; input.setAttribute('aria-label', label); return input;
+}
+function renderHandoffAssessment(model, state, rows, reviewReferences) {
+  if (!state || !rows) return;
+  rows.replaceChildren();
+  if (!model) { state.textContent = 'Gate B is waiting for a controlled staged BPMN source.'; return; }
+  const assessment = assessBpmnHandoffs(model, reviewReferences);
+  state.textContent = `${assessment.gateLabel}. ${assessment.findings.length} qualified finding${assessment.findings.length === 1 ? '' : 's'}; references remain unverified and do not create authority, receipt, validation, or acceptance.`;
+  if (!assessment.handoffs.length) { const row = document.createElement('tr'); cell(row, 'No explicit message-flow handoff is represented in the staged source.').colSpan = 5; rows.append(row); return; }
+  for (const handoff of assessment.handoffs) {
+    const row = document.createElement('tr');
+    cell(row, handoff.sourceMessageFlowId);
+    cell(row, `${handoff.sender.participantId || handoff.sender.sourceElementId || 'Unresolved sender'} → ${handoff.intendedRecipient.participantId || handoff.intendedRecipient.sourceElementId || 'Unresolved recipient'}`);
+    cell(row, `${handoff.lifecycle.transmission}; receipt ${handoff.lifecycle.receipt}; validation ${handoff.lifecycle.validation}; acceptance ${handoff.lifecycle.accountableAcceptance}`);
+    const references = cell(row, ''); const supplied = reviewReferences[handoff.id] || {}; references.append(document.createTextNode('Authority reference'), inputForHandoff(supplied.authorityEnvelopeId || '', 'authorityEnvelopeId', handoff.id, `Authority reference for ${handoff.sourceMessageFlowId}`), document.createElement('br'), document.createTextNode('Evidence references'), inputForHandoff(supplied.evidenceRequirementIds || '', 'evidenceRequirementIds', handoff.id, `Evidence references for ${handoff.sourceMessageFlowId}`));
+    cell(row, handoff.findings.map((item) => item.type).join('; ') || 'No unresolved source/link condition'); rows.append(row);
+  }
+}
 
 export function createBpmnReviewController({ root = document, getWorkspace, setWorkspace, notify = () => {} }) {
-  let model = null, commitRecord = null, confirmationBinding = null;
+  let model = null, commitRecord = null, confirmationBinding = null, handoffReviewReferences = {};
   const find = (selector) => root.querySelector(selector);
   const clearConfirmation = () => {
     confirmationBinding = null;
@@ -53,10 +73,10 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     if (confirmation) confirmation.checked = false;
   };
   const render = () => {
-    const state = find('#bpmn-review-state'), rows = find('#bpmn-review-candidates'), diagramHost = find('#bpmn-diagram-canvas'), diagramState = find('#bpmn-diagram-state'), intakeState = find('#bpmn-intake-state');
+    const state = find('#bpmn-review-state'), rows = find('#bpmn-review-candidates'), diagramHost = find('#bpmn-diagram-canvas'), diagramState = find('#bpmn-diagram-state'), intakeState = find('#bpmn-intake-state'), handoffState = find('#bpmn-handoff-state'), handoffRows = find('#bpmn-handoff-candidates');
     if (!state || !rows) return;
     rows.replaceChildren();
-    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); renderIntakeAssessment(null, intakeState, {}); return; }
+    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); renderIntakeAssessment(null, intakeState, {}); renderHandoffAssessment(null, handoffState, handoffRows, {}); return; }
     state.textContent = `${model.status}: ${model.elements.length} elements, ${model.mappingCandidates.length} candidates, ${model.diagnostics.length} diagnostics. Source ${model.source.sha256.slice(0, 16)}… remains modeled evidence.`;
     for (const candidate of model.mappingCandidates) {
       const row = document.createElement('tr');
@@ -76,10 +96,11 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     if (confirmation) confirmation.disabled = model.status !== 'REVIEWED_COMPLETE';
     renderDiagram(model, diagramHost, diagramState);
     renderIntakeAssessment(model, intakeState, { assessmentPurpose: find('#bpmn-assessment-purpose')?.value, customerEndUserScope: find('#bpmn-customer-scope')?.value });
+    renderHandoffAssessment(model, handoffState, handoffRows, handoffReviewReferences);
   };
   const stage = async ({ fileName, data, mediaType = '' }) => {
     const parsed = await parseAndValidateBpmn({ fileName, data, mediaType, importedAt: new Date().toISOString() });
-    model = await mapBpmnToFeoaCandidates(parsed); commitRecord = null; clearConfirmation(); render(); return model;
+    model = await mapBpmnToFeoaCandidates(parsed); commitRecord = null; handoffReviewReferences = {}; clearConfirmation(); render(); return model;
   };
   const review = (candidateId, action) => {
     const reviewer = find('#bpmn-reviewer')?.value || '', note = find('#bpmn-review-note')?.value || '';
@@ -97,6 +118,7 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
   find('#download-bpmn-normalized')?.addEventListener('click', () => { if (model) download('roi-ea-bpmn-normalized-v0.1.json', `${stableJson(model)}\n`); });
   find('#bpmn-standards-input')?.addEventListener('change', async (event) => { const file = event.target.files?.[0]; if (!file) return; try { if (file.size > BPMN_IMPORT_LIMITS.maxBytes) throw new Error(`BPMN source exceeds the ${BPMN_IMPORT_LIMITS.maxBytes}-byte controlled limit.`); await stage({ fileName: file.name, data: await file.arrayBuffer(), mediaType: file.type }); notify('BPMN parsed, validated, and staged for human review.'); } catch (error) { notify(`BPMN rejected: ${error.message}`); } finally { event.target.value = ''; } });
   for (const selector of ['#bpmn-assessment-purpose', '#bpmn-customer-scope']) find(selector)?.addEventListener('input', render);
+  find('#bpmn-handoff-candidates')?.addEventListener('change', (event) => { const target = event.target.closest('[data-bpmn-handoff-field]'); if (!target) return; const existing = handoffReviewReferences[target.dataset.handoffId] || {}; handoffReviewReferences = { ...handoffReviewReferences, [target.dataset.handoffId]: { ...existing, [target.dataset.bpmnHandoffField]: target.value } }; render(); });
   find('#stage-reference-bpmn')?.addEventListener('click', async () => { try { const response = await fetch('assets/North-Star-Mortgage-Workflow-v0.1.bpmn'); if (!response.ok) throw new Error(`Reference BPMN returned ${response.status}.`); await stage({ fileName: 'North-Star-Mortgage-Workflow-v0.1.bpmn', data: await response.arrayBuffer(), mediaType: 'application/bpmn+xml' }); notify('Reference BPMN staged for human review.'); } catch (error) { notify(`BPMN rejected: ${error.message}`); } });
   render();
   return { stage, getModel: () => model, getCommitRecord: () => commitRecord };
