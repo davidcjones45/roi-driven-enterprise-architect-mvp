@@ -5,6 +5,7 @@ import { bpmnCommitConfirmationBinding, commitAcceptedBpmnCandidates } from './b
 import { exportBpmnImportReport } from './bpmn-import-report.mjs';
 import { BPMN_IMPORT_LIMITS, stableJson } from './bpmn-import-model.mjs';
 import { buildBpmnDiagramView } from './bpmn-diagram.mjs';
+import { evaluateBpmnAssessmentIntake } from './bpmn-assessment-intake.mjs';
 
 function cell(row, value) { const td = document.createElement('td'); td.textContent = String(value ?? ''); row.append(td); return td; }
 function button(label, action, candidateId) { const item = document.createElement('button'); item.type = 'button'; item.textContent = label; item.dataset.bpmnReviewAction = action; item.dataset.candidateId = candidateId; return item; }
@@ -36,6 +37,12 @@ function renderDiagram(model, host, state) {
   for (const node of diagram.nodes) { drawing.append(nodeShape(node)); label(drawing, node); }
   host.append(drawing);
 }
+function renderIntakeAssessment(model, state, context) {
+  if (!state) return;
+  if (!model) { state.textContent = 'Gate A is waiting for a staged BPMN source and explicit reviewer context.'; return; }
+  const assessment = evaluateBpmnAssessmentIntake(model, context);
+  state.textContent = `${assessment.gateLabel}. ${assessment.findings.length} qualified finding${assessment.findings.length === 1 ? '' : 's'}; no authority, compliance, or implementation conclusion is created.`;
+}
 
 export function createBpmnReviewController({ root = document, getWorkspace, setWorkspace, notify = () => {} }) {
   let model = null, commitRecord = null, confirmationBinding = null;
@@ -46,10 +53,10 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     if (confirmation) confirmation.checked = false;
   };
   const render = () => {
-    const state = find('#bpmn-review-state'), rows = find('#bpmn-review-candidates'), diagramHost = find('#bpmn-diagram-canvas'), diagramState = find('#bpmn-diagram-state');
+    const state = find('#bpmn-review-state'), rows = find('#bpmn-review-candidates'), diagramHost = find('#bpmn-diagram-canvas'), diagramState = find('#bpmn-diagram-state'), intakeState = find('#bpmn-intake-state');
     if (!state || !rows) return;
     rows.replaceChildren();
-    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); return; }
+    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); renderIntakeAssessment(null, intakeState, {}); return; }
     state.textContent = `${model.status}: ${model.elements.length} elements, ${model.mappingCandidates.length} candidates, ${model.diagnostics.length} diagnostics. Source ${model.source.sha256.slice(0, 16)}… remains modeled evidence.`;
     for (const candidate of model.mappingCandidates) {
       const row = document.createElement('tr');
@@ -68,6 +75,7 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     const confirmation = find('#bpmn-commit-confirm');
     if (confirmation) confirmation.disabled = model.status !== 'REVIEWED_COMPLETE';
     renderDiagram(model, diagramHost, diagramState);
+    renderIntakeAssessment(model, intakeState, { assessmentPurpose: find('#bpmn-assessment-purpose')?.value, customerEndUserScope: find('#bpmn-customer-scope')?.value });
   };
   const stage = async ({ fileName, data, mediaType = '' }) => {
     const parsed = await parseAndValidateBpmn({ fileName, data, mediaType, importedAt: new Date().toISOString() });
@@ -88,6 +96,7 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
   find('#download-bpmn-report')?.addEventListener('click', () => { if (model) download('roi-ea-bpmn-import-report-v0.1.json', exportBpmnImportReport(model, commitRecord)); });
   find('#download-bpmn-normalized')?.addEventListener('click', () => { if (model) download('roi-ea-bpmn-normalized-v0.1.json', `${stableJson(model)}\n`); });
   find('#bpmn-standards-input')?.addEventListener('change', async (event) => { const file = event.target.files?.[0]; if (!file) return; try { if (file.size > BPMN_IMPORT_LIMITS.maxBytes) throw new Error(`BPMN source exceeds the ${BPMN_IMPORT_LIMITS.maxBytes}-byte controlled limit.`); await stage({ fileName: file.name, data: await file.arrayBuffer(), mediaType: file.type }); notify('BPMN parsed, validated, and staged for human review.'); } catch (error) { notify(`BPMN rejected: ${error.message}`); } finally { event.target.value = ''; } });
+  for (const selector of ['#bpmn-assessment-purpose', '#bpmn-customer-scope']) find(selector)?.addEventListener('input', render);
   find('#stage-reference-bpmn')?.addEventListener('click', async () => { try { const response = await fetch('assets/North-Star-Mortgage-Workflow-v0.1.bpmn'); if (!response.ok) throw new Error(`Reference BPMN returned ${response.status}.`); await stage({ fileName: 'North-Star-Mortgage-Workflow-v0.1.bpmn', data: await response.arrayBuffer(), mediaType: 'application/bpmn+xml' }); notify('Reference BPMN staged for human review.'); } catch (error) { notify(`BPMN rejected: ${error.message}`); } });
   render();
   return { stage, getModel: () => model, getCommitRecord: () => commitRecord };
