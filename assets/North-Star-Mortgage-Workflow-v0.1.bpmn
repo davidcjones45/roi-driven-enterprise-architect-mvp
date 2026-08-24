@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  xmlns:aihs="https://www.aiathumanscale.com/ns/bounded-ai/1.0"
+  id="Definitions_NorthStarMortgage_v0_1"
+  targetNamespace="https://www.aiathumanscale.com/bpmn/north-star-mortgage/v0.1"
+  exporter="AI at Human Scale"
+  exporterVersion="0.1">
+  <bpmn:process id="Process_NorthStarMortgage" name="North Star Mortgage Evidence Review" isExecutable="false">
+    <bpmn:documentation>Synthetic analytical fixture. It does not represent any bank's operating process and cannot approve, deny, price, determine eligibility, issue a notice, or create authority.</bpmn:documentation>
+
+    <bpmn:startEvent id="Start_ApplicationReceived" name="Synthetic application received" />
+    <bpmn:userTask id="Task_ConfirmPermittedUse" name="Confirm permitted purpose and data" />
+    <bpmn:serviceTask id="Task_CheckEvidence" name="Check evidence readiness"
+      aihs:aiCandidate="bounded-support" aihs:purpose="evidence-gap detection" aihs:authority="none" />
+    <bpmn:exclusiveGateway id="Gateway_EvidenceComplete" name="Required evidence complete?" />
+    <bpmn:userTask id="Task_RequestEvidence" name="Request and review additional evidence" />
+    <bpmn:serviceTask id="Task_CalculateMeasures" name="Calculate controlled financial measures"
+      aihs:aiCandidate="bounded-support" aihs:purpose="deterministic calculation" aihs:authority="none" />
+    <bpmn:businessRuleTask id="Task_ComparePolicy" name="Compare with fictional policy bands"
+      aihs:aiCandidate="bounded-support" aihs:purpose="traceable comparison" aihs:authority="none" />
+    <bpmn:serviceTask id="Task_PrepareReviewTrace" name="Prepare evidence and calculation trace"
+      aihs:aiCandidate="bounded-support" aihs:purpose="trace preparation" aihs:authority="none" />
+    <bpmn:userTask id="Task_QualifiedReview" name="Conduct qualified human review" />
+    <bpmn:exclusiveGateway id="Gateway_AuthorizedDisposition" name="Authorized disposition recorded?" />
+    <bpmn:userTask id="Task_RecordDisposition" name="Record accountable disposition outside advisory capability" />
+    <bpmn:endEvent id="End_AwaitingEvidence" name="Awaiting evidence; no credit decision" />
+    <bpmn:endEvent id="End_AwaitingDisposition" name="Awaiting authorized disposition; no machine decision" />
+    <bpmn:endEvent id="End_DispositionRecorded" name="Accountable disposition recorded" />
+
+    <bpmn:sequenceFlow id="Flow_01" sourceRef="Start_ApplicationReceived" targetRef="Task_ConfirmPermittedUse" />
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="Task_ConfirmPermittedUse" targetRef="Task_CheckEvidence" />
+    <bpmn:sequenceFlow id="Flow_03" sourceRef="Task_CheckEvidence" targetRef="Gateway_EvidenceComplete" />
+    <bpmn:sequenceFlow id="Flow_04" name="No" sourceRef="Gateway_EvidenceComplete" targetRef="Task_RequestEvidence" />
+    <bpmn:sequenceFlow id="Flow_05" sourceRef="Task_RequestEvidence" targetRef="End_AwaitingEvidence" />
+    <bpmn:sequenceFlow id="Flow_06" name="Yes" sourceRef="Gateway_EvidenceComplete" targetRef="Task_CalculateMeasures" />
+    <bpmn:sequenceFlow id="Flow_07" sourceRef="Task_CalculateMeasures" targetRef="Task_ComparePolicy" />
+    <bpmn:sequenceFlow id="Flow_08" sourceRef="Task_ComparePolicy" targetRef="Task_PrepareReviewTrace" />
+    <bpmn:sequenceFlow id="Flow_09" sourceRef="Task_PrepareReviewTrace" targetRef="Task_QualifiedReview" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Task_QualifiedReview" targetRef="Gateway_AuthorizedDisposition" />
+    <bpmn:sequenceFlow id="Flow_11" name="No" sourceRef="Gateway_AuthorizedDisposition" targetRef="End_AwaitingDisposition" />
+    <bpmn:sequenceFlow id="Flow_12" name="Yes" sourceRef="Gateway_AuthorizedDisposition" targetRef="Task_RecordDisposition" />
+    <bpmn:sequenceFlow id="Flow_13" sourceRef="Task_RecordDisposition" targetRef="End_DispositionRecorded" />
+  </bpmn:process>
+</bpmn:definitions>

@@ -1,0 +1,3 @@
+# BPMN fixture manifests hash exact source bytes; preserve them across Windows checkouts.
+bpmn-fixtures/*.bpmn -text
+bpmn-fixtures/*.xml -text
