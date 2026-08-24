@@ -24,6 +24,8 @@ test('mortgage reference demo is exposed as a read-only governed surface',async(
     ,'without executing the workflow'
     ,'id="bpmn-standards-review"'
     ,'id="commit-bpmn-review"'
+    ,'id="bpmn-diagram-canvas"'
+    ,'Read-only source visualization'
   ]) assert.ok(html.includes(expected),expected);
   for(const expected of [
     "from './mortgage-fixture.mjs'",
@@ -60,7 +62,7 @@ test('legacy BPMN surface remains analytical while G4 adds explicit human review
 
 test('G4 BPMN review UI renders imported labels as text and never injects source HTML',async()=>{
   const ui=await read('bpmn-review-ui.mjs');
-  for(const expected of ['textContent','replaceChildren','reviewBpmnCandidate','commitAcceptedBpmnCandidates','exportBpmnImportReport']) assert.ok(ui.includes(expected),expected);
+  for(const expected of ['textContent','replaceChildren','reviewBpmnCandidate','commitAcceptedBpmnCandidates','exportBpmnImportReport','buildBpmnDiagramView','createElementNS']) assert.ok(ui.includes(expected),expected);
   assert.equal(/innerHTML\s*=/u.test(ui),false);
   assert.equal(/insertAdjacentHTML/u.test(ui),false);
 });
