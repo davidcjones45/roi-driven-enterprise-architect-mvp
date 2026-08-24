@@ -10,31 +10,36 @@
 <body>
   <aside class="sidebar">
     <div class="brand"><span class="eyebrow">AI AT HUMAN SCALE</span><strong>ROI-Driven<br>Enterprise Architect</strong></div>
+    <div class="workspace-switcher" role="group" aria-label="Select workspace">
+      <button type="button" class="workspace-select active" data-workspace-select="roi">ROI-EA assessment</button>
+      <button type="button" class="workspace-select" data-workspace-select="federated">Federated Enterprise</button>
+      <button type="button" class="workspace-select" data-workspace-select="mortgage">Mortgage reference</button>
+    </div>
     <nav aria-label="Workflow">
-      <button class="nav-link active" data-view="overview"><span>01</span> Decision workspace</button>
-      <button class="nav-link" data-view="opportunity"><span>02</span> Opportunity</button>
-      <button class="nav-link" data-view="evidence"><span>03</span> Evidence register</button>
-      <button class="nav-link" data-view="inventory"><span>04</span> Architecture inventory</button>
-      <button class="nav-link" data-view="baseline"><span>05</span> ROI baseline</button>
-      <button class="nav-link" data-view="risk"><span>06</span> Agentic risk</button>
-      <button class="nav-link" data-view="authority"><span>07</span> Authority envelope</button>
-      <button class="nav-link" data-view="authority-portfolio"><span>07a</span> Authority portfolio</button>
-      <button class="nav-link" data-view="architecture"><span>08</span> Architecture decision</button>
-      <button class="nav-link" data-view="pilot"><span>08</span> Pilot charter</button>
-      <button class="nav-link" data-view="results"><span>09</span> Pilot review</button>
-      <button class="nav-link" data-view="regulatory"><span>10</span> Regulatory context</button>
-      <button class="nav-link" data-view="compliance-cost"><span>11</span> Compliance cost &amp; capacity</button>
-      <button class="nav-link" data-view="feoa"><span>F</span> FEOA workbench</button>
-      <button class="nav-link" data-view="federated"><span>FE</span> Federated Enterprise</button>
-      <button class="nav-link" data-view="mortgage-demo"><span>M</span> Mortgage reference demo</button>
-      <button class="nav-link" data-view="dossier"><span>12</span> Executive dossier</button>
+      <button class="nav-link active" data-workspace="roi" data-view="overview"><span>01</span> Decision workspace</button>
+      <button class="nav-link" data-workspace="roi" data-view="opportunity"><span>02</span> Opportunity</button>
+      <button class="nav-link" data-workspace="roi" data-view="evidence"><span>03</span> Evidence register</button>
+      <button class="nav-link" data-workspace="roi" data-view="inventory"><span>04</span> Architecture inventory</button>
+      <button class="nav-link" data-workspace="roi" data-view="baseline"><span>05</span> ROI baseline</button>
+      <button class="nav-link" data-workspace="roi" data-view="risk"><span>06</span> Agentic risk</button>
+      <button class="nav-link" data-workspace="roi" data-view="authority"><span>07</span> Authority envelope</button>
+      <button class="nav-link" data-workspace="roi" data-view="authority-portfolio"><span>07a</span> Authority portfolio</button>
+      <button class="nav-link" data-workspace="roi" data-view="architecture"><span>08</span> Architecture decision</button>
+      <button class="nav-link" data-workspace="roi" data-view="pilot"><span>08</span> Pilot charter</button>
+      <button class="nav-link" data-workspace="roi" data-view="results"><span>09</span> Pilot review</button>
+      <button class="nav-link" data-workspace="roi" data-view="regulatory"><span>10</span> Regulatory context</button>
+      <button class="nav-link" data-workspace="roi" data-view="compliance-cost"><span>11</span> Compliance cost &amp; capacity</button>
+      <button class="nav-link" data-workspace="federated" data-view="feoa"><span>F</span> FEOA workbench</button>
+      <button class="nav-link" data-workspace="federated" data-view="federated"><span>FE</span> Federated Enterprise</button>
+      <button class="nav-link" data-workspace="mortgage" data-view="mortgage-demo"><span>M</span> Mortgage reference demo</button>
+      <button class="nav-link" data-workspace="roi" data-view="dossier"><span>12</span> Executive dossier</button>
     </nav>
     <div class="sidebar-note">Design-partner MVP<br><small>Stored in this browser only.</small><small class="copyright-notice">© 2026 David C. Jones. All rights reserved.<br>AI at Human Scale.</small></div>
   </aside>
 
   <main>
     <header class="topbar">
-      <div><span class="eyebrow">MAKE THE NEXT DECISION VISIBLE</span><h1 id="page-title">Decision workspace</h1></div>
+      <div><span class="eyebrow">MAKE THE NEXT DECISION VISIBLE</span><h1 id="page-title">Decision workspace</h1><p class="workspace-context"><strong id="workspace-decision">Define a bounded, accountable decision.</strong><span id="workspace-boundary">Evidence, authority, and results remain distinct.</span></p></div>
       <div class="topbar-actions"><button id="load-demo" class="secondary">Load Northstar example</button><button id="reset-data" class="secondary danger">Reset local data</button></div>
     </header>
 

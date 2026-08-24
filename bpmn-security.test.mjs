@@ -6,6 +6,7 @@ import { importBpmnXml, inspectXmlSafety } from './bpmn-parser-adapter.mjs';
 import { BPMN_IMPORT_LIMITS } from './bpmn-import-model.mjs';
 
 const load = (name) => fs.readFile(new URL(`./bpmn-fixtures/${name}`, import.meta.url));
+const canonicalFixtureBytes = (bytes) => Buffer.from(bytes.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
 
 async function rejectsFixture(name, code) {
   const data = await load(name);
@@ -57,10 +58,16 @@ test('XML scanner enforces comment and trailing-text value limits', () => {
   assert.throws(() => inspectXmlSafety(`<a/>${'x'.repeat(BPMN_IMPORT_LIMITS.maxValueLength + 1)}`), (error) => error.code === 'BPMN-SEC-006');
 });
 
-test('fixture manifest hashes match every retained synthetic fixture', async () => {
+test('fixture manifest hashes match every retained synthetic fixture in canonical LF form', async () => {
   const manifest = JSON.parse(await fs.readFile(new URL('./bpmn-fixtures/manifest.json', import.meta.url), 'utf8'));
   for (const fixture of manifest.fixtures) {
     const bytes = await load(fixture.file);
-    assert.equal(createHash('sha256').update(bytes).digest('hex'), fixture.sha256, fixture.file);
+    assert.equal(createHash('sha256').update(canonicalFixtureBytes(bytes)).digest('hex'), fixture.sha256, fixture.file);
   }
+});
+
+test('fixture manifest identity is invariant to Windows line-ending checkout conversion', async () => {
+  const bytes = await load('choreography-deferred.bpmn');
+  const windowsBytes = Buffer.from(canonicalFixtureBytes(bytes).toString('utf8').replace(/\n/g, '\r\n'), 'utf8');
+  assert.equal(createHash('sha256').update(canonicalFixtureBytes(windowsBytes)).digest('hex'), createHash('sha256').update(canonicalFixtureBytes(bytes)).digest('hex'));
 });
