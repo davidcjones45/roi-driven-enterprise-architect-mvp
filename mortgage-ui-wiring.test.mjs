@@ -26,6 +26,9 @@ test('mortgage reference demo is exposed as a read-only governed surface',async(
     ,'id="commit-bpmn-review"'
     ,'id="bpmn-diagram-canvas"'
     ,'Read-only source visualization'
+    ,'id="bpmn-assessment-purpose"'
+    ,'id="bpmn-customer-scope"'
+    ,'id="bpmn-intake-state"'
   ]) assert.ok(html.includes(expected),expected);
   for(const expected of [
     "from './mortgage-fixture.mjs'",
@@ -38,6 +41,7 @@ test('mortgage reference demo is exposed as a read-only governed surface',async(
     'renderMortgageIntegration',
     'wireMortgageDemo'
   ]) assert.ok(app.includes(expected),expected);
+  assert.ok((await read('bpmn-review-ui.mjs')).includes("from './bpmn-assessment-intake.mjs'"));
 });
 
 test('mortgage demo contains no editable case-entry controls or decision actions',async()=>{
@@ -46,7 +50,7 @@ test('mortgage demo contains no editable case-entry controls or decision actions
   assert.ok(section,'mortgage demo section');
   assert.equal(/<(textarea|select)\b/i.test(section),false);
   const inputs=[...section.matchAll(/<input\b([^>]*)>/gi)].map(match=>match[1]);
-  assert.deepEqual(inputs.map(attributes=>attributes.match(/type="([^"]+)"/i)?.[1]),['file','file','file','text','text','checkbox']);
+  assert.deepEqual(inputs.map(attributes=>attributes.match(/type="([^"]+)"/i)?.[1]),['file','file','file','text','text','text','text','checkbox']);
   assert.equal(/>\s*(approve|deny|price|waive)\s*</i.test(section),false);
 });
 

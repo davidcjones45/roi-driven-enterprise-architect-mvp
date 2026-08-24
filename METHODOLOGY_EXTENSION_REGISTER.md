@@ -1,5 +1,17 @@
 # Methodology Extension Register
 
+## BPMN-MOA-001 — Multi-organization process assessment relationship
+
+- **Date:** 2026-08-24
+- **Source:** BPMN multi-organization assessment design package
+- **Affected modules:** Candidate BPMN assessment layer; prospective FEOA/Authority/Evidence references
+- **Finding type:** Proposed representational extension
+- **Description:** Controlled BPMN intake preserves source notation, provenance, review, bounded candidate mapping, and visualization. It does not yet represent first-class, source-linked candidate objects for cross-organization boundaries, handoffs, information boundaries, dependencies, customer touchpoints, qualified obligation/control assessments, unresolved gaps, or bounded-AI suitability.
+- **Evidence:** `BPMN_MULTI_ORGANIZATION_ASSESSMENT_EXTENSION_V0.1.md`
+- **Severity:** Non-blocking / material for future BPMN assessment capability
+- **Proposed disposition:** Design and separately review a candidate assessment layer. Retain the distinctions among performer, authority, accountable organization, evidence, permission, commitment, dependency, and control. Do not infer legal applicability, compliance, violation, operating authorization, realized benefit, or AI decision authority from BPMN notation or mappings.
+- **Status:** Proposed design; no implementation authorized by this entry.
+
 ## NSI-001 — Multi-year economic calculation relationship
 
 - **Date:** 2026-08-20
