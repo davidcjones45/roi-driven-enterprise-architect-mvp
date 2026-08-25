@@ -40,11 +40,12 @@
   <main>
     <header class="topbar">
       <div><span class="eyebrow">MAKE THE NEXT DECISION VISIBLE</span><h1 id="page-title">Decision workspace</h1><p class="workspace-context"><strong id="workspace-decision">Define a bounded, accountable decision.</strong><span id="workspace-boundary">Evidence, authority, and results remain distinct.</span></p></div>
-      <div class="topbar-actions"><button id="load-demo" class="secondary">Load Northstar example</button><button id="reset-data" class="secondary danger">Reset local data</button></div>
+      <div class="topbar-actions"><span id="guided-demo-status" class="guided-demo-status" aria-live="polite">Optional guided tour</span><button id="guided-demo-next" class="secondary" hidden>Next guided step</button><button id="load-demo" class="secondary">Load Northstar example</button><button id="reset-data" class="secondary danger">Reset local data</button></div>
     </header>
 
     <section id="overview" class="view active">
       <div class="hero"><div><span class="eyebrow accent">PAID DESIGN-PARTNER WORKFLOW</span><h2>Turn a costly work problem into an accountable, bounded AI decision.</h2><p>This MVP captures the minimum facts required to decide whether to proceed: a defined opportunity, economic baseline, agentic-risk boundary, architecture choice, pilot charter, and executive-ready dossier.</p></div><div class="hero-status"><span id="readiness-label">Draft</span><strong id="readiness-score">0 / 6</strong><small>decision components complete</small></div></div>
+      <section class="guided-demo card" id="guided-demo-card" aria-live="polite"></section>
       <div class="card-grid" id="progress-cards"></div>
       <section class="card"><div class="section-heading"><div><span class="eyebrow">WORKING RULES</span><h2>Evidence before enthusiasm</h2></div></div><ul class="rule-list"><li>Forecast value is not realized value.</li><li>Risk reduction, cost avoidance, and released capacity require explicit evidence and owners.</li><li>Agentic recommendations do not replace named human authority.</li><li>Exported dossiers are decision-support documents, not legal, security, or financial approval.</li></ul></section>
     </section>
