@@ -13,6 +13,7 @@
     <div class="workspace-switcher" role="group" aria-label="Select workspace">
       <button type="button" class="workspace-select active" data-workspace-select="roi">ROI-EA assessment</button>
       <button type="button" class="workspace-select" data-workspace-select="federated">Federated Enterprise</button>
+      <button type="button" class="workspace-select" data-workspace-select="community-banking">Community Banking</button>
       <button type="button" class="workspace-select" data-workspace-select="mortgage">Mortgage reference</button>
       <button type="button" class="workspace-select" data-workspace-select="consulting" id="consulting-workspace-switch" hidden>Consulting engagements</button>
     </div>
@@ -32,6 +33,7 @@
       <button class="nav-link" data-workspace="roi" data-view="compliance-cost"><span>12</span> Compliance cost &amp; capacity</button>
       <button class="nav-link" data-workspace="federated" data-view="feoa"><span>F</span> FEOA workbench</button>
       <button class="nav-link" data-workspace="federated" data-view="federated"><span>FE</span> Federated Enterprise</button>
+      <button class="nav-link" data-workspace="community-banking" data-view="community-banking"><span>CB</span> Community Banking reference</button>
       <button class="nav-link" data-workspace="mortgage" data-view="mortgage-demo"><span>M</span> Mortgage reference demo</button>
       <button class="nav-link" data-workspace="roi" data-view="dossier"><span>13</span> Executive dossier</button>
       <button class="nav-link" data-workspace="consulting" data-view="engagements" hidden><span>C</span> Engagement workspace</button>
@@ -57,7 +59,7 @@
       <section class="guided-demo card" id="guided-demo-card" aria-live="polite"></section>
       <section class="reference-case-orientation card" aria-labelledby="reference-case-title">
         <span class="eyebrow">REFERENCE-CASE ORIENTATION</span>
-        <h2 id="reference-case-title">Three synthetic demonstrators, three different purposes</h2>
+        <h2 id="reference-case-title">Four synthetic demonstrators, four different purposes</h2>
         <p class="quiet-note">Use the example that fits the question you want to inspect. Each remains illustrative and does not establish a real-world result, authority, compliance determination, or implementation.</p>
         <div class="reference-case-grid">
           <article class="reference-case">
@@ -69,6 +71,11 @@
             <h3>Federated Healthcare method example</h3>
             <p>A synthetic/modelled FOFA, MCVSM, FACEM, and BACRM method case. It is not a real federation, clinical determination, legal conclusion, or implementation.</p>
             <button type="button" class="secondary" data-reference-workspace="federated" data-reference-view="federated">Open federated example</button>
+          </article>
+          <article class="reference-case">
+            <h3>Community Banking form-assessment example</h3>
+            <p>A synthetic fixture for comparing possible shared forms and preserving bank-local accountability. No form, economics, authority, applicability, or implementation is selected.</p>
+            <button type="button" class="secondary" data-reference-workspace="community-banking" data-reference-view="community-banking">Open Community Banking example</button>
           </article>
           <article class="reference-case">
             <h3>Mortgage regulatory-control example</h3>
@@ -368,6 +375,14 @@
       <details class="card advanced-disclosure" id="feoa-advanced-entry"><summary><span><span class="eyebrow">ADVANCED TECHNICAL ENTRY</span><strong>Canonical workspace records and JSON entry</strong></span><span class="advanced-disclosure-hint">Expand for architect-led record entry</span></summary><div class="advanced-disclosure-content form-grid"><div class="full"><p class="quiet-note">Each panel in the FEOA workbench reads from the same persisted assessment workspace. Use the synthetic healthcare fixture to explore the complete workflow, or add a record with the selected canonical collection. This technical entry does not create an approval, authority, or result.</p></div><label>Workspace surface<select id="feoa-record-type"><option value="participants">Participants &amp; value propositions</option><option value="capabilities">Capabilities</option><option value="valueStreams">Value streams</option><option value="processSteps">Process steps</option><option value="handoffs">Handoffs</option><option value="actions">Consequential actions</option><option value="constraints">Authority / evidence / constraints</option><option value="metrics">Baseline metrics</option><option value="frictions">Friction</option><option value="counterfactuals">Counterfactual cases</option><option value="economicFlows">Economic flows</option><option value="riskAdjustments">Risk adjustments</option><option value="participantEconomicCases">Participant deal viability</option><option value="readinessGaps">Technical &amp; operational readiness</option><option value="gates">Gate decisions</option><option value="aiCases">AI capability cases</option><option value="cognitiveResilience">Cognitive resilience</option><option value="sensitivities">Sensitivity / breakpoints</option><option value="pilotMeasurements">Pilot evidence &amp; variance</option></select></label><label class="full">Record JSON<textarea id="feoa-record-json" rows="6" aria-label="FEOA record JSON">{"name":"New record"}</textarea></label><div class="form-actions full"><button type="button" id="add-feoa-record">Add FEOA record</button><button type="button" id="load-feoa-healthcare" class="secondary">Load synthetic healthcare acceptance case</button><button type="button" id="generate-feoa-reports" class="secondary">Generate seven report instances</button></div></div></details>
       <div class="card"><h3>Assessment views and reusable records</h3><div class="table-wrap"><table><thead><tr><th>View</th><th>Primary FEOA concern</th><th>Existing ROI-EA / ERIR source of truth</th></tr></thead><tbody><tr><td>Participants &amp; allocation</td><td>Creation, capture, allocation, and internal transfers</td><td>FEOA participant and economic-line records</td></tr><tr><td>Operating handoffs</td><td>Communication, responsibility, authority, accountability</td><td>FEOA actions/handoffs + Authority Envelope</td></tr><tr><td>Authority, evidence &amp; constraints</td><td>Valid evidence is not authorization</td><td>Authority Envelope, Evidence register, ERIR links</td></tr><tr><td>Baseline, friction &amp; economics</td><td>Case 0 / 1 / 2, consolidated and risk-adjusted value</td><td>ROI baseline, Architecture alternatives, FEOA counterfactuals</td></tr><tr><td>Readiness, gates &amp; pilot</td><td>Decision-proportional evidence and reversible learning</td><td>Risk, Pilot/Results, FEOA gates and observations</td></tr><tr><td>AI &amp; Cognitive Resilience</td><td>Optional performer capability and durable human fallback</td><td>Authority Envelope, FEOA AI case and resilience records</td></tr></tbody></table></div></div>
       <div class="card" id="feoa-summary" aria-live="polite"></div>
+    </section>
+    <section id="community-banking" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FCB-NS-001 / SYNTHETIC COMMUNITY BANKING REFERENCE</span><h2 id="community-banking-name">Community Banking reference</h2><p id="community-banking-boundary" class="quiet-note"></p></div><span class="status-pill">Synthetic / unresolved</span></div>
+      <div class="federated-caveat" role="note"><strong>Decision boundary:</strong> No operating form has been selected. Economics, authority, regulatory applicability, and implementation remain unresolved.</div>
+      <div class="card executive-summary"><h3>Controlled decision question</h3><p id="community-banking-question"></p><p class="quiet-note">The fixture distinguishes shared support from bank-local applicability, policy interpretation, approval, residual-risk acceptance, implementation authorization, and formal compliance representation.</p></div>
+      <div class="federated-columns"><div class="card compact-card"><h3>Five candidate banks</h3><ul id="community-banking-participants"></ul></div><div class="card compact-card"><h3>Four governed dependencies</h3><ul id="community-banking-dependencies"></ul></div></div>
+      <div class="federated-columns"><div class="card compact-card"><h3>Eight unranked form alternatives</h3><ul id="community-banking-forms"></ul></div><div class="card compact-card"><h3>Illustrative operating path</h3><ol id="community-banking-process"></ol></div></div>
+      <details class="card advanced-disclosure"><summary><span><strong>View unresolved decision criteria and evidence controls</strong></span><span class="advanced-disclosure-hint">No weights, scores, or selection</span></summary><div class="advanced-disclosure-content"><p id="community-banking-review-summary" class="quiet-note"></p><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Criterion ID</th><th>Decision criterion</th><th>Weight / state</th></tr></thead><tbody id="community-banking-criteria"></tbody></table></div><p class="quiet-note"><strong>Handoff control:</strong> transmission is not receipt, validation, or acceptance; preliminary relevance is not bank-local applicability; and evidence is not authority.</p></div></details>
     </section>
 
     <section id="federated" class="view">
