@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { FCB_NS_001, communityBankingFixture } from './community-banking-fixture.mjs';
 import { validateDependencyMembershipSeparation } from './federated-facem-model.mjs';
+import { validateAlternativeRatingCoverage, validateCriteriaWeights } from './federated-fofa-mcvsm-model.mjs';
 
 const fixture = () => communityBankingFixture();
 
@@ -36,7 +37,7 @@ test('FCB-I1-05 retains eight explicitly identified form alternatives', () => {
 test('FCB-I1-06 leaves every form alternative unselected and unranked', () => {
   const w = fixture();
   assert.equal(w.formDecisions.length, 0);
-  assert.equal(w.alternativeRatings.length, 0);
+  assert.ok(w.alternativeRatings.every(item => item.rating === '' && item.reviewStatus === 'Unresolved'));
 });
 
 test('FCB-I1-07 retains twelve decision criteria with unresolved weights', () => {
@@ -82,11 +83,53 @@ test('Community Banking fixture contains no authority-envelope artifact', () => 
   assert.equal((w.authorityEnvelopes || []).length, 0);
 });
 
+test('FCB-I2-01 supplies exactly one unresolved comparator input for every form and criterion relationship', () => {
+  const w = fixture();
+  assert.equal(w.alternativeRatings.length, w.formAlternatives.length * w.decisionCriteria.length);
+  const coverage = validateAlternativeRatingCoverage(w.formAlternatives, w.decisionCriteria, w.alternativeRatings);
+  assert.equal(coverage.valid, true);
+  assert.deepEqual(coverage.duplicateRatingRelationships, []);
+  assert.deepEqual(coverage.unresolvedRatingIds, []);
+});
+
+test('FCB-I2-02 comparator input identities are stable natural-key relationships, not array-position labels', () => {
+  const first = fixture().alternativeRatings.map(item => ({ id: item.id, alternativeId: item.alternativeId, criterionId: item.criterionId }));
+  const second = fixture().alternativeRatings.map(item => ({ id: item.id, alternativeId: item.alternativeId, criterionId: item.criterionId }));
+  assert.deepEqual(first, second);
+  assert.equal(new Set(first.map(item => item.id)).size, first.length);
+  assert.ok(first.every(item => item.alternativeId && item.criterionId));
+});
+
+test('FCB-I2-03 comparator inputs remain unscored, unreviewed, and unsupported by assumed evidence', () => {
+  const w = fixture();
+  assert.ok(w.alternativeRatings.every(item => item.inputType === 'Controlled comparator input'
+    && item.rating === '' && item.confidence === '' && item.reviewerId === ''
+    && item.assumptionId === '' && item.evidenceIds.length === 0 && item.reviewStatus === 'Unresolved'));
+});
+
+test('FCB-I2-04 blocks analytical comparison inputs from becoming a ranking or selected form', () => {
+  const w = fixture();
+  const weights = validateCriteriaWeights(w.decisionCriteria);
+  assert.equal(weights.valid, false);
+  assert.equal(weights.missingWeightIds.length, 12);
+  assert.equal(w.formDecisions.length, 0);
+  assert.ok(w.formAlternatives.every(item => item.status === 'Candidate / unresolved'));
+});
+
+test('FCB-I2-05 adds no economic, AI, authority, membership, or implementation record', () => {
+  const w = fixture();
+  assert.equal(w.counterfactuals.length + w.economicFlows.length + w.participantEconomicCases.length + w.riskAdjustments.length, 0);
+  assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length, 0);
+  assert.equal(w.membershipEvents.length + (w.authorityEnvelopes || []).length, 0);
+});
+
 test('Community Banking reference UI remains a separate synthetic, unresolved workspace', () => {
   const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
   const app = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
   assert.match(html, /data-workspace-select="community-banking"/);
   assert.match(html, /No operating form has been selected\. Economics, authority, regulatory applicability, and implementation remain unresolved\./);
+  assert.match(html, /No weights, scores, ranking, or selection/);
   assert.match(app, /communityBankingFixture/);
   assert.match(app, /renderCommunityBanking/);
+  assert.match(app, /controlled comparator inputs cover the eight forms and twelve criteria/);
 });

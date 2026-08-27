@@ -23,6 +23,15 @@ const criterion = (id, name, definition) => ({
   minimumAcceptableRating: '', ownerId: '', evidenceIds: [], status: 'Unresolved',
 });
 
+const comparatorInput = (alternativeId, criterionId) => ({
+  // The canonical normalizer derives a stable ART identifier from this
+  // relationship. No array position, reviewer, rating, or preference is used.
+  alternativeId, criterionId,
+  inputType: 'Controlled comparator input',
+  rating: '', confidence: '', reasoning: 'No comparative rating or conclusion is recorded; qualified review is required.',
+  assumptionId: '', evidenceIds: [], reviewerId: '', reviewStatus: 'Unresolved',
+});
+
 export function communityBankingFixture() {
   const criteria = [
     ['FCB-CRIT-01', 'Economic efficiency', 'Whether qualified future evidence supports an efficient use of resources.'],
@@ -39,6 +48,17 @@ export function communityBankingFixture() {
     ['FCB-CRIT-12', 'Time to usable capability', 'Whether a proposed path can reach a usable, reviewable capability in an evidenced timeframe.'],
   ].map(([id, name, definition]) => criterion(id, name, definition));
   const criterionIds = criteria.map(item => item.id);
+  const forms = [
+    form('FCB-FORM-00', 'Independent internal operation', 'Each bank operates the selected work internally.', criterionIds),
+    form('FCB-FORM-01', 'Commercial provider / managed service', 'A commercial provider or managed service could support selected work.', criterionIds),
+    form('FCB-FORM-02', 'Correspondent or bankersâ€™ bank service', 'A correspondent or bankersâ€™ bank service could support selected work.', criterionIds),
+    form('FCB-FORM-03', 'Association-sponsored shared capability', 'An association-sponsored shared capability could support selected work.', criterionIds),
+    form('FCB-FORM-04', 'Bank Service Company / jointly owned service entity', 'A service company or jointly owned entity could support selected work.', criterionIds),
+    form('FCB-FORM-05', 'Governed network', 'A governed network could coordinate limited shared support.', criterionIds),
+    form('FCB-FORM-06', 'Governed federation', 'A governed federation could coordinate limited shared support.', criterionIds),
+    form('FCB-FORM-07', 'Common ownership / acquisition', 'Common ownership or acquisition could be considered as a comparator.', criterionIds),
+  ];
+  const comparatorInputs = forms.flatMap(alternative => criteria.map(item => comparatorInput(alternative.id, item.id)));
 
   return normalizeWorkspace({
     fixtureMetadata: {
@@ -93,16 +113,7 @@ export function communityBankingFixture() {
       { id: 'CON-NO-BASELINE-POOLING', name: 'No baseline customer-data pooling is represented', status: 'Unresolved / illustrative' },
     ],
     evidence: [{ id: 'EVD-SHARED-SOURCE-001', name: 'Illustrative shared regulatory source evidence artifact', classification: 'Illustrative', source: 'Synthetic fixture', status: 'Unresolved', limitation: 'Does not establish applicability, authority, compliance, or a regulatory conclusion.' }],
-    formAlternatives: [
-      form('FCB-FORM-00', 'Independent internal operation', 'Each bank operates the selected work internally.', criterionIds),
-      form('FCB-FORM-01', 'Commercial provider / managed service', 'A commercial provider or managed service could support selected work.', criterionIds),
-      form('FCB-FORM-02', 'Correspondent or bankers’ bank service', 'A correspondent or bankers’ bank service could support selected work.', criterionIds),
-      form('FCB-FORM-03', 'Association-sponsored shared capability', 'An association-sponsored shared capability could support selected work.', criterionIds),
-      form('FCB-FORM-04', 'Bank Service Company / jointly owned service entity', 'A service company or jointly owned entity could support selected work.', criterionIds),
-      form('FCB-FORM-05', 'Governed network', 'A governed network could coordinate limited shared support.', criterionIds),
-      form('FCB-FORM-06', 'Governed federation', 'A governed federation could coordinate limited shared support.', criterionIds),
-      form('FCB-FORM-07', 'Common ownership / acquisition', 'Common ownership or acquisition could be considered as a comparator.', criterionIds),
-    ],
+    formAlternatives: forms,
     decisionCriteria: criteria,
     governedDependencies: [
       { id: 'DEP-ERIR-001', name: 'ERIR Regulatory Intelligence Service', providerParticipantId: 'DEP-ERIR-001', sponsorMemberId: '', dependencyType: 'Read-only regulatory intelligence', permittedUse: 'Retrieve reference information for qualified review.', prohibitedUse: 'Membership, authority, applicability, compliance, or decision-making.', status: 'Illustrative dependency / non-member' },
@@ -114,6 +125,6 @@ export function communityBankingFixture() {
     reviews: ['RIVERBEND', 'HERITAGE', 'MAGNOLIA', 'PRAIRIE', 'SUMMIT'].map(bank => ({ id: `REV-${bank}-SOURCE-001`, reviewType: 'Bank-local source review', question: 'Does this illustrative source artifact require qualified bank-local applicability review?', scopeObjectIds: ['EVD-SHARED-SOURCE-001'], requiredEvidenceIds: ['EVD-SHARED-SOURCE-001'], reviewerId: `PAR-${bank}`, reviewerQualification: 'Unresolved', finding: 'No conclusion recorded.', conditions: 'Illustrative / unresolved; no divergent conclusion represented.', status: 'Unresolved' })),
     lifecycleEvents: [],
     reassessmentTriggers: [{ id: 'RST-FCB-001', name: 'Material source, authority, evidence, or dependency change', status: 'Illustrative / non-mutating' }],
-    formDecisions: [], alternativeRatings: [], counterfactuals: [], economicFlows: [], participantEconomicCases: [], riskAdjustments: [], aiCapabilities: [], aiCases: [], aiReleaseDecisions: [],
+    formDecisions: [], alternativeRatings: comparatorInputs, counterfactuals: [], economicFlows: [], participantEconomicCases: [], riskAdjustments: [], aiCapabilities: [], aiCases: [], aiReleaseDecisions: [],
   }, {});
 }
