@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { FCB_NS_001, communityBankingFixture } from './community-banking-fixture.mjs';
 import { normalizePermission, permissionEffectiveState, validateAccountableDecision, validateAuthorityPermissionSeparation, validateDependencyMembershipSeparation, validateEvidenceLineage, validateHandoffProgression } from './federated-facem-model.mjs';
 import { evaluateRequiredMemberViability, validateAlternativeRatingCoverage, validateCriteriaWeights, validateDistributionRules, distributionSustainability } from './federated-fofa-mcvsm-model.mjs';
+import { evaluateAbstention, evaluateBoundedRelease, evaluateRecoveryCase, validateAIInputBoundary, validateAIOutputBoundary, validateAISuspension, validateAuthorityCrosswalk, validateFallbackProcess, validateMonitoringTrigger, validateNonAIBaseline } from './federated-bacrm-model.mjs';
 
 const fixture = () => communityBankingFixture();
 
@@ -71,9 +72,10 @@ test('FCB-I1-11 preserves an unpopulated economic baseline before Increment 4 st
   assert.equal(w.economicFlows.length + w.riskAdjustments.length, 0);
 });
 
-test('FCB-I1-12 contains no AI capability, case, or release records', () => {
+test('FCB-I1-12 preserves no AI case or release decision outside the later bounded candidate structure', () => {
   const w = fixture();
-  assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length, 0);
+  assert.equal(w.aiCases.length + w.aiReleaseDecisions.length, 0);
+  assert.ok(w.aiCapabilities.every(item => item.currentLifecycleState !== 'RELEASED_BOUNDED'));
 });
 
 // FCB-I1-13 is the repository-level canonical/reference regression run recorded
@@ -117,11 +119,11 @@ test('FCB-I2-04 blocks analytical comparison inputs from becoming a ranking or s
   assert.ok(w.formAlternatives.every(item => item.status === 'Candidate / unresolved'));
 });
 
-test('FCB-I2-05 adds no economic result, AI, membership, or implementation record', () => {
+test('FCB-I2-05 adds no economic result, membership, or implementation record', () => {
   const w = fixture();
   assert.equal(w.economicFlows.length + w.riskAdjustments.length, 0);
-  assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length, 0);
   assert.equal(w.membershipEvents.length, 0);
+  assert.equal(w.formDecisions.length, 0);
 });
 
 test('FCB-I3-01 bounded shared-support permission normalizes without creating authority', () => {
@@ -215,9 +217,10 @@ test('FCB-I3-11 preserves no populated economic or counterfactual result', () =>
   assert.ok(w.counterfactuals.every(item => item.economicLines.length === 0 && item.assumptionIds.length === 0 && item.evidenceIds.length === 0));
 });
 
-test('FCB-I3-12 adds no AI capability, evaluation, or release record', () => {
+test('FCB-I3-12 preserves no AI release decision and no AI-created authority', () => {
   const w = fixture();
-  assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length + (w.aiEvaluations || []).length, 0);
+  assert.equal(w.aiCases.length + w.aiReleaseDecisions.length, 0);
+  assert.ok(w.aiCapabilities.every(item => !/authority|commitment|compliance/i.test(item.permittedFunctions.join(' '))));
 });
 
 test('FCB-I4-01 adds only an explicit current, best-non-federation, and conventional non-AI comparator structure', () => {
@@ -270,14 +273,14 @@ test('FCB-I4-05 keeps participant-specific distribution terms unallocated and un
   assert.equal(sustainability.status, 'INCOMPLETE');
 });
 
-test('FCB-I4-06 introduces no monetary flow, risk adjustment, calculated value, ranked form, or AI record', () => {
+test('FCB-I4-06 introduces no monetary flow, risk adjustment, calculated value, or ranked form', () => {
   const w = fixture();
   assert.deepEqual(w.economicFlows, []);
   assert.deepEqual(w.riskAdjustments, []);
   assert.ok(w.participantEconomicCases.every(item => item.memberNPV === '' && item.minimumCumulativeCash === '' && item.benefitShare === '' && item.costShare === ''));
   assert.ok(w.federationEconomicCases.every(item => item.collectiveNPV === '' && item.collectiveROI === '' && item.benefitCostRatio === '' && item.riskAdjustedResult === ''));
   assert.equal(w.formDecisions.length, 0);
-  assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length, 0);
+  assert.equal(w.aiCases.length + w.aiReleaseDecisions.length, 0);
 });
 
 test('FCB-I4-07 keeps the best non-federation comparator form-neutral until qualified FOFA review', () => {
