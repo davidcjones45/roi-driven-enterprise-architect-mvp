@@ -1,4 +1,5 @@
 import { normalizeWorkspace } from './feoa-workspace.mjs';
+import { normalizeAuthority } from './authority-model.mjs';
 
 export const FCB_NS_001 = 'FCB-NS-001';
 
@@ -59,6 +60,23 @@ export function communityBankingFixture() {
     form('FCB-FORM-07', 'Common ownership / acquisition', 'Common ownership or acquisition could be considered as a comparator.', criterionIds),
   ];
   const comparatorInputs = forms.flatMap(alternative => criteria.map(item => comparatorInput(alternative.id, item.id)));
+  const bankIds = ['RIVERBEND', 'HERITAGE', 'MAGNOLIA', 'PRAIRIE', 'SUMMIT'];
+  const authorityEnvelopes = bankIds.map(bank => normalizeAuthority({
+    id: `AE-FCB-APP-${bank}`,
+    aiSystem: 'Not applicable',
+    businessCapability: 'Bank-local applicability and control review',
+    authorityOwner: `PAR-${bank}`,
+    effectiveDate: '2026-08-26',
+    reviewDate: '2026-12-31',
+    permittedActions: [`ACT-APP-${bank}`],
+    evidenceArtifactIds: ['EVD-SHARED-SOURCE-001'],
+    evidenceAssessmentState: 'accepted',
+    evidenceValidFrom: '2026-08-26',
+    evidenceValidUntil: '2026-12-31',
+    evidenceReviewer: `PAR-${bank}`,
+    evidenceReviewAuthority: `PAR-${bank}`,
+    status: 'Synthetic / local review context only',
+  }));
 
   return normalizeWorkspace({
     fixtureMetadata: {
@@ -102,6 +120,36 @@ export function communityBankingFixture() {
     handoffs: [
       { id: 'HOF-RELEVANCE-TO-BANK', name: 'Candidate relevance transmission to a bank', communicationState: 'Sent', responsibilityState: 'Not Offered', authorityState: 'Not Applicable', transmissionEventId: 'TX-RELEVANCE-001', receiptEventId: '', validationEventId: '', acceptanceEventId: '', acceptingAuthorityId: '', provenanceIds: ['EVD-SHARED-SOURCE-001'], scope: 'Illustrative transmission only; receipt, validation, and acceptance remain unresolved.' },
     ],
+    permissions: [{
+      id: 'PER-FCB-SHARED-EVIDENCE-001',
+      grantorSubjectId: FCB_NS_001,
+      holderParticipantId: 'DEP-ERIR-001',
+      purpose: 'Synthetic shared-source evidence acquisition, normalization, and preliminary relevance support only.',
+      permittedDataActions: ['ACT-SOURCE-ACQUIRE', 'ACT-NORMALIZE', 'ACT-RELEVANCE-FLAG'],
+      prohibitedDataActions: ['Bank-local applicability determination', 'Policy or control approval', 'Residual-risk acceptance', 'Implementation authorization', 'Compliance representation'],
+      effectiveFrom: '2026-08-26T00:00:00Z',
+      conditions: 'Synthetic fixture only. Permission does not create authority, membership, governance rights, acceptance, or an operating arrangement.',
+      correctionChallengePath: 'Qualified bank-local review and evidence challenge path remain required.',
+      createsAuthority: true,
+      evidenceIds: ['EVD-SHARED-SOURCE-001'],
+      status: 'Synthetic / narrowly bounded',
+    }],
+    authorityEnvelopes,
+    delegations: [],
+    evidenceLineage: bankIds.map(bank => ({
+      id: `ELN-FCB-${bank}-SOURCE-001`,
+      externalEvidenceId: 'EVD-SHARED-SOURCE-001',
+      localArtifactId: `REV-${bank}-SOURCE-001`,
+      subjectObjectId: `PAR-${bank}`,
+      version: '1.0',
+      source: 'Synthetic shared-source provenance',
+      createdTime: '2026-08-26T00:00:00Z',
+      effectiveTime: '2026-08-26T00:00:00Z',
+      verificationState: 'Unresolved pending bank-local review',
+      permittedUse: 'Supports only the separately attributable bank-local qualified review path.',
+      prohibitedUse: 'Does not create authority, applicability, acceptance, policy/control approval, residual-risk acceptance, implementation authorization, or compliance conclusion.',
+      status: 'Synthetic / unresolved',
+    })),
     actions: [
       { id: 'ACT-SOURCE-ACQUIRE', name: 'Acquire published source candidate', performer: 'Potential shared capability', decisionAuthority: '', accountableOrganization: '', residualAccountableOrganization: '', aiEligibility: 'Not assessed', authorityEnvelopeId: '', evidenceRequirementIds: ['EVD-SHARED-SOURCE-001'] },
       { id: 'ACT-NORMALIZE', name: 'Normalize source and preserve provenance', performer: 'Potential shared capability', decisionAuthority: '', accountableOrganization: '', residualAccountableOrganization: '', aiEligibility: 'Not assessed', authorityEnvelopeId: '', evidenceRequirementIds: ['EVD-SHARED-SOURCE-001'] },
@@ -122,7 +170,7 @@ export function communityBankingFixture() {
       { id: 'DEP-SECURITY-001', name: 'Security / Monitoring Provider', providerParticipantId: 'DEP-SECURITY-001', sponsorMemberId: '', dependencyType: 'Security / monitoring', permittedUse: 'Potential security and monitoring support.', prohibitedUse: 'Member status, authority, or bank-local disposition.', status: 'Illustrative dependency / non-member' },
     ],
     membershipEvents: [],
-    reviews: ['RIVERBEND', 'HERITAGE', 'MAGNOLIA', 'PRAIRIE', 'SUMMIT'].map(bank => ({ id: `REV-${bank}-SOURCE-001`, reviewType: 'Bank-local source review', question: 'Does this illustrative source artifact require qualified bank-local applicability review?', scopeObjectIds: ['EVD-SHARED-SOURCE-001'], requiredEvidenceIds: ['EVD-SHARED-SOURCE-001'], reviewerId: `PAR-${bank}`, reviewerQualification: 'Unresolved', finding: 'No conclusion recorded.', conditions: 'Illustrative / unresolved; no divergent conclusion represented.', status: 'Unresolved' })),
+    reviews: bankIds.map(bank => ({ id: `REV-${bank}-SOURCE-001`, reviewType: 'Bank-local source review', question: 'Does this illustrative source artifact require qualified bank-local applicability review?', scopeObjectIds: ['EVD-SHARED-SOURCE-001'], requiredEvidenceIds: ['EVD-SHARED-SOURCE-001'], reviewerId: `PAR-${bank}`, reviewerQualification: 'Unresolved', authorityEnvelopeId: `AE-FCB-APP-${bank}`, finding: 'No conclusion recorded.', conditions: 'Illustrative / unresolved; no divergent conclusion represented.', status: 'Unresolved' })),
     lifecycleEvents: [],
     reassessmentTriggers: [{ id: 'RST-FCB-001', name: 'Material source, authority, evidence, or dependency change', status: 'Illustrative / non-mutating' }],
     formDecisions: [], alternativeRatings: comparatorInputs, counterfactuals: [], economicFlows: [], participantEconomicCases: [], riskAdjustments: [], aiCapabilities: [], aiCases: [], aiReleaseDecisions: [],

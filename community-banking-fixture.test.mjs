@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { FCB_NS_001, communityBankingFixture } from './community-banking-fixture.mjs';
-import { validateDependencyMembershipSeparation } from './federated-facem-model.mjs';
+import { normalizePermission, permissionEffectiveState, validateAccountableDecision, validateAuthorityPermissionSeparation, validateDependencyMembershipSeparation, validateEvidenceLineage, validateHandoffProgression } from './federated-facem-model.mjs';
 import { validateAlternativeRatingCoverage, validateCriteriaWeights } from './federated-fofa-mcvsm-model.mjs';
 
 const fixture = () => communityBankingFixture();
@@ -78,9 +78,10 @@ test('FCB-I1-12 contains no AI capability, case, or release records', () => {
 
 // FCB-I1-13 is the repository-level canonical/reference regression run recorded
 // with this increment; this fixture invariant remains separately testable.
-test('Community Banking fixture contains no authority-envelope artifact', () => {
+test('Community Banking fixture retains bank-local authority contexts separate from shared support', () => {
   const w = fixture();
-  assert.equal((w.authorityEnvelopes || []).length, 0);
+  assert.equal((w.authorityEnvelopes || []).length, 5);
+  assert.ok(w.authorityEnvelopes.every(item => /^PAR-/.test(item.authorityOwner)));
 });
 
 test('FCB-I2-01 supplies exactly one unresolved comparator input for every form and criterion relationship', () => {
@@ -116,11 +117,106 @@ test('FCB-I2-04 blocks analytical comparison inputs from becoming a ranking or s
   assert.ok(w.formAlternatives.every(item => item.status === 'Candidate / unresolved'));
 });
 
-test('FCB-I2-05 adds no economic, AI, authority, membership, or implementation record', () => {
+test('FCB-I2-05 adds no economic, AI, membership, or implementation record', () => {
   const w = fixture();
   assert.equal(w.counterfactuals.length + w.economicFlows.length + w.participantEconomicCases.length + w.riskAdjustments.length, 0);
   assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length, 0);
-  assert.equal(w.membershipEvents.length + (w.authorityEnvelopes || []).length, 0);
+  assert.equal(w.membershipEvents.length, 0);
+});
+
+test('FCB-I3-01 bounded shared-support permission normalizes without creating authority', () => {
+  const permission = normalizePermission(fixture().permissions[0]);
+  assert.equal(permission.id, 'PER-FCB-SHARED-EVIDENCE-001');
+  assert.equal(permission.createsAuthority, false);
+  assert.deepEqual(permission.permittedDataActions, ['ACT-SOURCE-ACQUIRE', 'ACT-NORMALIZE', 'ACT-RELEVANCE-FLAG']);
+  assert.equal(permissionEffectiveState(permission, '2026-08-26T00:00:00Z'), 'EFFECTIVE');
+});
+
+test('FCB-I3-02 shared-support permission explicitly excludes reserved bank decisions', () => {
+  const permission = fixture().permissions[0];
+  assert.deepEqual(permission.prohibitedDataActions, ['Bank-local applicability determination', 'Policy or control approval', 'Residual-risk acceptance', 'Implementation authorization', 'Compliance representation']);
+});
+
+test('FCB-I3-03 bank-local applicability authority contexts remain separately attributable', () => {
+  const w = fixture();
+  assert.deepEqual(w.authorityEnvelopes.map(item => item.authorityOwner), w.participants.map(item => item.id));
+  assert.ok(w.reviews.every(item => item.authorityEnvelopeId && item.authorityEnvelopeId.endsWith(item.reviewerId.replace('PAR-', ''))));
+  assert.ok(w.authorityEnvelopes.every(item => !item.authorityOwner.startsWith('DEP-')));
+});
+
+test('FCB-I3-04 handoff progression preserves transmission apart from receipt, validation, and acceptance', () => {
+  const handoff = validateHandoffProgression(fixture().handoffs[0]);
+  assert.equal(handoff.valid, true);
+  assert.equal(handoff.transmissionRecorded, true);
+  assert.equal(handoff.receiptRecorded, false);
+  assert.equal(handoff.validationRecorded, false);
+  assert.equal(handoff.acceptanceRecorded, false);
+});
+
+test('FCB-I3-05 common evidence provenance supports five separate bank-local lineage paths', () => {
+  const w = fixture();
+  assert.equal(w.evidenceLineage.length, 5);
+  assert.deepEqual([...new Set(w.evidenceLineage.map(item => item.externalEvidenceId))], ['EVD-SHARED-SOURCE-001']);
+  assert.equal(new Set(w.evidenceLineage.map(item => item.subjectObjectId)).size, 5);
+  for (const lineage of w.evidenceLineage) {
+    const result = validateEvidenceLineage(lineage);
+    assert.equal(result.valid, true);
+    assert.equal(result.embeddedAuthority, false);
+  }
+});
+
+test('FCB-I3-06 shared dependency cannot supply bank-local applicability authority', () => {
+  const w = fixture();
+  const attempt = validateAccountableDecision({
+    id: 'DEC-FCB-SHARED-APPLICABILITY-ATTEMPT',
+    decisionOwnerId: 'DEP-ERIR-001',
+    authorityId: '',
+    effectiveTime: '2026-08-26T00:00:00Z',
+    recordedTime: '2026-08-26T00:00:00Z',
+  }, null, '2026-08-26T00:00:00Z');
+  const separation = validateAuthorityPermissionSeparation({ permission: w.permissions[0], authorityEnvelope: null, asOfTime: '2026-08-26T00:00:00Z' });
+  assert.equal(attempt.status, 'INCOMPLETE');
+  assert.match(attempt.issues.join(' '), /Authority reference is required/);
+  assert.equal(separation.authorityState, 'UNRESOLVED');
+  assert.equal(separation.permissionCreatesAuthority, true);
+});
+
+test('FCB-I3-07 dependencies stay non-members and permission/evidence do not create governance', () => {
+  const w = fixture();
+  assert.equal(w.membershipEvents.length, 0);
+  for (const dependency of w.governedDependencies) assert.equal(validateDependencyMembershipSeparation(dependency, w.membershipEvents, '2026-08-26T00:00:00Z').providerMembership, 'non-member');
+  assert.ok(w.permissions.every(item => /does not create authority, membership, governance rights/i.test(item.conditions)));
+});
+
+test('FCB-I3-08 has no delegation record and therefore no delegated authority expansion', () => {
+  assert.deepEqual(fixture().delegations, []);
+});
+
+test('FCB-I3-09 persists no applicability, approval, risk acceptance, implementation, or compliance conclusion', () => {
+  const w = fixture();
+  assert.ok(w.reviews.every(item => item.finding === 'No conclusion recorded.' && item.status === 'Unresolved'));
+  assert.equal(w.formDecisions.length, 0);
+  assert.equal(w.commitments.length, 0);
+});
+
+test('FCB-I3-10 preserves the Increment 2 neutral comparator baseline', () => {
+  const w = fixture();
+  assert.equal(w.formAlternatives.length, 8);
+  assert.equal(w.decisionCriteria.length, 12);
+  assert.equal(w.alternativeRatings.length, 96);
+  assert.ok(w.alternativeRatings.every(item => item.rating === '' && item.reviewStatus === 'Unresolved'));
+  assert.ok(w.decisionCriteria.every(item => item.weight === '' && item.status === 'Unresolved'));
+  assert.equal(w.formDecisions.length, 0);
+});
+
+test('FCB-I3-11 adds no economic or counterfactual model', () => {
+  const w = fixture();
+  assert.equal(w.counterfactuals.length + w.economicFlows.length + w.participantEconomicCases.length + w.riskAdjustments.length, 0);
+});
+
+test('FCB-I3-12 adds no AI capability, evaluation, or release record', () => {
+  const w = fixture();
+  assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length + (w.aiEvaluations || []).length, 0);
 });
 
 test('Community Banking reference UI remains a separate synthetic, unresolved workspace', () => {
@@ -132,4 +228,6 @@ test('Community Banking reference UI remains a separate synthetic, unresolved wo
   assert.match(app, /communityBankingFixture/);
   assert.match(app, /renderCommunityBanking/);
   assert.match(app, /controlled comparator inputs cover the eight forms and twelve criteria/);
+  assert.match(app, /shared-support permission is bounded to evidence and preliminary relevance work; it creates no authority/);
+  assert.match(app, /Transmission is recorded while receipt, validation, and acceptance remain unresolved/);
 });
