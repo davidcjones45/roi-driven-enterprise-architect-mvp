@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { FCB_NS_001, communityBankingFixture } from './community-banking-fixture.mjs';
 import { normalizePermission, permissionEffectiveState, validateAccountableDecision, validateAuthorityPermissionSeparation, validateDependencyMembershipSeparation, validateEvidenceLineage, validateHandoffProgression } from './federated-facem-model.mjs';
-import { validateAlternativeRatingCoverage, validateCriteriaWeights } from './federated-fofa-mcvsm-model.mjs';
+import { evaluateRequiredMemberViability, validateAlternativeRatingCoverage, validateCriteriaWeights, validateDistributionRules, distributionSustainability } from './federated-fofa-mcvsm-model.mjs';
 
 const fixture = () => communityBankingFixture();
 
@@ -66,9 +66,9 @@ test('FCB-I1-10 has one shared evidence artifact referenced by five unresolved r
   assert.ok(w.reviews.every(item => item.requiredEvidenceIds.includes('EVD-SHARED-SOURCE-001') && item.status === 'Unresolved'));
 });
 
-test('FCB-I1-11 contains no economic flows, counterfactuals, participant economics, or risk adjustments', () => {
+test('FCB-I1-11 preserves an unpopulated economic baseline before Increment 4 structures are assessed', () => {
   const w = fixture();
-  assert.equal(w.counterfactuals.length + w.economicFlows.length + w.participantEconomicCases.length + w.riskAdjustments.length, 0);
+  assert.equal(w.economicFlows.length + w.riskAdjustments.length, 0);
 });
 
 test('FCB-I1-12 contains no AI capability, case, or release records', () => {
@@ -117,9 +117,9 @@ test('FCB-I2-04 blocks analytical comparison inputs from becoming a ranking or s
   assert.ok(w.formAlternatives.every(item => item.status === 'Candidate / unresolved'));
 });
 
-test('FCB-I2-05 adds no economic, AI, membership, or implementation record', () => {
+test('FCB-I2-05 adds no economic result, AI, membership, or implementation record', () => {
   const w = fixture();
-  assert.equal(w.counterfactuals.length + w.economicFlows.length + w.participantEconomicCases.length + w.riskAdjustments.length, 0);
+  assert.equal(w.economicFlows.length + w.riskAdjustments.length, 0);
   assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length, 0);
   assert.equal(w.membershipEvents.length, 0);
 });
@@ -209,14 +209,85 @@ test('FCB-I3-10 preserves the Increment 2 neutral comparator baseline', () => {
   assert.equal(w.formDecisions.length, 0);
 });
 
-test('FCB-I3-11 adds no economic or counterfactual model', () => {
+test('FCB-I3-11 preserves no populated economic or counterfactual result', () => {
   const w = fixture();
-  assert.equal(w.counterfactuals.length + w.economicFlows.length + w.participantEconomicCases.length + w.riskAdjustments.length, 0);
+  assert.equal(w.economicFlows.length + w.riskAdjustments.length, 0);
+  assert.ok(w.counterfactuals.every(item => item.economicLines.length === 0 && item.assumptionIds.length === 0 && item.evidenceIds.length === 0));
 });
 
 test('FCB-I3-12 adds no AI capability, evaluation, or release record', () => {
   const w = fixture();
   assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length + (w.aiEvaluations || []).length, 0);
+});
+
+test('FCB-I4-01 adds only an explicit current, best-non-federation, and conventional non-AI comparator structure', () => {
+  const w = fixture();
+  assert.deepEqual(w.counterfactuals.map(item => ({ id: item.id, caseType: item.caseType, comparatorCaseId: item.comparatorCaseId })), [
+    { id: 'FCB-CASE-0', caseType: 'CURRENT', comparatorCaseId: '' },
+    { id: 'FCB-CASE-BEST-NON-FEDERATION', caseType: 'BEST_NON_FEDERATION', comparatorCaseId: 'FCB-CASE-0' },
+    { id: 'FCB-CASE-1', caseType: 'FEDERATION_NON_AI', comparatorCaseId: 'FCB-CASE-BEST-NON-FEDERATION' },
+  ]);
+  assert.ok(w.counterfactuals.every(item => !item.organizationalFormId && !item.aiCapabilityId));
+  assert.equal(w.formDecisions.length, 0);
+});
+
+test('FCB-I4-02 retains blank calculation assumptions and an explicit unresolved evidence gap', () => {
+  const w = fixture();
+  assert.deepEqual(w.evidenceGaps.map(item => item.id), ['FCB-GAP-ECONOMICS']);
+  assert.equal(w.economicCalculationAssumptions.length, 3);
+  assert.ok(w.economicCalculationAssumptions.every(item => item.discountRate === '' && item.annualGrowthRate === ''
+    && item.horizonPeriods === '' && item.roiDenominatorRule === '' && item.evidenceIds.length === 0));
+});
+
+test('FCB-I4-03 gives every candidate member a separate unresolved Case 1 threshold and economic case', () => {
+  const w = fixture();
+  assert.equal(w.memberEconomicThresholds.length, 5);
+  assert.equal(w.participantEconomicCases.length, 5);
+  assert.deepEqual(w.memberEconomicThresholds.map(item => item.participantId), w.participants.map(item => item.id));
+  assert.ok(w.memberEconomicThresholds.every(item => item.caseId === 'FCB-CASE-1' && item.minimumAcceptableNPV === '' && item.evidenceIds.length === 0));
+  assert.ok(w.participantEconomicCases.every(item => item.caseId === 'FCB-CASE-1' && item.memberNPV === '' && item.evidenceIds.length === 0));
+});
+
+test('FCB-I4-04 keeps member and collective viability explicitly incomplete rather than inferred', () => {
+  const w = fixture();
+  const viability = evaluateRequiredMemberViability(w.participants, w.participantEconomicCases, w.memberEconomicThresholds, w.participants.map(item => item.id), 'FCB-CASE-1');
+  assert.equal(viability.overallResult, 'INCOMPLETE');
+  assert.deepEqual(viability.incompleteParticipantIds, w.participants.map(item => item.id));
+  assert.deepEqual(w.federationEconomicCases.map(item => ({ caseId: item.caseId, collectiveNPV: item.collectiveNPV, collectiveROI: item.collectiveROI, benefitCostRatio: item.benefitCostRatio })), [
+    { caseId: 'FCB-CASE-1', collectiveNPV: '', collectiveROI: '', benefitCostRatio: '' },
+  ]);
+});
+
+test('FCB-I4-05 keeps participant-specific distribution terms unallocated and unaccepted', () => {
+  const w = fixture();
+  const distribution = validateDistributionRules('FCB-CASE-1', w.distributionRules, ['benefit', 'operatingCost', 'investment', 'riskCost']);
+  const sustainability = distributionSustainability({ distributionValidation: distribution, memberViability: { overallResult: 'INCOMPLETE' }, rules: w.distributionRules });
+  assert.equal(w.distributionRules.length, 5);
+  assert.ok(w.distributionRules.every(item => item.participantId && item.benefitShare === '' && item.operatingCostShare === ''
+    && item.investmentShare === '' && item.riskCostShare === '' && item.acceptanceStatus === 'Unresolved'));
+  assert.equal(distribution.valid, false);
+  assert.equal(distribution.acceptanceInferred, false);
+  assert.equal(sustainability.status, 'INCOMPLETE');
+});
+
+test('FCB-I4-06 introduces no monetary flow, risk adjustment, calculated value, ranked form, or AI record', () => {
+  const w = fixture();
+  assert.deepEqual(w.economicFlows, []);
+  assert.deepEqual(w.riskAdjustments, []);
+  assert.ok(w.participantEconomicCases.every(item => item.memberNPV === '' && item.minimumCumulativeCash === '' && item.benefitShare === '' && item.costShare === ''));
+  assert.ok(w.federationEconomicCases.every(item => item.collectiveNPV === '' && item.collectiveROI === '' && item.benefitCostRatio === '' && item.riskAdjustedResult === ''));
+  assert.equal(w.formDecisions.length, 0);
+  assert.equal(w.aiCapabilities.length + w.aiCases.length + w.aiReleaseDecisions.length, 0);
+});
+
+test('FCB-I4-07 keeps the best non-federation comparator form-neutral until qualified FOFA review', () => {
+  const bestNonFederation = fixture().counterfactuals.find(item => item.id === 'FCB-CASE-BEST-NON-FEDERATION');
+  assert.ok(bestNonFederation);
+  assert.equal(bestNonFederation.caseType, 'BEST_NON_FEDERATION');
+  assert.equal(bestNonFederation.organizationalFormId, '');
+  assert.deepEqual(bestNonFederation.assumptionIds, []);
+  assert.deepEqual(bestNonFederation.evidenceIds, []);
+  assert.match(bestNonFederation.status, /must be determined through qualified FOFA review/i);
 });
 
 test('Community Banking reference UI remains a separate synthetic, unresolved workspace', () => {
