@@ -13,7 +13,9 @@
     <div class="workspace-switcher" role="group" aria-label="Select workspace">
       <button type="button" class="workspace-select active" data-workspace-select="roi">ROI-EA assessment</button>
       <button type="button" class="workspace-select" data-workspace-select="federated">Federated Enterprise</button>
+      <button type="button" class="workspace-select" data-workspace-select="community-banking">Community Banking</button>
       <button type="button" class="workspace-select" data-workspace-select="mortgage">Mortgage reference</button>
+      <button type="button" class="workspace-select" data-workspace-select="consulting" id="consulting-workspace-switch" hidden>Consulting engagements</button>
     </div>
     <nav aria-label="Workflow">
       <button class="nav-link active" data-workspace="roi" data-view="overview"><span>01</span> Decision workspace</button>
@@ -31,8 +33,17 @@
       <button class="nav-link" data-workspace="roi" data-view="compliance-cost"><span>12</span> Compliance cost &amp; capacity</button>
       <button class="nav-link" data-workspace="federated" data-view="feoa"><span>F</span> FEOA workbench</button>
       <button class="nav-link" data-workspace="federated" data-view="federated"><span>FE</span> Federated Enterprise</button>
+      <button class="nav-link" data-workspace="community-banking" data-view="community-banking"><span>CB</span> Community Banking reference</button>
       <button class="nav-link" data-workspace="mortgage" data-view="mortgage-demo"><span>M</span> Mortgage reference demo</button>
       <button class="nav-link" data-workspace="roi" data-view="dossier"><span>13</span> Executive dossier</button>
+      <button class="nav-link" data-workspace="consulting" data-view="engagements" hidden><span>C</span> Engagement workspace</button>
+      <button class="nav-link" data-workspace="consulting" data-view="discovery" hidden><span>1</span> Discovery</button>
+      <button class="nav-link" data-workspace="consulting" data-view="engagement-evidence" hidden><span>2</span> Evidence &amp; documents</button>
+      <button class="nav-link" data-workspace="consulting" data-view="ai-necessity" hidden><span>3</span> AI Necessity Gate</button>
+      <button class="nav-link" data-workspace="consulting" data-view="findings-questions" hidden><span>4</span> Findings &amp; questions</button>
+      <button class="nav-link" data-workspace="consulting" data-view="recommendation" hidden><span>5</span> Recommendation</button>
+        <button class="nav-link" data-workspace="consulting" data-view="executive-package" hidden><span>6</span> Executive package</button>
+        <button class="nav-link" data-workspace="consulting" data-view="snapshots" hidden><span>7</span> Snapshots</button>
     </nav>
     <div class="sidebar-note">Design-partner MVP<br><small>Stored in this browser only.</small><a class="engagement-link" href="https://www.aiathumanscale.com" target="_blank" rel="noopener noreferrer">Explore AI at Human Scale<br><span>Design-partner engagement information</span></a><small class="copyright-notice">© 2026 David C. Jones. All rights reserved.<br>AI at Human Scale.</small></div>
   </aside>
@@ -48,7 +59,7 @@
       <section class="guided-demo card" id="guided-demo-card" aria-live="polite"></section>
       <section class="reference-case-orientation card" aria-labelledby="reference-case-title">
         <span class="eyebrow">REFERENCE-CASE ORIENTATION</span>
-        <h2 id="reference-case-title">Three synthetic demonstrators, three different purposes</h2>
+        <h2 id="reference-case-title">Four synthetic demonstrators, four different purposes</h2>
         <p class="quiet-note">Use the example that fits the question you want to inspect. Each remains illustrative and does not establish a real-world result, authority, compliance determination, or implementation.</p>
         <div class="reference-case-grid">
           <article class="reference-case">
@@ -60,6 +71,11 @@
             <h3>Federated Healthcare method example</h3>
             <p>A synthetic/modelled FOFA, MCVSM, FACEM, and BACRM method case. It is not a real federation, clinical determination, legal conclusion, or implementation.</p>
             <button type="button" class="secondary" data-reference-workspace="federated" data-reference-view="federated">Open federated example</button>
+          </article>
+          <article class="reference-case">
+            <h3>Community Banking form-assessment example</h3>
+            <p>A synthetic fixture for comparing possible shared forms and preserving bank-local accountability. No form, economics, authority, applicability, or implementation is selected.</p>
+            <button type="button" class="secondary" data-reference-workspace="community-banking" data-reference-view="community-banking">Open Community Banking example</button>
           </article>
           <article class="reference-case">
             <h3>Mortgage regulatory-control example</h3>
@@ -360,6 +376,19 @@
       <div class="card"><h3>Assessment views and reusable records</h3><div class="table-wrap"><table><thead><tr><th>View</th><th>Primary FEOA concern</th><th>Existing ROI-EA / ERIR source of truth</th></tr></thead><tbody><tr><td>Participants &amp; allocation</td><td>Creation, capture, allocation, and internal transfers</td><td>FEOA participant and economic-line records</td></tr><tr><td>Operating handoffs</td><td>Communication, responsibility, authority, accountability</td><td>FEOA actions/handoffs + Authority Envelope</td></tr><tr><td>Authority, evidence &amp; constraints</td><td>Valid evidence is not authorization</td><td>Authority Envelope, Evidence register, ERIR links</td></tr><tr><td>Baseline, friction &amp; economics</td><td>Case 0 / 1 / 2, consolidated and risk-adjusted value</td><td>ROI baseline, Architecture alternatives, FEOA counterfactuals</td></tr><tr><td>Readiness, gates &amp; pilot</td><td>Decision-proportional evidence and reversible learning</td><td>Risk, Pilot/Results, FEOA gates and observations</td></tr><tr><td>AI &amp; Cognitive Resilience</td><td>Optional performer capability and durable human fallback</td><td>Authority Envelope, FEOA AI case and resilience records</td></tr></tbody></table></div></div>
       <div class="card" id="feoa-summary" aria-live="polite"></div>
     </section>
+    <section id="community-banking" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FCB-NS-001 / SYNTHETIC COMMUNITY BANKING REFERENCE</span><h2 id="community-banking-name">Community Banking reference</h2><p id="community-banking-boundary" class="quiet-note"></p></div><span class="status-pill">Synthetic / unresolved</span></div>
+      <div class="federated-caveat" role="note"><strong>Decision boundary:</strong> No operating form has been selected. Economics, authority, regulatory applicability, and implementation remain unresolved.</div>
+      <div class="card executive-summary"><h3>Controlled decision question</h3><p id="community-banking-question"></p><p class="quiet-note">The fixture distinguishes shared support from bank-local applicability, policy interpretation, approval, residual-risk acceptance, implementation authorization, and formal compliance representation.</p></div>
+      <div class="federated-columns"><div class="card compact-card"><h3>Five candidate banks</h3><ul id="community-banking-participants"></ul></div><div class="card compact-card"><h3>Four governed dependencies</h3><ul id="community-banking-dependencies"></ul></div></div>
+      <div class="federated-columns"><div class="card compact-card"><h3>Eight unranked form alternatives</h3><ul id="community-banking-forms"></ul></div><div class="card compact-card"><h3>Illustrative operating path</h3><ol id="community-banking-process"></ol></div></div>
+      <div class="federated-columns"><div class="card compact-card"><h3>Viable non-AI baseline</h3><p id="community-banking-non-ai" class="quiet-note"></p></div><div class="card compact-card"><h3>Bounded AI candidate</h3><p id="community-banking-ai-boundary" class="quiet-note"></p></div></div>
+      <div class="card compact-card"><h3>Readiness, fallback, and release boundary</h3><p id="community-banking-ai-readiness" class="quiet-note"></p></div>
+      <div class="card executive-summary"><h3>Integrated decision status</h3><p id="community-banking-decision-status">INSUFFICIENT EVIDENCE</p><p class="quiet-note">This status is derived from unresolved comparison, economic, authority, and release inputs. It is not a form selection, legal conclusion, compliance determination, implementation authorization, or release decision.</p></div>
+      <div class="federated-columns"><div class="card compact-card"><h3>CB-Q1–CB-Q15 qualified queries</h3><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Query</th><th>State</th><th>Qualified result</th></tr></thead><tbody id="community-banking-query-results"></tbody></table></div></div><div class="card compact-card"><h3>Supported stress cases</h3><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Case</th><th>State</th><th>Qualified result</th></tr></thead><tbody id="community-banking-stress-results"></tbody></table></div></div></div>
+      <div class="card compact-card"><h3>Executive integrated report</h3><p id="community-banking-report-summary" class="quiet-note"></p></div>
+      <details class="card advanced-disclosure"><summary><span><strong>View controlled comparator inputs, unresolved criteria, and evidence controls</strong></span><span class="advanced-disclosure-hint">No weights, scores, ranking, or selection</span></summary><div class="advanced-disclosure-content"><p id="community-banking-review-summary" class="quiet-note"></p><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Criterion ID</th><th>Decision criterion</th><th>Weight / state</th></tr></thead><tbody id="community-banking-criteria"></tbody></table></div><p class="quiet-note"><strong>Handoff control:</strong> transmission is not receipt, validation, or acceptance; preliminary relevance is not bank-local applicability; and evidence is not authority.</p></div></details>
+    </section>
 
     <section id="federated" class="view">
       <div class="section-heading"><div><span class="eyebrow">FROZEN PRE-UI CANDIDATE BASELINE / FEDERATED ENTERPRISE</span><h2>North Star synthetic healthcare method example</h2><p>Follow the accepted chain from form assessment through collective value, operating governance, bounded AI, and the comparator-aware value loopback. This is a read-only display of synthetic/modelled process-test outputs.</p></div><span class="status-pill">Synthetic / modeled</span></div>
@@ -471,10 +500,148 @@
       <div class="dossier-actions"><button id="export-html">Export executive dossier</button><button id="download-json" class="secondary">Download working record (JSON)</button></div>
       <p class="quiet-note">“Export executive dossier” opens a print-ready document. Use the browser’s Print command to save a PDF or print for review.</p>
     </section>
+
+    <section id="engagements" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FEDARM / RELEASE 1 / LOCAL CONSULTING MODE</span><h2>Engagement workspace</h2><p>Store a decision-scoped consulting engagement on this trusted laptop. This record links to—not replaces—the browser-local ROI-EA working workspace. It does not create authority, evidence validity, an AI recommendation, or client approval.</p></div><span class="status-pill" id="engagement-api-status">Connecting</span></div>
+      <div class="card" id="engagement-local-status"><p class="quiet-note">Local consulting mode is available only from the loopback launcher with <code>?mode=consulting</code>.</p></div>
+      <form id="engagement-form" class="form-grid card">
+        <input type="hidden" name="engagement_id">
+        <label>Client name<input required name="client_name" maxlength="256" placeholder="Client organization"></label>
+        <label>Initiative name<input required name="initiative_name" maxlength="256" placeholder="Decision-scoped initiative"></label>
+        <label>Engagement title<input required name="engagement_title" maxlength="256" placeholder="Consulting engagement title"></label>
+        <label>Status<select required name="status"><option>Draft</option><option>Discovery</option><option>Analysis</option><option>Decision Preparation</option><option>Decision Issued</option><option>Closed</option><option>Archived</option></select></label>
+        <label>Executive sponsor<input required name="executive_sponsor" maxlength="256" placeholder="Named sponsor"></label>
+        <label>Business owner<input required name="business_owner" maxlength="256" placeholder="Named business owner"></label>
+        <label>Consultant<input required name="consultant" maxlength="256" placeholder="Named consultant"></label>
+        <label>Industry<input required name="industry" maxlength="256" placeholder="Industry"></label>
+        <label>Start date<input required type="date" name="start_date"></label>
+        <label>Target decision date<input required type="date" name="target_decision_date"></label>
+        <label>Jurisdictions<input required name="jurisdictions" maxlength="512" placeholder="Jurisdictions in scope"></label>
+        <label class="full">Decision question<textarea required name="decision_question" rows="3" maxlength="4000" placeholder="What decision is the engagement designed to support?"></textarea></label>
+        <label class="full">Scope<textarea required name="scope" rows="3" maxlength="4000" placeholder="Decision-scoped work included in this engagement"></textarea></label>
+        <label class="full">Out of scope<textarea required name="out_of_scope" rows="3" maxlength="4000" placeholder="Explicit exclusions and boundaries"></textarea></label>
+        <div class="form-actions full"><button type="submit">Save local engagement</button><button type="button" id="new-engagement" class="secondary">New engagement</button><label class="file-button secondary" for="engagement-import">Import engagement JSON</label><input id="engagement-import" type="file" accept="application/json,.json" hidden></div>
+      </form>
+      <div class="card evidence-table-wrap"><div class="section-heading"><div><span class="eyebrow">LOCAL ENGAGEMENTS</span><h3>Recent engagements</h3></div></div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Engagement</th><th>Client / initiative</th><th>Status / decision date</th><th>Foundation readiness</th><th>Actions</th></tr></thead><tbody id="engagement-rows"><tr><td colspan="5" class="quiet-note">No local engagements recorded.</td></tr></tbody></table></div></div>
+    </section>
+    <section id="discovery" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FEDARM / RELEASE 2 / STRUCTURED DISCOVERY</span><h2>Discovery and intake</h2><p>Capture what is known, asserted, inferred, assumed, estimated, or unknown before analysis. Saving an entry does not validate it or create a recommendation.</p></div><span class="status-pill" id="discovery-status">Select engagement</span></div>
+      <div class="card" id="discovery-local-status"><p class="quiet-note">Open a local engagement first. Discovery remains linked to that engagement and does not automatically alter the browser-local ROI-EA analysis.</p></div>
+      <form id="discovery-form" class="card" hidden>
+        <input type="hidden" name="engagement_id">
+        <div id="discovery-fields"></div>
+        <div class="form-actions"><button type="submit">Save structured discovery</button><button type="button" id="apply-discovery-opportunity" class="secondary">Copy selected intake to ROI-EA opportunity</button></div>
+      </form>
+    </section>
+    <section id="engagement-evidence" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FEDARM / RELEASE 3 / EVIDENCE AND DOCUMENT REGISTER</span><h2>Evidence and document register</h2><p>Register source metadata and review conditions for the selected engagement. A supplied document is not automatically valid evidence, applicable authority, a compliance conclusion, or a recommendation.</p></div><span class="status-pill" id="engagement-evidence-status">Select engagement</span></div>
+      <div class="card" id="engagement-evidence-local-status"><p class="quiet-note">Open a local engagement first. Files are not uploaded or analyzed in this local register; record a controlled source reference instead.</p></div>
+      <form id="engagement-evidence-form" class="form-grid card" hidden>
+        <label>Title<input required name="title" maxlength="256" placeholder="Document or evidence title"></label>
+        <label>Type<select required name="evidence_type"><option value="">Select</option><option>Interview note</option><option>Process document</option><option>Policy or procedure</option><option>System or architecture document</option><option>Cost or performance data</option><option>Contract or vendor material</option><option>Control evidence</option><option>Regulatory reference</option><option>Other</option></select></label>
+        <label>Classification<select required name="classification"><option>Verified fact</option><option>Client assertion</option><option>Consultant inference</option><option>Assumption</option><option>Estimate</option><option selected>Unknown</option></select></label>
+        <label>Review state<select required name="review_state"><option>Not reviewed</option><option>Supplied</option><option>Qualified review required</option><option>Reviewed with limitation</option><option>Superseded</option></select></label>
+        <label>Source or document reference<input required name="source_reference" maxlength="512" placeholder="File name, interview, system location, or controlled ID"></label>
+        <label>Received or observed date<input type="date" name="received_or_observed_date"></label>
+        <label>Reviewer or accountable source<input name="reviewer" maxlength="256" placeholder="Required for a verified fact"></label>
+        <label>Linked discovery references<input name="linked_discovery_references" maxlength="512" placeholder="e.g., business_problem.problem_statement"></label>
+        <label class="full">Relevance<textarea required name="relevance" rows="2" maxlength="4000" placeholder="Why this material matters to the decision or assessment"></textarea></label>
+        <label class="full">Limitation or evidence gap<textarea name="limitation_or_gap" rows="2" maxlength="4000" placeholder="What it does not establish, missing context, contradiction, or next review"></textarea></label>
+        <div class="form-actions full"><button type="submit">Add local evidence metadata</button></div>
+      </form>
+      <div class="card evidence-table-wrap" id="engagement-evidence-table" hidden><div class="evidence-summary" id="engagement-evidence-summary"></div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Record</th><th>Classification / review</th><th>Source / reviewer</th><th>Relevance / limitation</th><th>Discovery link</th></tr></thead><tbody id="engagement-evidence-rows"></tbody></table></div></div>
+    </section>
+    <section id="ai-necessity" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FEDARM / RELEASE 4 / AI NECESSITY GATE</span><h2>Compare a viable non-AI baseline before assessing bounded AI support.</h2><p>This gate does not recommend, authorize, select, or release AI. It records whether a qualified human review of a bounded comparison is possible.</p></div><span class="status-pill" id="ai-necessity-status">Select engagement</span></div>
+      <div class="card" id="ai-necessity-local-status"><p class="quiet-note">Open a local engagement first. Unknown conditions remain explicit; an AI comparison is not a business case, approval, or authority grant.</p></div>
+      <div class="card mortgage-disposition" id="ai-necessity-result" hidden></div>
+      <form id="ai-necessity-form" class="form-grid card" hidden>
+        <label class="full">Bounded task under review<textarea required name="assessed_task" rows="2" maxlength="4000" placeholder="Describe the operational task, not a general AI ambition"></textarea></label>
+        <label class="full">Viable non-AI baseline<textarea required name="non_ai_baseline" rows="2" maxlength="4000" placeholder="Describe the manual, rules-based, or conventional operating path"></textarea></label>
+        <label>Is the non-AI baseline viable?<select name="non_ai_viable"><option>Unknown</option><option>Yes</option><option>No</option><option>Not applicable</option></select></label>
+        <label>Accountable human disposition owner<input name="accountable_disposition_owner" maxlength="256" placeholder="Named role or organization"></label>
+        <label class="full">Proposed bounded AI support<textarea name="proposed_bounded_support" rows="2" maxlength="4000" placeholder="Permitted support such as completeness flagging, routing, delay detection, or traceability"></textarea></label>
+        <label class="full">Excluded consequential actions<textarea name="excluded_consequential_actions" rows="2" maxlength="4000" placeholder="State actions AI cannot approve, deny, commit, communicate, or decide"></textarea></label>
+        <label class="full">Evidence references<textarea name="evidence_references" rows="2" maxlength="4000" placeholder="Local evidence IDs or external references; absence remains explicit"></textarea></label>
+        <label class="full">Assumptions and unknowns<textarea required name="assumptions_and_unknowns" rows="2" maxlength="4000" placeholder="State measurement gaps, operating assumptions, and unresolved conditions"></textarea></label>
+        <div class="form-actions full"><button type="submit">Save AI Necessity Gate</button></div>
+      </form>
+    </section>
+    <section id="findings-questions" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FEDARM / RELEASE 5 / QUALIFIED FINDINGS</span><h2>Keep findings, contradictory evidence, and unanswered questions explicit.</h2><p>These local records support qualified review. They do not establish authority, legal applicability, compliance, control effectiveness, an architecture decision, or an implementation recommendation.</p></div><span class="status-pill" id="findings-questions-status">Select engagement</span></div>
+      <div class="card" id="findings-questions-local-status"><p class="quiet-note">Open a local engagement first. Decision-blocking items are visible for review; they do not automatically stop all progress or create a decision.</p></div>
+      <div class="card evidence-summary" id="findings-questions-summary">No engagement selected.</div>
+      <div class="two-column-grid">
+        <form id="finding-form" class="form-grid card" hidden>
+          <div class="full"><span class="eyebrow">RECORD A FINDING</span><p class="quiet-note">Record the observed issue, evidence for and against it, and the action still required. Do not record an unsupported conclusion as fact.</p></div>
+          <label>Finding title<input required name="title" maxlength="500" placeholder="Short, reviewable title"></label>
+          <label>Domain<select required name="domain"><option>Business</option><option>Economics</option><option>Architecture</option><option>Data</option><option>AI</option><option>Governance</option><option>Authority</option><option>Regulatory</option><option>Security</option><option>Operations</option><option>Vendor</option><option>Evidence</option><option>Other</option></select></label>
+          <label class="full">Finding statement<textarea required name="finding_statement" rows="3" maxlength="4000" placeholder="What was observed, with its stated limitation"></textarea></label>
+          <label>Severity<select required name="severity"><option>Observation</option><option>Low</option><option>Moderate</option><option>High</option><option>Decision-critical</option></select></label>
+          <label>Status<select required name="status"><option>Open</option><option>In review</option><option>Resolved</option><option>Deferred</option></select></label>
+          <label class="full">Supporting evidence / reference<textarea required name="supporting_evidence" rows="2" maxlength="4000" placeholder="Evidence reference, source, or traceable reviewer input"></textarea></label>
+          <label class="full">Contradictory evidence / limitation<textarea name="contradictory_evidence" rows="2" maxlength="4000" placeholder="Evidence that qualifies or challenges this finding, if known"></textarea></label>
+          <label>Decision impact<select required name="decision_impact"><option>Informational</option><option>Material</option><option>Decision-blocking</option></select></label>
+          <label>Owner<input required name="owner" maxlength="500" placeholder="Named review owner"></label>
+          <label class="full">Required action<textarea required name="required_action" rows="2" maxlength="4000" placeholder="What review, evidence, or accountable action remains required"></textarea></label>
+          <label>Due date<input name="due_date" type="date"></label>
+          <label>Resolution (when resolved)<input name="resolution" maxlength="4000" placeholder="Do not infer a resolution"></label>
+          <div class="full"><button type="submit">Record qualified finding</button></div>
+        </form>
+        <form id="open-question-form" class="form-grid card" hidden>
+          <div class="full"><span class="eyebrow">RECORD AN OPEN QUESTION</span><p class="quiet-note">A question is not an assumption and remains unresolved until a recorded resolution or inability to resolve is supplied.</p></div>
+          <label class="full">Question<textarea required name="question" rows="3" maxlength="4000" placeholder="State the question that requires evidence or accountable review"></textarea></label>
+          <label>Domain<select required name="domain"><option>Business</option><option>Economics</option><option>Architecture</option><option>Data</option><option>AI</option><option>Governance</option><option>Authority</option><option>Regulatory</option><option>Security</option><option>Operations</option><option>Vendor</option><option>Evidence</option><option>Other</option></select></label>
+          <label>Status<select required name="status"><option>Open</option><option>In review</option><option>Resolved</option><option>Unable to resolve</option><option>Deferred</option></select></label>
+          <label>Decision impact<select required name="decision_impact"><option>Informational</option><option>Material</option><option>Decision-blocking</option></select></label>
+          <label>Owner<input required name="owner" maxlength="500" placeholder="Named review owner"></label>
+          <label class="full">Evidence needed<textarea required name="evidence_needed" rows="3" maxlength="4000" placeholder="What evidence, review, or decision record is needed"></textarea></label>
+          <label class="full">Resolution (when resolved or unable to resolve)<textarea name="resolution" rows="2" maxlength="4000" placeholder="Record only an explicit disposition"></textarea></label>
+          <div class="full"><button type="submit">Record open question</button></div>
+        </form>
+      </div>
+      <div class="card evidence-table-wrap"><h3>Findings register</h3><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Finding</th><th>Classification</th><th>Evidence / limitation</th><th>Owner / required action</th></tr></thead><tbody id="finding-rows"></tbody></table></div></div>
+      <div class="card evidence-table-wrap"><h3>Open questions register</h3><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Question</th><th>Classification</th><th>Evidence needed</th><th>Owner / resolution</th></tr></thead><tbody id="open-question-rows"></tbody></table></div></div>
+    </section>
+    <section id="recommendation" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FEDARM / RELEASE 6 / CONSULTANT RECOMMENDATION</span><h2>Record the consultant’s decision recommendation with explicit conditions.</h2><p>A readiness indicator can surface exceptions. It cannot select, authorize, approve, or implement a recommendation.</p></div><span class="status-pill" id="recommendation-status">Select engagement</span></div>
+      <div class="card" id="recommendation-local-status"><p class="quiet-note">Open a local engagement before recording a recommendation. A recommendation remains consultant judgment and is versioned locally.</p></div>
+      <div class="card mortgage-disposition" id="recommendation-readiness" hidden></div>
+      <form id="recommendation-form" class="form-grid card" hidden>
+        <div class="full"><span class="eyebrow">CONSULTANT-ENTERED DECISION OUTPUT</span><p class="quiet-note">The system will not choose this option. A recorded recommendation does not itself grant organizational authority, establish legal applicability, demonstrate compliance, or authorize implementation.</p></div>
+        <label>Recommendation<select required name="recommendation"><option value="">Select a consultant-entered outcome</option><option>AUTHORIZE</option><option>REDESIGN</option><option>DEFER</option><option>DECLINE</option></select></label>
+        <label>Decision date<input required name="decision_date" type="date"></label>
+        <label>Consultant<input required name="consultant" maxlength="500" placeholder="Named consultant"></label>
+        <label>Review trigger<input required name="review_trigger" maxlength="4000" placeholder="When the recommendation must be reconsidered"></label>
+        <label class="full">Executive summary<textarea required name="executive_summary" rows="3" maxlength="6000" placeholder="A concise, qualified explanation of the recommended path"></textarea></label>
+        <label class="full">Rationale<textarea required name="rationale" rows="4" maxlength="6000" placeholder="Why this recommendation is appropriate based on the recorded review inputs"></textarea></label>
+        <label class="full">Key evidence references<textarea required name="key_evidence" rows="2" maxlength="4000" placeholder="Structured evidence IDs or source references; retrieval is not sufficiency"></textarea></label>
+        <label class="full">Key findings and contradictory evidence<textarea required name="key_findings" rows="2" maxlength="4000" placeholder="Relevant finding IDs and qualifying contrary evidence"></textarea></label>
+        <label class="full">Conditions / reconsideration criteria<textarea required name="conditions" rows="3" maxlength="6000" placeholder="For AUTHORIZE: bounded pilot and controls. For REDESIGN/DEFER/DECLINE: what changes or when reconsideration is possible."></textarea></label>
+        <label class="full">Assumptions<textarea name="assumptions" rows="2" maxlength="4000" placeholder="Explicit assumptions and unknowns"></textarea></label>
+        <label class="full">Residual risks<textarea name="residual_risks" rows="2" maxlength="4000" placeholder="Risks that remain after this recommendation"></textarea></label>
+        <label class="full">Required next steps<textarea required name="required_next_steps" rows="3" maxlength="6000" placeholder="Accountable actions needed after the recommendation"></textarea></label>
+        <label class="full">Readiness exception (if proceeding despite unresolved conditions)<textarea name="readiness_exception" rows="2" maxlength="4000" placeholder="Record why the consultant proceeded despite a readiness condition, if applicable"></textarea></label>
+        <div class="full"><button type="submit">Record consultant recommendation version</button></div>
+      </form>
+      <div class="card evidence-table-wrap" id="recommendation-history" hidden><h3>Recommendation history</h3><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Version</th><th>Recommendation</th><th>Consultant / date</th><th>Review trigger</th></tr></thead><tbody id="recommendation-history-rows"></tbody></table></div></div>
+    </section>
+
+    <section id="executive-package" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FEDARM / RELEASE 7 / CLIENT-READY PACKAGE</span><h2>Executive decision package</h2><p>Generate a print-ready HTML package from the current local engagement record. Missing information remains explicit; this generation is not an R8 snapshot, approval, legal conclusion, compliance determination, or implementation authorization.</p></div><span class="status-pill" id="executive-package-status">Select engagement</span></div>
+      <div class="card" id="executive-package-local-status"><p class="quiet-note">Open a local engagement first. The package reuses structured content and leaves unsupported analysis visible rather than filling gaps.</p></div>
+      <div class="card" id="executive-package-actions" hidden><span class="eyebrow">LOCAL OUTPUT</span><h3>Print-ready, current-state decision support</h3><p class="quiet-note">Opening the print layout or downloading HTML does not freeze the engagement. Use the existing engagement Export action for the controlled JSON handoff.</p><button type="button" id="print-executive-package">Open print layout</button> <button type="button" class="secondary" id="download-executive-package">Download print-ready HTML</button></div>
+      <article class="card executive-package-preview" id="executive-package-preview" hidden></article>
+    </section>
+    <section id="snapshots" class="view">
+      <div class="section-heading"><div><span class="eyebrow">FEDARM / RELEASE 8 / IMMUTABLE LOCAL RECORD</span><h2>Engagement snapshots</h2><p>An issued snapshot preserves the recommendation-time engagement state and its SHA-256 manifest. It is an evidence-controlled local record, not an authority grant, compliance conclusion, implementation approval, or proof of effectiveness.</p></div><span class="status-pill" id="snapshots-status">Select engagement</span></div>
+      <div class="card" id="snapshots-local-status"><p class="quiet-note">Open a local engagement to review its issued snapshots. Recording a consultant recommendation creates a new immutable snapshot; reassessment does not replace an earlier one.</p></div>
+      <div class="card evidence-table-wrap" id="snapshot-history" hidden><h3>Issued local snapshots</h3><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Snapshot</th><th>Issued at</th><th>Recommendation</th><th>Content SHA-256</th><th>Handoff</th></tr></thead><tbody id="snapshot-history-rows"></tbody></table></div></div>
+    </section>
     <footer class="application-footer">© 2026 David C. Jones. All rights reserved. AI at Human Scale.</footer>
   </main>
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="demo-config.js"></script>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=fedarm-snapshots-v0.1"></script>
 </body>
 </html>
