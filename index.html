@@ -15,6 +15,7 @@
       <button type="button" class="workspace-select" data-workspace-select="federated">Federated Enterprise</button>
       <button type="button" class="workspace-select" data-workspace-select="community-banking">Community Banking</button>
       <button type="button" class="workspace-select" data-workspace-select="mortgage">Mortgage reference</button>
+      <button type="button" class="workspace-select" data-workspace-select="consequential">Decision Workspace</button>
       <button type="button" class="workspace-select" data-workspace-select="consulting" id="consulting-workspace-switch" hidden>Consulting engagements</button>
     </div>
     <nav aria-label="Workflow">
@@ -35,6 +36,7 @@
       <button class="nav-link" data-workspace="federated" data-view="federated"><span>FE</span> Federated Enterprise</button>
       <button class="nav-link" data-workspace="community-banking" data-view="community-banking"><span>CB</span> Community Banking reference</button>
       <button class="nav-link" data-workspace="mortgage" data-view="mortgage-demo"><span>M</span> Mortgage reference demo</button>
+      <button class="nav-link" data-workspace="consequential" data-view="consequential"><span>CD</span> Decision workspace</button>
       <button class="nav-link" data-workspace="roi" data-view="dossier"><span>13</span> Executive dossier</button>
       <button class="nav-link" data-workspace="consulting" data-view="engagements" hidden><span>C</span> Engagement workspace</button>
       <button class="nav-link" data-workspace="consulting" data-view="discovery" hidden><span>1</span> Discovery</button>
@@ -492,6 +494,19 @@
       <div class="card"><span class="eyebrow">BACRM CAPABILITY ENVELOPE</span><h3 id="mortgage-capability-name">MERCA</h3><div class="mortgage-definition-grid" id="mortgage-capability-summary"></div></div>
       <div class="card"><span class="eyebrow">ERIR / READ-ONLY SOURCE SEED</span><h3>Source candidates and unresolved applicability</h3><p class="quiet-note">These links identify source candidates. Their presence does not establish applicability, legal sufficiency, compliance, control effectiveness, or organizational authorization.</p><details class="advanced-disclosure"><summary><span><strong>View regulatory-source register</strong></span><span class="advanced-disclosure-hint">Seed references only</span></summary><div class="advanced-disclosure-content"><div class="table-scroll"><table class="evidence-table"><thead><tr><th>ID</th><th>Source</th><th>Instrument type</th><th>Status</th></tr></thead><tbody id="mortgage-erir-rows"></tbody></table></div></div></details></div>
       <div class="card"><span class="eyebrow">SOURCE AND INTERPRETATION CONTROL</span><p><b>Fixture:</b> <span id="mortgage-source-name"></span></p><p><b>SHA-256:</b> <code id="mortgage-source-hash"></code></p><p class="mortgage-limit" id="mortgage-interpretation-limit"></p></div>
+    </section>
+
+    <section id="consequential" class="view">
+      <div class="section-heading"><div><span class="eyebrow">CONSEQUENTIAL DECISION RECORD / LOCAL-FIRST</span><h2>Decision Workspace</h2><p>Keep authority, viable alternatives, uncertainty, and human judgment visible. This illustrative local record does not select an operating form or authorize implementation.</p></div><span class="status-pill">Exploration / unresolved</span></div>
+      <div class="cdr-layout"><div class="cdr-main">
+        <div class="cdr-tabs" role="tablist" aria-label="Decision Workspace views"><button type="button" class="secondary active" data-cdr-tab="overview">Overview</button><button type="button" class="secondary" data-cdr-tab="authority">Authority</button><button type="button" class="secondary" data-cdr-tab="alternatives">Alternatives</button><button type="button" class="secondary" data-cdr-tab="judgment">Collaborative judgment</button><button type="button" class="secondary" data-cdr-tab="scale">Scalability &amp; stability</button><button type="button" class="secondary" data-cdr-tab="history">Decision history</button></div>
+        <article class="card cdr-panel" data-cdr-panel="overview"><span class="eyebrow">PURPOSE</span><h3>What are we deciding?</h3><p id="cdr-summary"></p><div class="cdr-overview-flow"><span>Purpose</span><span>Authority</span><span>Alternatives</span><span>Constraints &amp; gates</span><span>Judgment relationship</span><span>Decision state</span></div></article>
+        <article class="card cdr-panel" data-cdr-panel="authority" hidden><span class="eyebrow">AUTHORITY CHAIN</span><h3>Who can decide or act?</h3><p class="quiet-note">A conditional or unresolved authority is a visible decision condition, not an implicit permission.</p><div id="cdr-authority" class="cdr-record-grid"></div></article>
+        <article class="card cdr-panel" data-cdr-panel="alternatives" hidden><span class="eyebrow">ALTERNATIVES</span><h3>What remains viable?</h3><p class="quiet-note">Alternatives are not ranked when comparison is unresolved.</p><div id="cdr-alternatives" class="cdr-record-grid"></div></article>
+        <article class="card cdr-panel" data-cdr-panel="judgment" hidden><span class="eyebrow">JUDGMENT &amp; DELEGATION</span><h3>Keep the human decision right explicit.</h3><div id="cdr-judgment"></div></article>
+        <article class="card cdr-panel" data-cdr-panel="scale" hidden><span class="eyebrow">SCALABILITY &amp; STABILITY</span><h3>Inspect dimensions independently.</h3><p class="quiet-note">No composite score can hide an unsupported condition.</p><div id="cdr-scale"></div></article>
+        <article class="card cdr-panel" data-cdr-panel="history" hidden><span class="eyebrow">COLLABORATIVE JUDGMENT TIMELINE</span><h3>Decision-relevant trajectory</h3><ol id="cdr-timeline" class="cdr-timeline"></ol></article>
+      </div><aside class="card cdr-state" aria-label="Decision state"><span class="eyebrow">DECISION STATE</span><h3>Keep the next move in view.</h3><dl><dt>Governing question</dt><dd id="cdr-question"></dd><dt>Decision owner</dt><dd id="cdr-owner"></dd><dt>Judgment mode</dt><dd id="cdr-mode"></dd><dt>Target status</dt><dd id="cdr-target"></dd><dt>Current state</dt><dd id="cdr-state"></dd></dl><h4>Open uncertainties</h4><ul id="cdr-uncertainties"></ul><h4>Critical conditions</h4><ul id="cdr-critical"></ul><div class="cdr-next"><span class="eyebrow">LEAST-REGRET NEXT MOVE</span><strong id="cdr-next-type"></strong><p id="cdr-next-description"></p></div></aside></div>
     </section>
 
     <section id="dossier" class="view">
