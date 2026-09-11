@@ -8,56 +8,67 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to workspace</a>
   <aside class="sidebar">
     <div class="brand"><span class="eyebrow">AI AT HUMAN SCALE</span><strong>ROI-Driven<br>Enterprise Architect</strong></div>
     <div class="workspace-switcher" role="group" aria-label="Select workspace">
+      <span class="nav-caption">WORKSPACE</span>
       <button type="button" class="workspace-select active" data-workspace-select="roi">ROI-EA assessment</button>
-      <button type="button" class="workspace-select" data-workspace-select="federated">Federated Enterprise</button>
-      <button type="button" class="workspace-select" data-workspace-select="community-banking">Community Banking</button>
-      <button type="button" class="workspace-select" data-workspace-select="mortgage">Mortgage reference</button>
-      <button type="button" class="workspace-select" data-workspace-select="consequential">Decision Workspace</button>
+      <button type="button" class="workspace-select" data-workspace-select="consequential">Decision analysis</button>
       <button type="button" class="workspace-select" data-workspace-select="consulting" id="consulting-workspace-switch" hidden>Consulting engagements</button>
+      <details class="workspace-library" id="workspace-library">
+        <summary>Specialist workspaces &amp; examples</summary>
+        <div><button type="button" class="workspace-select" data-workspace-select="federated">Federated Enterprise</button>
+      <button type="button" class="workspace-select" data-workspace-select="community-banking">Community Banking</button>
+      <button type="button" class="workspace-select" data-workspace-select="mortgage">Mortgage reference</button></div>
+      </details>
     </div>
     <nav aria-label="Workflow">
-      <button class="nav-link active" data-workspace="roi" data-view="overview"><span>01</span> Decision workspace</button>
+<div class="nav-group" data-nav-workspace="roi"><span class="nav-caption">Frame the decision</span><button class="nav-link active" data-workspace="roi" data-view="overview"><span>01</span> Assessment overview</button>
       <button class="nav-link" data-workspace="roi" data-view="opportunity"><span>02</span> Opportunity</button>
-      <button class="nav-link" data-workspace="roi" data-view="evidence"><span>03</span> Evidence register</button>
-      <button class="nav-link" data-workspace="roi" data-view="inventory"><span>04</span> Architecture inventory</button>
+      <button class="nav-link" data-workspace="roi" data-view="evidence"><span>03</span> Evidence register</button></div>
+<div class="nav-group" data-nav-workspace="roi"><span class="nav-caption">Assess & compare</span>
       <button class="nav-link" data-workspace="roi" data-view="baseline"><span>05</span> ROI baseline</button>
-      <button class="nav-link" data-workspace="roi" data-view="risk"><span>06</span> Agentic risk</button>
-      <button class="nav-link" data-workspace="roi" data-view="authority"><span>07</span> Authority envelope</button>
-      <button class="nav-link" data-workspace="roi" data-view="authority-portfolio"><span>07a</span> Authority portfolio</button>
       <button class="nav-link" data-workspace="roi" data-view="architecture"><span>08</span> Architecture decision</button>
+      <button class="nav-link" data-workspace="roi" data-view="risk"><span>06</span> Agentic risk</button>
+      <button class="nav-link" data-workspace="roi" data-view="authority"><span>07</span> Authority envelope</button></div>
+<div class="nav-group" data-nav-workspace="roi"><span class="nav-caption">Plan & review</span>
       <button class="nav-link" data-workspace="roi" data-view="pilot"><span>09</span> Pilot charter</button>
       <button class="nav-link" data-workspace="roi" data-view="results"><span>10</span> Pilot review</button>
+      <button class="nav-link" data-workspace="roi" data-view="dossier"><span>13</span> Executive dossier</button></div>
+<details class="nav-group supporting-nav" data-nav-workspace="roi"><summary>Supporting analysis</summary><button class="nav-link" data-workspace="roi" data-view="inventory"><span>04</span> Architecture inventory</button>
+      <button class="nav-link" data-workspace="roi" data-view="authority-portfolio"><span>07a</span> Authority portfolio</button>
       <button class="nav-link" data-workspace="roi" data-view="regulatory"><span>11</span> Regulatory context</button>
-      <button class="nav-link" data-workspace="roi" data-view="compliance-cost"><span>12</span> Compliance cost &amp; capacity</button>
-      <button class="nav-link" data-workspace="federated" data-view="feoa"><span>F</span> FEOA workbench</button>
+      <button class="nav-link" data-workspace="roi" data-view="compliance-cost"><span>12</span> Compliance cost &amp; capacity</button></details>
+<button class="nav-link" data-workspace="federated" data-view="feoa"><span>F</span> FEOA workbench</button>
       <button class="nav-link" data-workspace="federated" data-view="federated"><span>FE</span> Federated Enterprise</button>
       <button class="nav-link" data-workspace="community-banking" data-view="community-banking"><span>CB</span> Community Banking reference</button>
       <button class="nav-link" data-workspace="mortgage" data-view="mortgage-demo"><span>M</span> Mortgage reference demo</button>
-      <button class="nav-link" data-workspace="consequential" data-view="consequential"><span>CD</span> Decision workspace</button>
-      <button class="nav-link" data-workspace="roi" data-view="dossier"><span>13</span> Executive dossier</button>
+      <button class="nav-link" data-workspace="consequential" data-view="consequential"><span>CD</span> Decision analysis</button>
       <button class="nav-link" data-workspace="consulting" data-view="engagements" hidden><span>C</span> Engagement workspace</button>
       <button class="nav-link" data-workspace="consulting" data-view="discovery" hidden><span>1</span> Discovery</button>
       <button class="nav-link" data-workspace="consulting" data-view="engagement-evidence" hidden><span>2</span> Evidence &amp; documents</button>
       <button class="nav-link" data-workspace="consulting" data-view="ai-necessity" hidden><span>3</span> AI Necessity Gate</button>
       <button class="nav-link" data-workspace="consulting" data-view="findings-questions" hidden><span>4</span> Findings &amp; questions</button>
       <button class="nav-link" data-workspace="consulting" data-view="recommendation" hidden><span>5</span> Recommendation</button>
-        <button class="nav-link" data-workspace="consulting" data-view="executive-package" hidden><span>6</span> Executive package</button>
-        <button class="nav-link" data-workspace="consulting" data-view="snapshots" hidden><span>7</span> Snapshots</button>
+      <button class="nav-link" data-workspace="consulting" data-view="executive-package" hidden><span>6</span> Executive package</button>
+      <button class="nav-link" data-workspace="consulting" data-view="snapshots" hidden><span>7</span> Snapshots</button>
     </nav>
     <div class="sidebar-note">Design-partner MVP<br><small>Stored in this browser only.</small><a class="engagement-link" href="https://www.aiathumanscale.com" target="_blank" rel="noopener noreferrer">Explore AI at Human Scale<br><span>Design-partner engagement information</span></a><small class="copyright-notice">© 2026 David C. Jones. All rights reserved.<br>AI at Human Scale.</small></div>
   </aside>
 
-  <main>
+  <main id="main-content" tabindex="-1">
     <header class="topbar">
-      <div><span class="eyebrow">MAKE THE NEXT DECISION VISIBLE</span><h1 id="page-title">Decision workspace</h1><p class="workspace-context"><strong id="workspace-decision">Define a bounded, accountable decision.</strong><span id="workspace-boundary">Evidence, authority, and results remain distinct.</span></p></div>
-      <div class="topbar-actions"><span id="guided-demo-status" class="guided-demo-status" aria-live="polite">Optional guided tour</span><button id="guided-demo-next" class="secondary" hidden>Next guided step</button><button id="load-demo" class="secondary">Load Northstar example</button><button id="reset-data" class="secondary danger">Reset local data</button></div>
+      <div><span class="eyebrow">CONSULTANT WORKSPACE</span><h1 id="page-title" tabindex="-1">Assessment overview</h1><p class="workspace-context"><strong id="workspace-decision">Define a bounded, accountable decision.</strong><span id="workspace-boundary">Evidence, authority, and results remain distinct.</span></p></div>
+      <div class="topbar-actions"><span id="guided-demo-status" class="guided-demo-status" aria-live="polite">Optional guided tour</span><button id="guided-demo-next" class="secondary" hidden>Next guided step</button><details class="workspace-tools"><summary>Workspace tools</summary><div><button id="load-demo" class="secondary">Load Northstar example</button><p>Loading the ROI-EA example replaces this browser's current assessment.</p><button id="reset-data" class="secondary danger">Reset local data</button></div></details></div>
     </header>
 
     <section id="overview" class="view active">
-      <div class="hero"><div><span class="eyebrow accent">PAID DESIGN-PARTNER WORKFLOW</span><h2>Turn a costly work problem into an accountable, bounded AI decision.</h2><p>This MVP captures the minimum facts required to decide whether to proceed: a defined opportunity, economic baseline, agentic-risk boundary, architecture choice, pilot charter, and executive-ready dossier.</p></div><div class="hero-status"><span id="readiness-label">Draft</span><strong id="readiness-score">0 / 6</strong><small>decision components complete</small></div></div>
+      <div class="work-summary"><div><span class="eyebrow accent">CURRENT ASSESSMENT</span><h2 id="assessment-name">Your next decision starts here</h2><p id="assessment-question">Define the opportunity, then build the evidence and compare your options.</p><p class="assessment-meta" id="assessment-meta">No opportunity recorded yet.</p></div><div class="hero-status"><span id="readiness-label">Draft</span><strong id="readiness-score">0 / 7</strong><small>workflow components complete</small></div></div>
+      <section class="next-action" aria-labelledby="next-action-title"><div><span class="eyebrow accent">NEXT STEP</span><h2 id="next-action-title">Define the opportunity</h2><p id="next-action-description">Start with the business problem and the decision owner.</p></div><button id="continue-assessment" type="button">Start assessment</button></section>
+      <div class="workflow-heading"><h2>Assessment workflow</h2><span>Completeness does not establish approval or evidence quality.</span></div>
+      <div class="card-grid" id="progress-cards"></div>
+      <details class="reference-library"><summary><span>Examples &amp; guided walkthrough<span class="summary-description">Explore synthetic cases separately from your assessment.</span></span></summary><div class="reference-library-content">
       <section class="guided-demo card" id="guided-demo-card" aria-live="polite"></section>
       <section class="reference-case-orientation card" aria-labelledby="reference-case-title">
         <span class="eyebrow">REFERENCE-CASE ORIENTATION</span>
@@ -86,8 +97,8 @@
           </article>
         </div>
       </section>
-      <div class="card-grid" id="progress-cards"></div>
-      <section class="card"><div class="section-heading"><div><span class="eyebrow">WORKING RULES</span><h2>Evidence before enthusiasm</h2></div></div><ul class="rule-list"><li>Forecast value is not realized value.</li><li>Risk reduction, cost avoidance, and released capacity require explicit evidence and owners.</li><li>Agentic recommendations do not replace named human authority.</li><li>Exported dossiers are decision-support documents, not legal, security, or financial approval.</li></ul></section>
+      </div></details>
+      <section class="card working-rules"><div class="section-heading"><div><span class="eyebrow">WORKING RULES</span><h2>Evidence before enthusiasm</h2></div></div><ul class="rule-list"><li>Forecast value is not realized value.</li><li>Risk reduction, cost avoidance, and released capacity require explicit evidence and owners.</li><li>Agentic recommendations do not replace named human authority.</li><li>Exported dossiers are decision-support documents, not legal, security, or financial approval.</li></ul></section>
     </section>
 
     <section id="opportunity" class="view">
@@ -301,7 +312,9 @@
         <label>Decision status<select name="status"><option value="">Select</option><option>Context linked</option><option>Potentially applicable - human review required</option><option>Undetermined</option><option>Control mapping proposed</option><option>Reviewed in ERIR</option></select></label>
         <label class="full">Source citation / official reference<textarea name="citation" rows="2" placeholder="Record the ERIR source title, citation locator, and official reference. The gateway may enrich this from a linked record."></textarea></label>
         <label class="full">Unresolved regulatory conditions<textarea name="unresolvedConditions" rows="3" placeholder="State missing facts, source-review gaps, pending counsel/compliance review, control conditions, or other uncertainty. Do not imply a compliance conclusion."></textarea></label>
-        <div class="form-actions full"><button type="submit">Save regulatory links</button><button type="button" id="load-erir-trace" class="secondary">Load ERIR traceability</button><button type="button" id="download-erir-handoff" class="secondary">Download ERIR handoff</button></div>
+        <div class="form-actions full"><button type="submit">Save regulatory links</button>
+      <button type="button" id="load-erir-trace" class="secondary">Load ERIR traceability</button>
+      <button type="button" id="download-erir-handoff" class="secondary">Download ERIR handoff</button></div>
       </form>
       <section class="card erir-status-panel" data-erir-status-panel aria-live="polite"></section>
       <div class="card evidence-table-wrap"><div class="evidence-summary" id="regulatory-summary">No ERIR records linked.</div><details class="advanced-disclosure"><summary><span><strong>View regulatory-source register</strong></span><span class="advanced-disclosure-hint">Read-only retrieval context</span></summary><div class="advanced-disclosure-content"><div class="table-scroll"><table class="evidence-table"><thead><tr><th>ERIR record</th><th>Status / review</th><th>Source / citation</th><th>Relationship</th></tr></thead><tbody id="regulatory-rows"><tr><td colspan="4" class="quiet-note">Load the configured ERIR read-only service to display traceability. Retrieved records remain review context, not a compliance conclusion.</td></tr></tbody></table></div></div></details></div>
@@ -373,8 +386,24 @@
         <label class="full">Required next action<textarea name="requiredNextAction" rows="2" placeholder="State the next evidence, design, or decision action."></textarea></label>
         <div class="form-actions full"><button type="submit">Save assessment foundation</button></div>
       </form>
-      <div class="card"><span class="eyebrow">GUIDED FEOA LIFECYCLE</span><h3>Continue the current assessment</h3><p class="quiet-note">Select a stage to review shared records, identify evidence gaps, and add the next record without re-entering prior work.</p><div class="dossier-actions" id="feoa-surface-nav"><button type="button" data-feoa-surface="home">Assessment Home</button><button type="button" data-feoa-surface="participants">Participants</button><button type="button" data-feoa-surface="stream">Value Stream</button><button type="button" data-feoa-surface="handoffs">Handoffs &amp; Actions</button><button type="button" data-feoa-surface="authority">Authority &amp; Evidence</button><button type="button" data-feoa-surface="baseline">Baseline &amp; Friction</button><button type="button" data-feoa-surface="economics">Economics</button><button type="button" data-feoa-surface="viability">Deal Viability</button><button type="button" data-feoa-surface="readiness">Readiness</button><button type="button" data-feoa-surface="gates">Gates</button><button type="button" data-feoa-surface="ai">AI Case</button><button type="button" data-feoa-surface="resilience">Resilience</button><button type="button" data-feoa-surface="sensitivity">Sensitivity</button><button type="button" data-feoa-surface="pilot">Pilot Evidence</button><button type="button" data-feoa-surface="reports">Reports</button></div><div class="dossier-summary" id="feoa-guided-surface" aria-live="polite"></div></div>
-      <details class="card advanced-disclosure" id="feoa-advanced-entry"><summary><span><span class="eyebrow">ADVANCED TECHNICAL ENTRY</span><strong>Canonical workspace records and JSON entry</strong></span><span class="advanced-disclosure-hint">Expand for architect-led record entry</span></summary><div class="advanced-disclosure-content form-grid"><div class="full"><p class="quiet-note">Each panel in the FEOA workbench reads from the same persisted assessment workspace. Use the synthetic healthcare fixture to explore the complete workflow, or add a record with the selected canonical collection. This technical entry does not create an approval, authority, or result.</p></div><label>Workspace surface<select id="feoa-record-type"><option value="participants">Participants &amp; value propositions</option><option value="capabilities">Capabilities</option><option value="valueStreams">Value streams</option><option value="processSteps">Process steps</option><option value="handoffs">Handoffs</option><option value="actions">Consequential actions</option><option value="constraints">Authority / evidence / constraints</option><option value="metrics">Baseline metrics</option><option value="frictions">Friction</option><option value="counterfactuals">Counterfactual cases</option><option value="economicFlows">Economic flows</option><option value="riskAdjustments">Risk adjustments</option><option value="participantEconomicCases">Participant deal viability</option><option value="readinessGaps">Technical &amp; operational readiness</option><option value="gates">Gate decisions</option><option value="aiCases">AI capability cases</option><option value="cognitiveResilience">Cognitive resilience</option><option value="sensitivities">Sensitivity / breakpoints</option><option value="pilotMeasurements">Pilot evidence &amp; variance</option></select></label><label class="full">Record JSON<textarea id="feoa-record-json" rows="6" aria-label="FEOA record JSON">{"name":"New record"}</textarea></label><div class="form-actions full"><button type="button" id="add-feoa-record">Add FEOA record</button><button type="button" id="load-feoa-healthcare" class="secondary">Load synthetic healthcare acceptance case</button><button type="button" id="generate-feoa-reports" class="secondary">Generate seven report instances</button></div></div></details>
+      <div class="card"><span class="eyebrow">GUIDED FEOA LIFECYCLE</span><h3>Continue the current assessment</h3><p class="quiet-note">Select a stage to review shared records, identify evidence gaps, and add the next record without re-entering prior work.</p><div class="dossier-actions" id="feoa-surface-nav"><button type="button" data-feoa-surface="home">Assessment Home</button>
+      <button type="button" data-feoa-surface="participants">Participants</button>
+      <button type="button" data-feoa-surface="stream">Value Stream</button>
+      <button type="button" data-feoa-surface="handoffs">Handoffs &amp; Actions</button>
+      <button type="button" data-feoa-surface="authority">Authority &amp; Evidence</button>
+      <button type="button" data-feoa-surface="baseline">Baseline &amp; Friction</button>
+      <button type="button" data-feoa-surface="economics">Economics</button>
+      <button type="button" data-feoa-surface="viability">Deal Viability</button>
+      <button type="button" data-feoa-surface="readiness">Readiness</button>
+      <button type="button" data-feoa-surface="gates">Gates</button>
+      <button type="button" data-feoa-surface="ai">AI Case</button>
+      <button type="button" data-feoa-surface="resilience">Resilience</button>
+      <button type="button" data-feoa-surface="sensitivity">Sensitivity</button>
+      <button type="button" data-feoa-surface="pilot">Pilot Evidence</button>
+      <button type="button" data-feoa-surface="reports">Reports</button></div><div class="dossier-summary" id="feoa-guided-surface" aria-live="polite"></div></div>
+      <details class="card advanced-disclosure" id="feoa-advanced-entry"><summary><span><span class="eyebrow">ADVANCED TECHNICAL ENTRY</span><strong>Canonical workspace records and JSON entry</strong></span><span class="advanced-disclosure-hint">Expand for architect-led record entry</span></summary><div class="advanced-disclosure-content form-grid"><div class="full"><p class="quiet-note">Each panel in the FEOA workbench reads from the same persisted assessment workspace. Use the synthetic healthcare fixture to explore the complete workflow, or add a record with the selected canonical collection. This technical entry does not create an approval, authority, or result.</p></div><label>Workspace surface<select id="feoa-record-type"><option value="participants">Participants &amp; value propositions</option><option value="capabilities">Capabilities</option><option value="valueStreams">Value streams</option><option value="processSteps">Process steps</option><option value="handoffs">Handoffs</option><option value="actions">Consequential actions</option><option value="constraints">Authority / evidence / constraints</option><option value="metrics">Baseline metrics</option><option value="frictions">Friction</option><option value="counterfactuals">Counterfactual cases</option><option value="economicFlows">Economic flows</option><option value="riskAdjustments">Risk adjustments</option><option value="participantEconomicCases">Participant deal viability</option><option value="readinessGaps">Technical &amp; operational readiness</option><option value="gates">Gate decisions</option><option value="aiCases">AI capability cases</option><option value="cognitiveResilience">Cognitive resilience</option><option value="sensitivities">Sensitivity / breakpoints</option><option value="pilotMeasurements">Pilot evidence &amp; variance</option></select></label><label class="full">Record JSON<textarea id="feoa-record-json" rows="6" aria-label="FEOA record JSON">{"name":"New record"}</textarea></label><div class="form-actions full"><button type="button" id="add-feoa-record">Add FEOA record</button>
+      <button type="button" id="load-feoa-healthcare" class="secondary">Load synthetic healthcare acceptance case</button>
+      <button type="button" id="generate-feoa-reports" class="secondary">Generate seven report instances</button></div></div></details>
       <div class="card"><h3>Assessment views and reusable records</h3><div class="table-wrap"><table><thead><tr><th>View</th><th>Primary FEOA concern</th><th>Existing ROI-EA / ERIR source of truth</th></tr></thead><tbody><tr><td>Participants &amp; allocation</td><td>Creation, capture, allocation, and internal transfers</td><td>FEOA participant and economic-line records</td></tr><tr><td>Operating handoffs</td><td>Communication, responsibility, authority, accountability</td><td>FEOA actions/handoffs + Authority Envelope</td></tr><tr><td>Authority, evidence &amp; constraints</td><td>Valid evidence is not authorization</td><td>Authority Envelope, Evidence register, ERIR links</td></tr><tr><td>Baseline, friction &amp; economics</td><td>Case 0 / 1 / 2, consolidated and risk-adjusted value</td><td>ROI baseline, Architecture alternatives, FEOA counterfactuals</td></tr><tr><td>Readiness, gates &amp; pilot</td><td>Decision-proportional evidence and reversible learning</td><td>Risk, Pilot/Results, FEOA gates and observations</td></tr><tr><td>AI &amp; Cognitive Resilience</td><td>Optional performer capability and durable human fallback</td><td>Authority Envelope, FEOA AI case and resilience records</td></tr></tbody></table></div></div>
       <div class="card" id="feoa-summary" aria-live="polite"></div>
     </section>
@@ -462,7 +491,8 @@
       </div>
       <details class="card advanced-disclosure mortgage-bpmn-card" id="bpmn-standards-review"><summary><span><span class="eyebrow">ADVANCED TECHNICAL REVIEW</span><strong>Standards-aware BPMN review workspace</strong></span><span class="advanced-disclosure-hint">Expand for source staging, gates, and exports</span></summary><div class="advanced-disclosure-content">
         <div class="mortgage-card-heading"><div><span class="eyebrow">STANDARDS-AWARE BPMN REVIEW WORKSPACE / G4</span><h3>Review source-traceable candidates before an explicit bounded commit</h3><p class="quiet-note">Parsing, structural validation, candidate review, and canonical commit are separate events. Accepting a candidate does not establish operating truth, authority, accountability, acceptance, compliance, federation membership, AI classification, or implementation.</p></div></div>
-        <div class="mortgage-import-actions"><button type="button" id="stage-reference-bpmn">Stage reference BPMN</button><label class="file-button" for="bpmn-standards-input">Select BPMN for review</label><input id="bpmn-standards-input" type="file" accept=".bpmn,.xml,text/xml,application/xml,application/bpmn+xml"><button type="button" id="download-bpmn-normalized" class="secondary">Export normalized JSON</button><button type="button" id="download-bpmn-report" class="secondary">Export import report</button></div>
+        <div class="mortgage-import-actions"><button type="button" id="stage-reference-bpmn">Stage reference BPMN</button><label class="file-button" for="bpmn-standards-input">Select BPMN for review</label><input id="bpmn-standards-input" type="file" accept=".bpmn,.xml,text/xml,application/xml,application/bpmn+xml"><button type="button" id="download-bpmn-normalized" class="secondary">Export normalized JSON</button>
+      <button type="button" id="download-bpmn-report" class="secondary">Export import report</button></div>
         <div class="form-grid bpmn-review-fields"><label>Reviewer<input id="bpmn-reviewer" type="text" maxlength="256" autocomplete="name" placeholder="Named qualified reviewer"></label><label>Disposition rationale<input id="bpmn-review-note" type="text" maxlength="32768" placeholder="Required reason for accept, revise, or reject"></label></div>
         <div id="bpmn-review-state" class="mortgage-import-state" role="status" aria-live="polite"></div>
         <div class="form-grid bpmn-review-fields"><label>Assessment purpose<input id="bpmn-assessment-purpose" type="text" maxlength="512" placeholder="Explicit reviewer-supplied assessment purpose"></label><label>Customer/end-user scope<input id="bpmn-customer-scope" type="text" maxlength="512" placeholder="Explicit reviewer-supplied customer/end-user scope"></label></div>
@@ -486,7 +516,8 @@
       <div class="card"><span class="eyebrow">ABSTENTION AND HUMAN REVIEW</span><h3>Unresolved evidence</h3><div id="mortgage-gap-list"></div></div>
       <div class="card mortgage-integration-card">
         <div class="mortgage-card-heading"><div><span class="eyebrow">INTEGRATED CONTROLLED EXECUTION</span><h3>ROI-EA → ERIR → FACEM → BACRM</h3><p class="quiet-note">The active synthetic mortgage reference case is evaluated across four distinct layers. Preloaded ERIR source IDs remain unverified in this browser session until a bounded read-only retrieval returns them; a returned record verifies retrieval only. Neither condition establishes applicability, compliance, control effectiveness, authorization, or an accountable disposition.</p></div><span class="status-pill" id="mortgage-integration-status">Not executed</span></div>
-        <div class="mortgage-import-actions"><button type="button" id="execute-mortgage-integration">Run integrated trace</button><button type="button" id="download-mortgage-trace" class="secondary" disabled>Download trace JSON</button></div>
+        <div class="mortgage-import-actions"><button type="button" id="execute-mortgage-integration">Run integrated trace</button>
+      <button type="button" id="download-mortgage-trace" class="secondary" disabled>Download trace JSON</button></div>
         <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Stage</th><th>Layer</th><th>Controlled input</th><th>Artifact and state</th><th>Boundary</th></tr></thead><tbody id="mortgage-integration-rows"><tr><td colspan="5" class="quiet-note">Run the integrated trace after loading or confirming the controlled case.</td></tr></tbody></table></div>
         <div id="mortgage-integration-detail"><p class="quiet-note">No cross-layer execution artifact exists in this browser session.</p></div>
         <section class="erir-status-panel" data-erir-status-panel aria-live="polite"></section>
@@ -499,7 +530,12 @@
     <section id="consequential" class="view">
       <div class="section-heading"><div><span class="eyebrow">CONSEQUENTIAL DECISION RECORD / LOCAL-FIRST</span><h2>Decision Workspace</h2><p>Keep authority, viable alternatives, uncertainty, and human judgment visible. This illustrative local record does not select an operating form or authorize implementation.</p></div><span class="status-pill">Exploration / unresolved</span></div>
       <div class="cdr-layout"><div class="cdr-main">
-        <div class="cdr-tabs" role="tablist" aria-label="Decision Workspace views"><button type="button" class="secondary active" data-cdr-tab="overview">Overview</button><button type="button" class="secondary" data-cdr-tab="authority">Authority</button><button type="button" class="secondary" data-cdr-tab="alternatives">Alternatives</button><button type="button" class="secondary" data-cdr-tab="judgment">Collaborative judgment</button><button type="button" class="secondary" data-cdr-tab="scale">Scalability &amp; stability</button><button type="button" class="secondary" data-cdr-tab="history">Decision history</button></div>
+        <div class="cdr-tabs" role="tablist" aria-label="Decision Workspace views"><button type="button" class="secondary active" data-cdr-tab="overview">Overview</button>
+      <button type="button" class="secondary" data-cdr-tab="authority">Authority</button>
+      <button type="button" class="secondary" data-cdr-tab="alternatives">Alternatives</button>
+      <button type="button" class="secondary" data-cdr-tab="judgment">Collaborative judgment</button>
+      <button type="button" class="secondary" data-cdr-tab="scale">Scalability &amp; stability</button>
+      <button type="button" class="secondary" data-cdr-tab="history">Decision history</button></div>
         <article class="card cdr-panel" data-cdr-panel="overview"><span class="eyebrow">PURPOSE</span><h3>What are we deciding?</h3><p id="cdr-summary"></p><div class="cdr-overview-flow"><span>Purpose</span><span>Authority</span><span>Alternatives</span><span>Constraints &amp; gates</span><span>Judgment relationship</span><span>Decision state</span></div></article>
         <article class="card cdr-panel" data-cdr-panel="authority" hidden><span class="eyebrow">AUTHORITY CHAIN</span><h3>Who can decide or act?</h3><p class="quiet-note">A conditional or unresolved authority is a visible decision condition, not an implicit permission.</p><div id="cdr-authority" class="cdr-record-grid"></div></article>
         <article class="card cdr-panel" data-cdr-panel="alternatives" hidden><span class="eyebrow">ALTERNATIVES</span><h3>What remains viable?</h3><p class="quiet-note">Alternatives are not ranked when comparison is unresolved.</p><div id="cdr-alternatives" class="cdr-record-grid"></div></article>
@@ -512,7 +548,8 @@
     <section id="dossier" class="view">
       <div class="section-heading"><div><span class="eyebrow">06 / EXECUTIVE DECISION DOSSIER</span><h2>Export a concise, evidence-aware decision package.</h2><p>The dossier records the current decision position. It must be reviewed by the named decision authority before any action is approved.</p></div><span class="status-pill" id="dossier-status">Needs inputs</span></div>
       <div class="card dossier-summary" id="dossier-summary"></div>
-      <div class="dossier-actions"><button id="export-html">Export executive dossier</button><button id="download-json" class="secondary">Download working record (JSON)</button></div>
+      <div class="dossier-actions"><button id="export-html">Export executive dossier</button>
+      <button id="download-json" class="secondary">Download working record (JSON)</button></div>
       <p class="quiet-note">“Export executive dossier” opens a print-ready document. Use the browser’s Print command to save a PDF or print for review.</p>
     </section>
 
@@ -535,7 +572,8 @@
         <label class="full">Decision question<textarea required name="decision_question" rows="3" maxlength="4000" placeholder="What decision is the engagement designed to support?"></textarea></label>
         <label class="full">Scope<textarea required name="scope" rows="3" maxlength="4000" placeholder="Decision-scoped work included in this engagement"></textarea></label>
         <label class="full">Out of scope<textarea required name="out_of_scope" rows="3" maxlength="4000" placeholder="Explicit exclusions and boundaries"></textarea></label>
-        <div class="form-actions full"><button type="submit">Save local engagement</button><button type="button" id="new-engagement" class="secondary">New engagement</button><label class="file-button secondary" for="engagement-import">Import engagement JSON</label><input id="engagement-import" type="file" accept="application/json,.json" hidden></div>
+        <div class="form-actions full"><button type="submit">Save local engagement</button>
+      <button type="button" id="new-engagement" class="secondary">New engagement</button><label class="file-button secondary" for="engagement-import">Import engagement JSON</label><input id="engagement-import" type="file" accept="application/json,.json" hidden></div>
       </form>
       <div class="card evidence-table-wrap"><div class="section-heading"><div><span class="eyebrow">LOCAL ENGAGEMENTS</span><h3>Recent engagements</h3></div></div><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Engagement</th><th>Client / initiative</th><th>Status / decision date</th><th>Foundation readiness</th><th>Actions</th></tr></thead><tbody id="engagement-rows"><tr><td colspan="5" class="quiet-note">No local engagements recorded.</td></tr></tbody></table></div></div>
     </section>
@@ -545,7 +583,8 @@
       <form id="discovery-form" class="card" hidden>
         <input type="hidden" name="engagement_id">
         <div id="discovery-fields"></div>
-        <div class="form-actions"><button type="submit">Save structured discovery</button><button type="button" id="apply-discovery-opportunity" class="secondary">Copy selected intake to ROI-EA opportunity</button></div>
+        <div class="form-actions"><button type="submit">Save structured discovery</button>
+      <button type="button" id="apply-discovery-opportunity" class="secondary">Copy selected intake to ROI-EA opportunity</button></div>
       </form>
     </section>
     <section id="engagement-evidence" class="view">

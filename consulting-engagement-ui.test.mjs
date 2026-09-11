@@ -26,7 +26,7 @@ test('consulting workspace is opt-in and hidden from public browser-local operat
 
 test('local engagement API is loopback-only and has no delete path', () => {
   assert.match(server, /ThreadingHTTPServer\(\("127\.0\.0\.1", PORT\)/);
-  assert.match(server, /def do_DELETE\(self\):\n\s+self\.send_json\(405, \{"error": "Deletion is not available\. Archive an engagement instead\."\}\)/);
+  assert.match(server, /def do_DELETE\(self\):\r?\n\s+self\.send_json\(405, \{"error": "Deletion is not available\. Archive an engagement instead\."\}\)/);
   assert.match(server, /"\/api\/engagements\/import"/);
   assert.match(server, /"\/api\/engagements\/"/);
 });
