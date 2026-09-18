@@ -1,0 +1,2 @@
+import assert from 'node:assert/strict';import test from 'node:test';import {validateCIFCaseSummary} from './roi-ea-cif-case-summary-model.mjs';
+test('case summary is read-only',()=>{const r=validateCIFCaseSummary({id:'CASE1',title:'Example',purpose:'Govern decision',systemBoundary:'pilot'});assert.equal(r.status,'PASS');assert.equal(r.readOnlyProjection,true);assert.equal(r.createsAuthority,false);});

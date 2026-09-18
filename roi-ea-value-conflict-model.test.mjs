@@ -1,0 +1,2 @@
+import assert from 'node:assert/strict';import test from 'node:test';import {validateValueConflictProfile} from './roi-ea-value-conflict-model.mjs';
+test('tradeoff profile does not turn ranking into decision',()=>{const r=validateValueConflictProfile({id:'T1',decisionId:'D1',conflictTypes:['VALUE'],alternativeIds:['A','B'],decisionMethod:'DELIBERATIVE_JUDGMENT',comparisonStatus:'NOT_REDUCIBLE_TO_SINGLE_SCALE',decisionAuthorityId:'AUTH1'});assert.equal(r.status,'PASS');assert.equal(r.rankingCreatesDecision,false);});

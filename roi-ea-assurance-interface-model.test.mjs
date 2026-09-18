@@ -1,0 +1,3 @@
+import assert from 'node:assert/strict';import test from 'node:test';import {validateAssuranceInterface,evaluateGovernedResumption} from './roi-ea-assurance-interface-model.mjs';
+test('assurance does not create authority',()=>{const r=validateAssuranceInterface({id:'AS1',subjectId:'SYS1',domain:'SECURITY',assuranceClaimIds:['C1'],evidenceIds:['E1'],scope:'config A',validityConditions:['unchanged'],limitations:['not safety']});assert.equal(r.status,'PASS');assert.equal(r.createsInstitutionalAuthority,false);});
+test('technical recovery alone is insufficient',()=>{const r=evaluateGovernedResumption({technicalRecoveryEstablished:true});assert.equal(r.status,'ASSURANCE_RESTORATION_REQUIRED');assert.equal(r.authorizedResumption,false);});
