@@ -49,12 +49,14 @@ export const CIF_RELATIONSHIPS = Object.freeze([
 ]);
 
 /**
- * Forbidden single-hop implications from CIF v0.3 / ROI-EA Second Edition.
+ * Forbidden single-hop implications where both source and target are members of
+ * the frozen CIF relationship grammar.
+ *
  * These do not prohibit an explicitly evidenced target relationship; they
- * prohibit creating it solely because the source relationship exists.
+ * prohibit deriving that relationship solely because the source relationship
+ * exists.
  */
-export const FORBIDDEN_ENTAILMENTS = Object.freeze([
-  ['HAS_CAPABILITY','POSSESSES_AUTHORITY'],
+export const FORBIDDEN_RELATIONSHIP_ENTAILMENTS = Object.freeze([
   ['HAS_ACCESS_TO','IS_PERMITTED_TO'],
   ['AUTHENTICATES_AS','IS_PERMITTED_TO'],
   ['IS_PERMITTED_TO','POSSESSES_AUTHORITY'],
@@ -70,8 +72,6 @@ export const FORBIDDEN_ENTAILMENTS = Object.freeze([
   ['VALIDATES','ACCEPTS'],
   ['ACCEPTS','PERFORMS'],
   ['PERFORMS','COMPLETES'],
-  ['COMPLETES','SEEKS_OUTCOME'],
-  ['SEEKS_OUTCOME','REALIZES_VALUE_FROM'],
   ['PRECEDES','CONTRIBUTES_CAUSALLY_TO'],
   ['DEPENDS_ON','CONTRIBUTES_CAUSALLY_TO'],
   ['CORRECTS','SUPERSEDES'],
@@ -80,6 +80,32 @@ export const FORBIDDEN_ENTAILMENTS = Object.freeze([
   ['IS_PERMITTED_TO','CONSENTS_TO'],
   ['ACCEPTS','CONSENTS_TO'],
   ['POSSESSES_AUTHORITY','CONSENTS_TO']
+]);
+
+/**
+ * Semantic/object-state non-entailments are not relationship-grammar edges.
+ * They protect distinctions among CIF object families, states, and ROI-EA/AACM
+ * decision concepts.
+ */
+export const SEMANTIC_NON_ENTAILMENTS = Object.freeze([
+  ['CAPABILITY','AUTHORITY'],
+  ['EVIDENCE','FACT'],
+  ['FACT','INFERENCE'],
+  ['INFERENCE','RECOMMENDATION'],
+  ['RECOMMENDATION','DECISION'],
+  ['CONFIDENCE','AUTHORITY'],
+  ['ACCEPTANCE','EXECUTION'],
+  ['EXECUTION','COMPLETION'],
+  ['COMPLETION','OUTCOME'],
+  ['OUTCOME','VALUE'],
+  ['RESPONSIBILITY','AUTHORITY'],
+  ['RESPONSIBILITY','COMMITMENT'],
+  ['RESPONSIBILITY','PERFORMANCE'],
+  ['TECHNICAL_RECOVERY','AUTHORIZED_RESUMPTION'],
+  ['CLASSIFICATION','RISK_ASSESSMENT'],
+  ['CLASSIFICATION','AUTHORIZATION'],
+  ['CLASSIFICATION','VALUE_JUDGMENT'],
+  ['SWARM_COMPONENT_CLASSIFICATION','SWARM_SYSTEM_CLASSIFICATION']
 ]);
 
 const text = value => String(value ?? '').trim();
@@ -132,15 +158,21 @@ export function normalizeCanonicalRelationship(record = {}) {
 }
 
 export function isForbiddenEntailment(sourceRelationship, proposedRelationship) {
-  return FORBIDDEN_ENTAILMENTS.some(
+  return FORBIDDEN_RELATIONSHIP_ENTAILMENTS.some(
     ([source, target]) => source === sourceRelationship && target === proposedRelationship
   );
 }
 
+export function isForbiddenSemanticEntailment(sourceConcept, proposedConcept) {
+  const source = text(sourceConcept).toUpperCase();
+  const target = text(proposedConcept).toUpperCase();
+  return SEMANTIC_NON_ENTAILMENTS.some(
+    ([from, to]) => from === source && to === target
+  );
+}
+
 /**
- * Validate a proposed derived relationship. Explicitly asserted relationships
- * may exist even when an entailment is forbidden; what is forbidden is using
- * the source relationship alone as sufficient derivation evidence.
+ * Validate a proposed relationship derivation.
  */
 export function validateDerivedRelationship({
   sourceRelationship = '',
@@ -150,6 +182,7 @@ export function validateDerivedRelationship({
 } = {}) {
   const forbidden = isForbiddenEntailment(sourceRelationship, proposedRelationship);
   const basis = list(derivationBasis).map(text).filter(Boolean);
+
   if (forbidden && !explicitAssertion) {
     return {
       valid: false,
@@ -157,6 +190,7 @@ export function validateDerivedRelationship({
       issues: [`${sourceRelationship} does not entail ${proposedRelationship}.`]
     };
   }
+
   if (forbidden && explicitAssertion && basis.length === 0) {
     return {
       valid: false,
@@ -164,6 +198,41 @@ export function validateDerivedRelationship({
       issues: [`Explicit ${proposedRelationship} requires an independent basis.`]
     };
   }
+
+  return { valid: true, status: 'PASS', issues: [] };
+}
+
+/**
+ * Validate a semantic/object-state implication separately from relationship
+ * grammar. This prevents invented relationship labels from entering CIF.
+ */
+export function validateSemanticEntailment({
+  sourceConcept = '',
+  proposedConcept = '',
+  derivationBasis = [],
+  explicitAssertion = false
+} = {}) {
+  const source = text(sourceConcept).toUpperCase();
+  const target = text(proposedConcept).toUpperCase();
+  const forbidden = isForbiddenSemanticEntailment(source, target);
+  const basis = list(derivationBasis).map(text).filter(Boolean);
+
+  if (forbidden && !explicitAssertion) {
+    return {
+      valid: false,
+      status: 'FORBIDDEN_SEMANTIC_ENTAILMENT',
+      issues: [`${source} does not entail ${target}.`]
+    };
+  }
+
+  if (forbidden && explicitAssertion && basis.length === 0) {
+    return {
+      valid: false,
+      status: 'INSUFFICIENT_BASIS',
+      issues: [`Explicit ${target} requires an independent basis.`]
+    };
+  }
+
   return { valid: true, status: 'PASS', issues: [] };
 }
 
