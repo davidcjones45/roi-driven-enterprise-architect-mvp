@@ -33,3 +33,16 @@ main{margin-left:264px;min-width:0}.topbar{padding:24px 36px;align-items:flex-st
 @media(max-width:900px){.sidebar{position:relative;width:auto;max-height:none;padding:20px 24px}.brand{padding:0 0 12px}.brand strong br{display:none}.workspace-switcher{grid-template-columns:repeat(2,minmax(0,1fr));padding:0;gap:8px}.workspace-switcher>.nav-caption,.workspace-library{grid-column:1/-1}.workspace-library>div{grid-template-columns:repeat(3,minmax(0,1fr))}.sidebar nav{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;margin-top:12px}.nav-group{flex:1 1 160px;min-width:0}.sidebar nav>.nav-link{width:auto}.sidebar-note{margin-top:8px;padding-top:12px}.sidebar-note .engagement-link,.sidebar-note .copyright-notice{display:none}main{margin-left:0}.topbar{padding:22px 24px}.view{padding:24px}.work-summary h2{font-size:1.6rem}.application-footer{padding:20px 24px}}
 @media(max-width:590px){.sidebar{padding:16px}.workspace-library>div{grid-template-columns:1fr}.topbar,.view{padding:20px 16px}.work-summary{align-items:flex-start;flex-direction:column;gap:12px}.work-summary .hero-status{border-left:0;padding:0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.work-summary .hero-status strong{font-size:1.5rem}.next-action{flex-direction:column;align-items:stretch;padding:18px}.card-grid,.reference-case-grid{grid-template-columns:1fr}.reference-library-content{padding:0 14px 14px}.reference-library>summary{padding:16px}.card{padding:18px}.workspace-tools>div{right:auto;left:0;width:min(280px,calc(100vw - 32px))}.topbar-actions{max-width:100%;flex-wrap:wrap}.cdr-state{padding:18px}.application-footer{padding:18px 16px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* ROI-EA metric-card wrapping hotfix v0.1 */
+.metric {
+    min-width: 0;
+}
+
+.metric span,
+.metric strong {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
