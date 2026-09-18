@@ -1,7 +1,7 @@
 /**
  * ROI-Driven Enterprise Architect — CIF canonical projection foundation.
  *
- * Additive compatibility module for A2. It does not replace FACEM, BACRM,
+ * Additive compatibility module. It does not replace FACEM, BACRM,
  * authority-model, FEOA, economics, or consultant-workflow domain records.
  * Canonical projection is descriptive and must not create materially different
  * relationships by implication.
@@ -32,29 +32,49 @@ export const CIF_OBJECT_FAMILIES = Object.freeze({
   LIFECYCLE: 'OF-22'
 });
 
+/**
+ * Frozen CIF v0.3 Canonical Relationship Grammar v0.2.
+ * Causal roles are kept separate below; they are not relationship types.
+ */
 export const CIF_RELATIONSHIPS = Object.freeze([
+  // Institutional / normative
   'POSSESSES_AUTHORITY','DELEGATES_TO','IS_PERMITTED_TO','RESPONSIBLE_FOR',
   'ACCOUNTABLE_FOR','MAKES_COMMITMENT','IS_MEMBER_OF','CONSENTS_TO',
-  'MAKES_DECISION','GRANTS_EXCEPTION_TO','ASSERTS','SUPPORTED_BY',
-  'DERIVED_FROM','EVALUATES','CONTRADICTS','RELIES_ON','INFERS',
-  'RECOMMENDS','MAPS_TO','TRANSFORMS_TO','SUPERSEDES','CORRECTS',
+  'MAKES_DECISION','ASSUMES','GRANTS_EXCEPTION_TO',
+
+  // Rule semantics
+  'APPLIES_TO','REQUIRES','PROHIBITS','PERMITS',
+
+  // Epistemic / semantic
+  'ASSERTS','SUPPORTED_BY','DERIVED_FROM','EVALUATES','CONTRADICTS',
+  'RELIES_ON','INFERS','RECOMMENDS','MAPS_TO','TRANSFORMS_TO',
+  'SUPERSEDES','CORRECTS','HAS_TRUST_STATE_FOR',
+
+  // Operational
   'PERFORMS','USES','HAS_ACCESS_TO','POSSESSES','AUTHENTICATES_AS',
   'DEPENDS_ON','REQUESTS','OFFERS','TRANSMITS','RECEIVES','VALIDATES',
   'ACCEPTS','COMPLETES','IMPLEMENTS_CONTROL','OPERATES_CONTROL',
-  'INTERVENES_IN','INVOKES_RECOURSE','CONTRIBUTES_CAUSALLY_TO',
-  'MITIGATES','PREVENTS','AMPLIFIES','SERVES_PURPOSE','SEEKS_OUTCOME',
-  'REALIZES_VALUE_FROM','ATTRIBUTES_VALUE_TO','PRECEDES',
-  'BECOMES_EFFECTIVE_AT','EXPIRES_AT','SUSPENDS','REACTIVATES',
+  'INTERVENES_IN','INVOKES_RECOURSE',
+
+  // Purpose / value
+  'SERVES_PURPOSE','SEEKS_OUTCOME','REALIZES_VALUE_FROM','ATTRIBUTES_VALUE_TO',
+
+  // Causal
+  'CONTRIBUTES_CAUSALLY_TO',
+
+  // Temporal / lifecycle
+  'PRECEDES','BECOMES_EFFECTIVE_AT','EXPIRES_AT','SUSPENDS','REACTIVATES',
   'RETIRES','RECOVERS_FROM'
+]);
+
+export const CIF_CAUSAL_ROLES = Object.freeze([
+  'DIRECT','CONTRIBUTING','ENABLING','NECESSARY_CONDITION',
+  'SUFFICIENT_CONDITION','AMPLIFYING','MITIGATING','PREVENTIVE'
 ]);
 
 /**
  * Forbidden single-hop implications where both source and target are members of
  * the frozen CIF relationship grammar.
- *
- * These do not prohibit an explicitly evidenced target relationship; they
- * prohibit deriving that relationship solely because the source relationship
- * exists.
  */
 export const FORBIDDEN_RELATIONSHIP_ENTAILMENTS = Object.freeze([
   ['HAS_ACCESS_TO','IS_PERMITTED_TO'],
@@ -84,26 +104,61 @@ export const FORBIDDEN_RELATIONSHIP_ENTAILMENTS = Object.freeze([
 
 /**
  * Semantic/object-state non-entailments are not relationship-grammar edges.
- * They protect distinctions among CIF object families, states, and ROI-EA/AACM
- * decision concepts.
  */
 export const SEMANTIC_NON_ENTAILMENTS = Object.freeze([
   ['CAPABILITY','AUTHORITY'],
+  ['ACCESS','PERMISSION'],
+  ['AUTHENTICATION','AUTHORIZATION'],
   ['EVIDENCE','FACT'],
   ['FACT','INFERENCE'],
   ['INFERENCE','RECOMMENDATION'],
   ['RECOMMENDATION','DECISION'],
   ['CONFIDENCE','AUTHORITY'],
+  ['POSSESSION','RELIANCE'],
+  ['RELIANCE','INHERITANCE'],
+  ['TRUST','AUTHORITY'],
+  ['DEPENDENCY','MEMBERSHIP'],
+  ['REQUEST','COMMITMENT'],
+  ['OFFER','ACCEPTANCE'],
+  ['TRANSMISSION','RECEIPT'],
+  ['RECEIPT','VALIDATION'],
+  ['VALIDATION','ACCEPTANCE'],
   ['ACCEPTANCE','EXECUTION'],
   ['EXECUTION','COMPLETION'],
   ['COMPLETION','OUTCOME'],
   ['OUTCOME','VALUE'],
+  ['EXECUTION','ACCOUNTABILITY'],
+  ['AUTHORITY','ACCOUNTABILITY'],
+  ['RESPONSIBILITY','ACCOUNTABILITY'],
+  ['COMMITMENT','ACCOUNTABILITY'],
   ['RESPONSIBILITY','AUTHORITY'],
   ['RESPONSIBILITY','COMMITMENT'],
   ['RESPONSIBILITY','PERFORMANCE'],
+  ['SEQUENCE','CAUSATION'],
+  ['CORRELATION','CAUSATION'],
+  ['DEPENDENCY','CAUSATION'],
+  ['RESPONSIBILITY','CAUSATION'],
+  ['ACCOUNTABILITY','CAUSATION'],
+  ['CAUSAL_CONTRIBUTION','LEGAL_LIABILITY'],
+  ['CORRECTION','HISTORICAL_ERASURE'],
+  ['CORRECTION','SUPERSESSION'],
+  ['CHANGED_VALIDITY','CORRECTION'],
+  ['SHARED_EVIDENCE','SHARED_DECISION'],
+  ['SAME_SOURCE_VALUE','SAME_SEMANTIC_MEANING'],
+  ['TECHNICAL_CONTINUITY','SEMANTIC_CONTINUITY'],
   ['TECHNICAL_RECOVERY','AUTHORIZED_RESUMPTION'],
+  ['PARTICIPATION','CONSENT'],
+  ['PERMISSION','CONSENT'],
+  ['ACCEPTANCE','CONSENT'],
+  ['AUTHORITY','CONSENT'],
+  ['MEMBERSHIP','CONSENT'],
+  ['PRIOR_USE','CONSENT'],
+  ['SILENCE','CONSENT'],
+
+  // ROI-EA / AACM specialization guards
   ['CLASSIFICATION','RISK_ASSESSMENT'],
   ['CLASSIFICATION','AUTHORIZATION'],
+  ['CLASSIFICATION','SAFETY_VALIDATION'],
   ['CLASSIFICATION','VALUE_JUDGMENT'],
   ['SWARM_COMPONENT_CLASSIFICATION','SWARM_SYSTEM_CLASSIFICATION']
 ]);
@@ -171,9 +226,6 @@ export function isForbiddenSemanticEntailment(sourceConcept, proposedConcept) {
   );
 }
 
-/**
- * Validate a proposed relationship derivation.
- */
 export function validateDerivedRelationship({
   sourceRelationship = '',
   proposedRelationship = '',
@@ -182,30 +234,15 @@ export function validateDerivedRelationship({
 } = {}) {
   const forbidden = isForbiddenEntailment(sourceRelationship, proposedRelationship);
   const basis = list(derivationBasis).map(text).filter(Boolean);
-
   if (forbidden && !explicitAssertion) {
-    return {
-      valid: false,
-      status: 'FORBIDDEN_ENTAILMENT',
-      issues: [`${sourceRelationship} does not entail ${proposedRelationship}.`]
-    };
+    return { valid:false, status:'FORBIDDEN_ENTAILMENT', issues:[`${sourceRelationship} does not entail ${proposedRelationship}.`] };
   }
-
   if (forbidden && explicitAssertion && basis.length === 0) {
-    return {
-      valid: false,
-      status: 'INSUFFICIENT_BASIS',
-      issues: [`Explicit ${proposedRelationship} requires an independent basis.`]
-    };
+    return { valid:false, status:'INSUFFICIENT_BASIS', issues:[`Explicit ${proposedRelationship} requires an independent basis.`] };
   }
-
-  return { valid: true, status: 'PASS', issues: [] };
+  return { valid:true, status:'PASS', issues:[] };
 }
 
-/**
- * Validate a semantic/object-state implication separately from relationship
- * grammar. This prevents invented relationship labels from entering CIF.
- */
 export function validateSemanticEntailment({
   sourceConcept = '',
   proposedConcept = '',
@@ -216,43 +253,18 @@ export function validateSemanticEntailment({
   const target = text(proposedConcept).toUpperCase();
   const forbidden = isForbiddenSemanticEntailment(source, target);
   const basis = list(derivationBasis).map(text).filter(Boolean);
-
   if (forbidden && !explicitAssertion) {
-    return {
-      valid: false,
-      status: 'FORBIDDEN_SEMANTIC_ENTAILMENT',
-      issues: [`${source} does not entail ${target}.`]
-    };
+    return { valid:false, status:'FORBIDDEN_SEMANTIC_ENTAILMENT', issues:[`${source} does not entail ${target}.`] };
   }
-
   if (forbidden && explicitAssertion && basis.length === 0) {
-    return {
-      valid: false,
-      status: 'INSUFFICIENT_BASIS',
-      issues: [`Explicit ${target} requires an independent basis.`]
-    };
+    return { valid:false, status:'INSUFFICIENT_BASIS', issues:[`Explicit ${target} requires an independent basis.`] };
   }
-
-  return { valid: true, status: 'PASS', issues: [] };
+  return { valid:true, status:'PASS', issues:[] };
 }
 
-/**
- * Projection registry entry. This is intentionally thin: domain modules remain
- * the authoritative owners of their existing records and calculations.
- */
-export function canonicalProjection({
-  canonicalRef = {},
-  relationships = [],
-  domainRecord = null
-} = {}) {
+export function canonicalProjection({ canonicalRef = {}, relationships = [], domainRecord = null } = {}) {
   const ref = normalizeCanonicalObjectRef(canonicalRef);
   const rels = relationships.map(normalizeCanonicalRelationship);
   const issues = [...ref.errors, ...rels.flatMap(item => item.errors)];
-  return {
-    ref,
-    relationships: rels,
-    domainRecord,
-    status: issues.length ? 'INCOMPLETE' : 'PASS',
-    issues
-  };
+  return { ref, relationships:rels, domainRecord, status:issues.length ? 'INCOMPLETE' : 'PASS', issues };
 }
