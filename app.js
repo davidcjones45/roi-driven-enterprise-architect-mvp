@@ -19,6 +19,7 @@ import { FINDING_DOMAINS, FINDING_SEVERITIES, FINDING_STATUSES, QUESTION_STATUSE
 import { normalizeRecommendation, recommendationErrors, recommendationReadiness } from './recommendation-model.mjs';
 import { buildExecutiveDecisionPackage, executiveDecisionPackageBody, renderExecutiveDecisionPackageHtml } from './engagement-report.mjs';
 import { renderDecisionWorkspace } from './consequential-decision-workspace.mjs';
+import { createOperatingCycleShellController } from './roi-ea-operating-cycle-ui.mjs';
 (() => {
   const KEY = 'roi-driven-enterprise-architect-mvp-v1';
   const blank = { opportunity:{}, evidence:[], inventory:[], baseline:{}, risk:{}, authorityEnvelope:{}, authorityEnvelopes:[], architecture:{alternatives:[]}, pilot:{}, results:{}, regulatory:{}, complianceCost:{assumptions:'',activities:[]}, feoa:{assessment:{},handoffs:[],actions:[],baselineMetrics:[],frictions:[],counterfactuals:[],risks:[],readiness:[],gates:[],cognitiveResilience:[],sensitivity:[],pilotObservations:[]} };
@@ -37,6 +38,7 @@ import { renderDecisionWorkspace } from './consequential-decision-workspace.mjs'
   const consultingMode = ['localhost','127.0.0.1'].includes(window.location.hostname) && new URLSearchParams(window.location.search).get('mode') === 'consulting';
   let engagements = [];
   let engagementSnapshots = [];
+  let operatingCycleShell = null;
   const $ = (selector, root=document) => root.querySelector(selector);
   const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
   const titles = {overview:'Assessment overview', opportunity:'Opportunity intake', evidence:'Evidence register', inventory:'Architecture inventory', baseline:'ROI baseline', risk:'Agentic risk boundary', authority:'Authority envelope', 'authority-portfolio':'Authority portfolio', authorityEnvelope:'Authority envelope', architecture:'Architecture decision', pilot:'Pilot charter', results:'Pilot review', regulatory:'Regulatory context', 'compliance-cost':'Compliance cost & capacity', feoa:'FEOA workbench', federated:'Federated Enterprise', 'community-banking':'Community Banking reference', 'mortgage-demo':'Mortgage reference demonstrator', consequential:'Decision analysis', dossier:'Executive decision dossier', engagements:'Consulting engagement workspace', discovery:'Structured discovery', 'engagement-evidence':'Engagement evidence register', 'ai-necessity':'AI Necessity Gate', 'findings-questions':'Findings & open questions', recommendation:'Consultant recommendation', 'executive-package':'Executive decision package', snapshots:'Engagement snapshots'};
@@ -83,7 +85,7 @@ import { renderDecisionWorkspace } from './consequential-decision-workspace.mjs'
   let guidedDemoIndex = -1;
   function workspaceForView(view){ return $(`.nav-link[data-view="${view}"]`)?.dataset.workspace || 'roi'; }
   function setWorkspace(workspace, navigate=true){ const definition=workspaceDefinitions[workspace] || workspaceDefinitions.roi; activeWorkspace=workspace; document.body.dataset.workspace=workspace; $$('.workspace-select').forEach(button=>button.classList.toggle('active',button.dataset.workspaceSelect===workspace)); $$('.nav-link').forEach(link=>link.hidden=link.dataset.workspace!==workspace); $$('[data-nav-workspace]').forEach(group=>group.hidden=group.dataset.navWorkspace!==workspace); const library=$('#workspace-library'); if(['federated','community-banking','mortgage'].includes(workspace)) library.open=true; $$('.workspace-select').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.workspaceSelect===workspace)));  $('#workspace-decision').textContent=definition.decision; $('#workspace-boundary').textContent=definition.boundary; $('#load-demo').textContent=definition.demoLabel; if(navigate) show(definition.defaultView); }
-  function show(view){ const workspace=workspaceForView(view); if(workspace!==activeWorkspace) setWorkspace(workspace,false); $$('.view').forEach(el=>el.classList.toggle('active',el.id===view)); $$('.nav-link').forEach(el=>el.classList.toggle('active',el.dataset.view===view)); $('#page-title').textContent=titles[view]; $$('.nav-link').forEach(link=>{if(link.dataset.view===view){link.setAttribute('aria-current','page'); const group=link.closest('details'); if(group)group.open=true;}else link.removeAttribute('aria-current');}); $('#page-title').focus({preventScroll:true});  if(view==='consequential') renderDecisionWorkspace($('#consequential')); if(view==='community-banking') renderCommunityBanking(); if(view==='discovery') renderDiscovery(); if(view==='engagement-evidence') renderEngagementEvidence(); if(view==='ai-necessity') renderAiNecessity(); if(view==='findings-questions') renderFindingsQuestions(); if(view==='recommendation') renderRecommendation(); if(view==='executive-package') renderExecutivePackage(); if(view==='snapshots') renderSnapshots(); window.scrollTo({top:0,behavior:'smooth'}); }
+  function show(view){ const workspace=workspaceForView(view); if(workspace!==activeWorkspace) setWorkspace(workspace,false); $$('.view').forEach(el=>el.classList.toggle('active',el.id===view)); $$('.nav-link').forEach(el=>el.classList.toggle('active',el.dataset.view===view)); $('#page-title').textContent=titles[view]; operatingCycleShell?.setView(view); $$('.nav-link').forEach(link=>{if(link.dataset.view===view){link.setAttribute('aria-current','page'); const group=link.closest('details'); if(group)group.open=true;}else link.removeAttribute('aria-current');}); $('#page-title').focus({preventScroll:true});  if(view==='consequential') renderDecisionWorkspace($('#consequential')); if(view==='community-banking') renderCommunityBanking(); if(view==='discovery') renderDiscovery(); if(view==='engagement-evidence') renderEngagementEvidence(); if(view==='ai-necessity') renderAiNecessity(); if(view==='findings-questions') renderFindingsQuestions(); if(view==='recommendation') renderRecommendation(); if(view==='executive-package') renderExecutivePackage(); if(view==='snapshots') renderSnapshots(); window.scrollTo({top:0,behavior:'smooth'}); }
   function renderCommunityBanking(){
     const w=activeCommunityBankingFixture, meta=w.fixtureMetadata||{};
     const text=(items, map)=>(items||[]).map(map).join('')||'<li class="quiet-note">No record.</li>';
@@ -418,10 +420,10 @@ import { renderDecisionWorkspace } from './consequential-decision-workspace.mjs'
       finally{bpmnInput.value='';}
     });
   }
-  wireForms(); wireEvidence(); wireInventory(); wireComplianceCost(); wireRegulatory(); wireAuthorityViews(); wireFederated(); wireWorkspaceNavigation(); wireGlobal(); wireDemoPortfolio(); wireMortgageDemo(); wireGuidedDemo(); wireEngagements(); wireDiscovery(); renderAll();
-  createBpmnReviewController({
-    getWorkspace: () => data.feoa,
+  wireForms(); wireEvidence(); wireInventory(); wireComplianceCost(); wireRegulatory(); wireAuthorityViews(); wireFederated(); wireWorkspaceNavigation(); wireGlobal(); wireDemoPortfolio(); wireMortgageDemo(); wireGuidedDemo(); wireEngagements(); wireDiscovery(); operatingCycleShell = createOperatingCycleShellController({ root:document, navigate:view=>show(view) }); operatingCycleShell.setView('overview'); renderAll();
+  createBpmnReviewController({getWorkspace: () => data.feoa,
     setWorkspace: (workspace) => { data.feoa = workspace; persist(); },
+    onStateChange: (snapshot) => operatingCycleShell?.setBpmnSnapshot(snapshot),
     notify: toast,
   });
 })();

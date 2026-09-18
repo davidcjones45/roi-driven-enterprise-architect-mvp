@@ -6,6 +6,7 @@
   <meta name="description" content="ROI-Driven Enterprise Architect: a decision workspace for paid design partners.">
   <title>ROI-Driven Enterprise Architect</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="roi-ea-operating-cycle.css">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to workspace</a>
@@ -62,6 +63,11 @@
       <div><span class="eyebrow">CONSULTANT WORKSPACE</span><h1 id="page-title" tabindex="-1">Assessment overview</h1><p class="workspace-context"><strong id="workspace-decision">Define a bounded, accountable decision.</strong><span id="workspace-boundary">Evidence, authority, and results remain distinct.</span></p></div>
       <div class="topbar-actions"><span id="guided-demo-status" class="guided-demo-status" aria-live="polite">Optional guided tour</span><button id="guided-demo-next" class="secondary" hidden>Next guided step</button><details class="workspace-tools"><summary>Workspace tools</summary><div><button id="load-demo" class="secondary">Load Northstar example</button><p>Loading the ROI-EA example replaces this browser's current assessment.</p><button id="reset-data" class="secondary danger">Reset local data</button></div></details></div>
     </header>
+
+    <section class="operating-cycle-shell" aria-label="ROI-Driven Enterprise Architecture Second Edition operating cycle">
+      <nav id="operating-cycle-strip" class="operating-cycle-strip" aria-label="Five-screen operating cycle"></nav>
+      <p id="operating-cycle-status" class="operating-cycle-status quiet-note" aria-live="polite">Logical operating-cycle orientation only; readiness, approval, and authority are not inferred from navigation.</p>
+    </section>
 
     <section id="overview" class="view active">
       <div class="work-summary"><div><span class="eyebrow accent">CURRENT ASSESSMENT</span><h2 id="assessment-name">Your next decision starts here</h2><p id="assessment-question">Define the opportunity, then build the evidence and compare your options.</p><p class="assessment-meta" id="assessment-meta">No opportunity recorded yet.</p></div><div class="hero-status"><span id="readiness-label">Draft</span><strong id="readiness-score">0 / 7</strong><small>workflow components complete</small></div></div>
@@ -489,8 +495,9 @@
         <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Node</th><th>Prospective support point</th><th>Permitted purpose</th><th>Authority</th><th>Disposition</th></tr></thead><tbody id="mortgage-bpmn-candidates"><tr><td colspan="5" class="quiet-note">No prospective candidate analysis exists in this browser session.</td></tr></tbody></table></div>
         <div id="mortgage-bpmn-summary"><p class="quiet-note">The controlled subset does not validate arbitrary BPMN, establish process correctness, or authorize implementation.</p></div>
       </div>
-      <details class="card advanced-disclosure mortgage-bpmn-card" id="bpmn-standards-review"><summary><span><span class="eyebrow">ADVANCED TECHNICAL REVIEW</span><strong>Standards-aware BPMN review workspace</strong></span><span class="advanced-disclosure-hint">Expand for source staging, gates, and exports</span></summary><div class="advanced-disclosure-content">
+      <details class="card advanced-disclosure mortgage-bpmn-card" id="bpmn-standards-review" data-cycle-screen="PROCESS_AI_ANALYSIS" data-read-only-process-evidence="true"><summary><span><span class="eyebrow">ADVANCED TECHNICAL REVIEW</span><strong>Standards-aware BPMN review workspace</strong></span><span class="advanced-disclosure-hint">Expand for source staging, gates, and exports</span></summary><div class="advanced-disclosure-content">
         <div class="mortgage-card-heading"><div><span class="eyebrow">STANDARDS-AWARE BPMN REVIEW WORKSPACE / G4</span><h3>Review source-traceable candidates before an explicit bounded commit</h3><p class="quiet-note">Parsing, structural validation, candidate review, and canonical commit are separate events. Accepting a candidate does not establish operating truth, authority, accountability, acceptance, compliance, federation membership, AI classification, or implementation.</p></div></div>
+        <p id="bpmn-cycle-context" class="bpmn-cycle-context quiet-note" aria-live="polite">Process &amp; AI Analysis · No standards-aware BPMN source is staged. The viewer remains read-only and creates no process-validity, authority, compliance, or implementation conclusion.</p>
         <div class="mortgage-import-actions"><button type="button" id="stage-reference-bpmn">Stage reference BPMN</button><label class="file-button" for="bpmn-standards-input">Select BPMN for review</label><input id="bpmn-standards-input" type="file" accept=".bpmn,.xml,text/xml,application/xml,application/bpmn+xml"><button type="button" id="download-bpmn-normalized" class="secondary">Export normalized JSON</button>
       <button type="button" id="download-bpmn-report" class="secondary">Export import report</button></div>
         <div class="form-grid bpmn-review-fields"><label>Reviewer<input id="bpmn-reviewer" type="text" maxlength="256" autocomplete="name" placeholder="Named qualified reviewer"></label><label>Disposition rationale<input id="bpmn-review-note" type="text" maxlength="32768" placeholder="Required reason for accept, revise, or reject"></label></div>

@@ -109,7 +109,24 @@ function renderDossier(model, state, boundaryRows, riskRows, aiRows, hypothesisR
   return dossier;
 }
 
-export function createBpmnReviewController({ root = document, getWorkspace, setWorkspace, notify = () => {} }) {
+export function bpmnReviewCycleSnapshot(model = null, dossier = null) {
+  return {
+    staged:Boolean(model),
+    reviewStatus:model?.status || 'NOT_STAGED',
+    sourceId:model?.source?.sha256 || '',
+    candidateCount:model?.mappingCandidates?.length || 0,
+    dossierAvailable:Boolean(dossier),
+    readOnlyVisualization:true,
+    executesWorkflow:false,
+    establishesProcessValidity:false,
+    createsAuthority:false,
+    createsAuthorization:false,
+    createsComplianceConclusion:false,
+    createsImplementationApproval:false
+  };
+}
+
+export function createBpmnReviewController({ root = document, getWorkspace, setWorkspace, notify = () => {}, onStateChange = () => {} }) {
   let model = null, commitRecord = null, confirmationBinding = null, handoffReviewReferences = {}, obligationControlReviewReferences = {}, boundedAiReviewReferences = {}, currentDossier = null;
   const find = (selector) => root.querySelector(selector);
   const clearConfirmation = () => {
@@ -121,7 +138,7 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     const state = find('#bpmn-review-state'), rows = find('#bpmn-review-candidates'), diagramHost = find('#bpmn-diagram-canvas'), diagramState = find('#bpmn-diagram-state'), intakeState = find('#bpmn-intake-state'), handoffState = find('#bpmn-handoff-state'), handoffRows = find('#bpmn-handoff-candidates'), obligationControlState = find('#bpmn-obligation-control-state'), obligationControlRows = find('#bpmn-obligation-control-candidates'), boundedAiState = find('#bpmn-bounded-ai-state'), boundedAiRows = find('#bpmn-bounded-ai-candidates'), dossierState = find('#bpmn-dossier-state'), dossierBoundaries = find('#bpmn-dossier-boundaries'), dossierRiskControls = find('#bpmn-dossier-risk-controls'), dossierAi = find('#bpmn-dossier-ai'), dossierHypotheses = find('#bpmn-dossier-hypotheses');
     if (!state || !rows) return;
     rows.replaceChildren();
-    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); renderIntakeAssessment(null, intakeState, {}); renderHandoffAssessment(null, handoffState, handoffRows, {}); renderObligationControlAssessment(null, obligationControlState, obligationControlRows, {}); renderBoundedAiAssessment(null, boundedAiState, boundedAiRows, {}); currentDossier = renderDossier(null, dossierState, dossierBoundaries, dossierRiskControls, dossierAi, dossierHypotheses, {}); return; }
+    if (!model) { state.textContent = 'No standards-aware BPMN import is staged in this browser session.'; renderDiagram(null, diagramHost, diagramState); renderIntakeAssessment(null, intakeState, {}); renderHandoffAssessment(null, handoffState, handoffRows, {}); renderObligationControlAssessment(null, obligationControlState, obligationControlRows, {}); renderBoundedAiAssessment(null, boundedAiState, boundedAiRows, {}); currentDossier = renderDossier(null, dossierState, dossierBoundaries, dossierRiskControls, dossierAi, dossierHypotheses, {}); onStateChange(bpmnReviewCycleSnapshot(null, currentDossier)); return; }
     state.textContent = `${model.status}: ${model.elements.length} elements, ${model.mappingCandidates.length} candidates, ${model.diagnostics.length} diagnostics. Source ${model.source.sha256.slice(0, 16)}… remains modeled evidence.`;
     for (const candidate of model.mappingCandidates) {
       const row = document.createElement('tr');
@@ -145,6 +162,7 @@ export function createBpmnReviewController({ root = document, getWorkspace, setW
     renderObligationControlAssessment(model, obligationControlState, obligationControlRows, obligationControlReviewReferences);
     renderBoundedAiAssessment(model, boundedAiState, boundedAiRows, boundedAiReviewReferences);
     currentDossier = renderDossier(model, dossierState, dossierBoundaries, dossierRiskControls, dossierAi, dossierHypotheses, { intakeContext: { assessmentPurpose: find('#bpmn-assessment-purpose')?.value, customerEndUserScope: find('#bpmn-customer-scope')?.value }, handoffReferences: handoffReviewReferences, obligationControlReferences: obligationControlReviewReferences, boundedAiReferences: boundedAiReviewReferences });
+    onStateChange(bpmnReviewCycleSnapshot(model, currentDossier));
   };
   const stage = async ({ fileName, data, mediaType = '' }) => {
     const parsed = await parseAndValidateBpmn({ fileName, data, mediaType, importedAt: new Date().toISOString() });

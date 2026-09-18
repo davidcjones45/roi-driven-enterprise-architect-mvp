@@ -1,0 +1,54 @@
+.operating-cycle-shell {
+  margin: 0 0 1rem;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid var(--border, #d8dde5);
+  background: var(--surface, #fff);
+}
+.operating-cycle-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: .5rem;
+}
+.operating-cycle-step {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.75rem;
+  padding: .55rem .65rem;
+  border: 1px solid var(--border, #d8dde5);
+  border-radius: .5rem;
+  background: transparent;
+  text-align: left;
+}
+.operating-cycle-step[aria-current="step"] {
+  border-width: 2px;
+  font-weight: 700;
+}
+.operating-cycle-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+.operating-cycle-step-label {
+  line-height: 1.2;
+}
+.operating-cycle-status {
+  margin: .5rem 0 0;
+  font-size: .85rem;
+}
+.bpmn-cycle-context {
+  margin: .75rem 0 0;
+  padding: .65rem .75rem;
+  border-left: 3px solid currentColor;
+  font-size: .9rem;
+}
+@media (max-width: 900px) {
+  .operating-cycle-strip {
+    grid-template-columns: 1fr;
+  }
+}
