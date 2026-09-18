@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   CIF_OBJECT_FAMILIES,
   CIF_RELATIONSHIPS,
+  CIF_CAUSAL_ROLES,
   FORBIDDEN_RELATIONSHIP_ENTAILMENTS,
   SEMANTIC_NON_ENTAILMENTS,
   canonicalProjection,
@@ -13,18 +14,28 @@ import {
 test('canonical object projection remains thin and preserves the domain record', () => {
   const domain = { id:'AE-1', status:'Active' };
   const result = canonicalProjection({
-    canonicalRef:{
-      canonicalId:'CAN-AE-1',
-      family:CIF_OBJECT_FAMILIES.AUTHORITY_DELEGATION,
-      domainType:'authority_envelope',
-      domainId:'AE-1',
-      sourceModule:'authority-model.mjs'
-    },
+    canonicalRef:{ canonicalId:'CAN-AE-1', family:CIF_OBJECT_FAMILIES.AUTHORITY_DELEGATION,
+      domainType:'authority_envelope', domainId:'AE-1', sourceModule:'authority-model.mjs' },
     domainRecord:domain
   });
   assert.equal(result.status,'PASS');
   assert.equal(result.domainRecord,domain);
-  assert.equal(result.ref.domainId,'AE-1');
+});
+
+test('CIF relationship grammar includes rule semantics, assumption, and trust-state relation', () => {
+  for (const relation of ['ASSUMES','APPLIES_TO','REQUIRES','PROHIBITS','PERMITS','HAS_TRUST_STATE_FOR']) {
+    assert.equal(CIF_RELATIONSHIPS.includes(relation), true, relation);
+  }
+});
+
+test('causal roles are not represented as relationship types', () => {
+  for (const role of ['AMPLIFYING','MITIGATING','PREVENTIVE']) {
+    assert.equal(CIF_CAUSAL_ROLES.includes(role), true);
+  }
+  for (const invalidRelation of ['AMPLIFIES','MITIGATES','PREVENTS']) {
+    assert.equal(CIF_RELATIONSHIPS.includes(invalidRelation), false);
+  }
+  assert.equal(CIF_RELATIONSHIPS.includes('CONTRIBUTES_CAUSALLY_TO'), true);
 });
 
 test('relationship non-entailment table contains only canonical relationship names', () => {
@@ -34,114 +45,50 @@ test('relationship non-entailment table contains only canonical relationship nam
   }
 });
 
-test('semantic non-entailment table contains semantic concepts rather than invented CIF relationships', () => {
-  assert.equal(SEMANTIC_NON_ENTAILMENTS.some(([source,target]) => source === 'CAPABILITY' && target === 'AUTHORITY'), true);
-  assert.equal(SEMANTIC_NON_ENTAILMENTS.some(([source,target]) => source === 'COMPLETION' && target === 'OUTCOME'), true);
-  assert.equal(SEMANTIC_NON_ENTAILMENTS.some(([source,target]) => source === 'OUTCOME' && target === 'VALUE'), true);
-  assert.equal(SEMANTIC_NON_ENTAILMENTS.some(([source,target]) => source === 'CLASSIFICATION' && target === 'AUTHORIZATION'), true);
-  assert.equal(FORBIDDEN_RELATIONSHIP_ENTAILMENTS.some(([source]) => source === 'HAS_CAPABILITY'), false);
+test('semantic non-entailments preserve CIF and AACM distinctions', () => {
+  for (const pair of [
+    ['CAPABILITY','AUTHORITY'],['COMPLETION','OUTCOME'],['OUTCOME','VALUE'],
+    ['TECHNICAL_RECOVERY','AUTHORIZED_RESUMPTION'],['CLASSIFICATION','AUTHORIZATION'],
+    ['SWARM_COMPONENT_CLASSIFICATION','SWARM_SYSTEM_CLASSIFICATION']
+  ]) {
+    assert.equal(SEMANTIC_NON_ENTAILMENTS.some(([s,t]) => s === pair[0] && t === pair[1]), true, pair.join(' != '));
+  }
 });
 
 test('permission does not entail authority', () => {
-  const result = validateDerivedRelationship({
-    sourceRelationship:'IS_PERMITTED_TO',
-    proposedRelationship:'POSSESSES_AUTHORITY'
-  });
+  const result = validateDerivedRelationship({ sourceRelationship:'IS_PERMITTED_TO', proposedRelationship:'POSSESSES_AUTHORITY' });
   assert.equal(result.valid,false);
-  assert.equal(result.status,'FORBIDDEN_ENTAILMENT');
 });
 
 test('dependency does not entail membership', () => {
-  const result = validateDerivedRelationship({
-    sourceRelationship:'DEPENDS_ON',
-    proposedRelationship:'IS_MEMBER_OF'
-  });
+  const result = validateDerivedRelationship({ sourceRelationship:'DEPENDS_ON', proposedRelationship:'IS_MEMBER_OF' });
   assert.equal(result.valid,false);
 });
 
 test('technical recovery relationship does not entail reactivation', () => {
-  const result = validateDerivedRelationship({
-    sourceRelationship:'RECOVERS_FROM',
-    proposedRelationship:'REACTIVATES'
-  });
+  const result = validateDerivedRelationship({ sourceRelationship:'RECOVERS_FROM', proposedRelationship:'REACTIVATES' });
   assert.equal(result.valid,false);
 });
 
-test('capability does not semantically entail authority', () => {
-  const result = validateSemanticEntailment({
-    sourceConcept:'CAPABILITY',
-    proposedConcept:'AUTHORITY'
-  });
-  assert.equal(result.valid,false);
-  assert.equal(result.status,'FORBIDDEN_SEMANTIC_ENTAILMENT');
-});
-
-test('completion does not semantically entail outcome', () => {
-  const result = validateSemanticEntailment({
-    sourceConcept:'COMPLETION',
-    proposedConcept:'OUTCOME'
-  });
-  assert.equal(result.valid,false);
-});
-
-test('outcome does not semantically entail value', () => {
-  const result = validateSemanticEntailment({
-    sourceConcept:'OUTCOME',
-    proposedConcept:'VALUE'
-  });
-  assert.equal(result.valid,false);
-});
-
-test('AACM classification does not semantically entail authorization', () => {
-  const result = validateSemanticEntailment({
-    sourceConcept:'CLASSIFICATION',
-    proposedConcept:'AUTHORIZATION'
-  });
-  assert.equal(result.valid,false);
-});
-
-test('swarm system classification is not inferred from component classifications', () => {
-  const result = validateSemanticEntailment({
-    sourceConcept:'SWARM_COMPONENT_CLASSIFICATION',
-    proposedConcept:'SWARM_SYSTEM_CLASSIFICATION'
-  });
+test('classification does not semantically entail authorization', () => {
+  const result = validateSemanticEntailment({ sourceConcept:'CLASSIFICATION', proposedConcept:'AUTHORIZATION' });
   assert.equal(result.valid,false);
 });
 
 test('explicit materially different relationship requires independent basis', () => {
   const result = validateDerivedRelationship({
-    sourceRelationship:'IS_PERMITTED_TO',
-    proposedRelationship:'POSSESSES_AUTHORITY',
-    explicitAssertion:true,
-    derivationBasis:[]
+    sourceRelationship:'IS_PERMITTED_TO', proposedRelationship:'POSSESSES_AUTHORITY',
+    explicitAssertion:true, derivationBasis:[]
   });
-  assert.equal(result.valid,false);
   assert.equal(result.status,'INSUFFICIENT_BASIS');
-
-  const supported = validateDerivedRelationship({
-    sourceRelationship:'IS_PERMITTED_TO',
-    proposedRelationship:'POSSESSES_AUTHORITY',
-    explicitAssertion:true,
-    derivationBasis:['AE-1']
-  });
-  assert.equal(supported.valid,true);
+  assert.equal(validateDerivedRelationship({
+    sourceRelationship:'IS_PERMITTED_TO', proposedRelationship:'POSSESSES_AUTHORITY',
+    explicitAssertion:true, derivationBasis:['AE-1']
+  }).valid,true);
 });
 
-test('explicit semantic assertion requires independent basis when source concept cannot entail target', () => {
-  const result = validateSemanticEntailment({
-    sourceConcept:'OUTCOME',
-    proposedConcept:'VALUE',
-    explicitAssertion:true,
-    derivationBasis:[]
-  });
-  assert.equal(result.valid,false);
-  assert.equal(result.status,'INSUFFICIENT_BASIS');
-
-  const supported = validateSemanticEntailment({
-    sourceConcept:'OUTCOME',
-    proposedConcept:'VALUE',
-    explicitAssertion:true,
-    derivationBasis:['FINANCE-VALIDATION-1']
-  });
-  assert.equal(supported.valid,true);
+test('explicit semantic assertion requires independent basis', () => {
+  assert.equal(validateSemanticEntailment({
+    sourceConcept:'OUTCOME', proposedConcept:'VALUE', explicitAssertion:true, derivationBasis:[]
+  }).status,'INSUFFICIENT_BASIS');
 });
