@@ -189,8 +189,12 @@ import { createOperatingCycleShellController } from './roi-ea-operating-cycle-ui
     changeLocalRecord(undoLocalRemoval, 'The removed record was restored. This does not independently validate evidence or create authority.');
   }
   function renderEvidence(){ const rows=data.evidence||[], unresolved=unresolvedEvidence(); const pill=$('#evidence-status'); pill.textContent=rows.length?`${unresolved.length} unresolved of ${rows.length}`:'No records'; pill.classList.toggle('complete',rows.length>0 && unresolved.length===0); $('#evidence-summary').textContent=rows.length?`${rows.length} structured evidence record${rows.length===1?'':'s'}; ${unresolved.length} require further review, validation, or resolution.`:'No evidence records have been added. Material assumptions remain visible but unresolved.'; $('#evidence-rows').innerHTML=rows.length?rows.map((r,i)=>`<tr><td>${esc(r.claim)}</td><td>${esc(r.area)}</td><td>${esc(r.recordType)}</td><td><span class="state ${esc(r.state).toLowerCase()}">${esc(r.state)}</span></td><td>${esc(r.source)}<br><small>${esc(r.sourceOwner)}</small></td><td>${esc(r.limitation||'None stated')}<br><small>${esc(r.reviewDate||'No review date')} / ${esc(r.confidence||'No confidence stated')}</small></td><td><button class="delete-evidence" data-evidence-index="${i}">Delete</button></td></tr>`).join(''):`<tr><td colspan="7" class="quiet-note">No evidence records yet.</td></tr>`; $$('[data-evidence-index]').forEach(btn=>btn.addEventListener('click',()=>removeDraftRecord('evidence',Number(btn.dataset.evidenceIndex)))); }
+  function baselineInputForDisplay(){
+    const form = $('#baseline-form');
+    return form ? getForm(form) : data.baseline;
+  }
   function renderBaseline(){
-    const b = calculatedBaseline();
+    const b = calculateBaseline(baselineInputForDisplay());
     const metrics = [
       ['Current annual cost', money(b.current)],
       ['Forecast net annual benefit', money(b.benefit)],
@@ -390,11 +394,12 @@ import { createOperatingCycleShellController } from './roi-ea-operating-cycle-ui
       setAuthorityForm(selectedAuthority());
       architectureEditor.loadRecorded();
       uxSafety?.hydrateDrafts();
+      renderBaseline();
       return;
     }
     formsWired = true;
     const forms=[['opportunity-form','opportunity'],['baseline-form','baseline'],['risk-form','risk'],['pilot-form','pilot'],['results-form','results'],['regulatory-form','regulatory']];
-    forms.forEach(([id,key])=>{ const form=$('#'+id); setForm(form,data[key]); form.addEventListener('submit',e=>{e.preventDefault();const saved=getForm(form);data[key]=key==='opportunity'?{...saved,id:data.opportunity?.id||stableId(saved.name||'opportunity','OPP')}:saved;persist();toast(`${titles[key]} saved.`);});});
+    forms.forEach(([id,key])=>{ const form=$('#'+id); setForm(form,data[key]); form.addEventListener('submit',e=>{e.preventDefault();const saved=getForm(form);data[key]=key==='opportunity'?{...saved,id:data.opportunity?.id||stableId(saved.name||'opportunity','OPP')}:saved;persist();toast(`${titles[key]} saved.`);}); if(key==='baseline'){form.addEventListener('input',renderBaseline);form.addEventListener('change',renderBaseline);} });
     const authorityForm=$('#authority-form'); setAuthorityForm(selectedAuthority()); authorityForm.addEventListener('submit',e=>{e.preventDefault(); const raw=getForm(authorityForm), existing=rawAuthorityRecords().find(a=>a.id===selectedAuthorityId)||{}; let authority=normalizeAuthority({...existing,...raw,monitoringObservations:parseObservations(raw.monitoringObservationsText)},authorityContext()); authority=appendDecision(authority,{decision:raw.decision,decisionAuthority:raw.authorityOwner,decisionDate:raw.decisionDate,rationale:raw.rationale,resultingState:raw.status,evidenceReferences:raw.evidenceArtifactIds,triggeringObservationIds:raw.triggeringObservationIds}); const records=rawAuthorityRecords(); const index=records.findIndex(a=>a.id===selectedAuthorityId); if(index>=0) records[index]=authority; else records.push(authority); selectedAuthorityId=authority.id; data.authorityEnvelopes=records; data.authorityEnvelope=authority; persist(); toast('Authority envelope and append-only lifecycle decision saved.');});
     const form=$('#architecture-form'); architectureEditor.loadRecorded(); form.addEventListener('submit',e=>{e.preventDefault();data.architecture=architectureEditor.recordFromEditor();persist();toast('Architecture decision saved.');});
     const feoaForm=$('#feoa-assessment-form'); feoaForm.addEventListener('submit',e=>{e.preventDefault();const raw=getForm(feoaForm); const participants=String(raw.participantsText||'').split(';').map(name=>name.trim()).filter(Boolean).map(name=>({name})); data.feoa=normalizeWorkspace({...data.feoa,assessment:{...data.feoa?.assessment,name:raw.name,currentPhase:raw.currentPhase,federationContext:{...data.feoa?.assessment?.federationContext,valueProposition:raw.valueProposition},participants,evidenceIds:raw.evidenceIds,majorGapIds:raw.majorGapIds,requiredNextAction:raw.requiredNextAction},participants},{...data,evidence:data.evidence});persist();toast('FEOA assessment foundation saved.');});

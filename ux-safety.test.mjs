@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createGuardedStore, WorkspaceStorageError, finiteInput, calculateBaseline,
   baselineExplanation, removeLocalRecord, undoLocalRemoval, validateWorkspaceShape,
   assertSafeJSON } from './ux-safety-model.mjs';
@@ -182,3 +183,9 @@ for (const [name, reference] of [['CRM','CRMS'], ['CRM','INCREMENT'], ['E1','E10
     assert.equal(result.uxRemovalHistory.length,1);
   });
 }
+test('baseline cards use current form inputs and refresh when draft inputs change', () => {
+  const app = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
+  assert.match(app, /function baselineInputForDisplay\(\)\{[\s\S]*?return form \? getForm\(form\) : data\.baseline;/);
+  assert.match(app, /const b = calculateBaseline\(baselineInputForDisplay\(\)\);/);
+  assert.match(app, /if\(key==='baseline'\)\{form\.addEventListener\('input',renderBaseline\);form\.addEventListener\('change',renderBaseline\);\}/);
+});
