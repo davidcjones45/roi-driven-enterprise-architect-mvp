@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { validateArchitectureSnapshot, ARCHITECTURE_DRAFT_SCHEMA, ALTERNATIVE_FIELDS, MAX_ALTERNATIVES } from './ux-architecture-editor.mjs';
+const row=(key)=>({key,record:Object.fromEntries(ALTERNATIVE_FIELDS.map(name=>[name,'']))});
+const snapshot=()=>({schema:ARCHITECTURE_DRAFT_SCHEMA,fields:[{name:'title',value:'Draft',type:'text'}],rows:[row('one'),row('two')],preferredKey:'two'});
+test('architecture codec accepts complete supported snapshot',()=>assert.equal(validateArchitectureSnapshot(snapshot()).rows.length,2));
+test('architecture codec accepts zero rows as an incomplete draft',()=>{const s=snapshot();s.rows=[];s.preferredKey=null;assert.equal(validateArchitectureSnapshot(s).rows.length,0);});
+test('architecture codec rejects a legacy named-fields-only array',()=>assert.throws(()=>validateArchitectureSnapshot([]),/unsupported format/));
+test('architecture codec rejects duplicate row identity',()=>{const s=snapshot();s.rows[1].key='one';assert.throws(()=>validateArchitectureSnapshot(s),/duplicate/);});
+test('architecture codec rejects missing alternative fields',()=>{const s=snapshot();delete s.rows[0].record.cost;assert.throws(()=>validateArchitectureSnapshot(s),/all six/);});
+test('architecture codec rejects dangling preference',()=>{const s=snapshot();s.preferredKey='missing';assert.throws(()=>validateArchitectureSnapshot(s),/not present/);});
+test('architecture codec preserves metadata outside edited fields',()=>{const s=snapshot();s.rows[0].record.provenance={source:'Synthetic'};assert.deepEqual(validateArchitectureSnapshot(s).rows[0].record.provenance,{source:'Synthetic'});});
+test('architecture codec rejects unsafe prototype fields',()=>{const s=snapshot();s.rows[0].record=JSON.parse('{"__proto__":{}}');assert.throws(()=>validateArchitectureSnapshot(s),/Unsupported record property/);});
+test('architecture codec rejects unsupported schema',()=>{const s=snapshot();s.schema='future/v9';assert.throws(()=>validateArchitectureSnapshot(s),/unsupported format/);});
+test('architecture codec rejects over-limit structures rather than truncating',()=>{const s=snapshot();s.rows=Array.from({length:MAX_ALTERNATIVES+1},(_,i)=>row(String(i)));assert.throws(()=>validateArchitectureSnapshot(s),/at most/);});
