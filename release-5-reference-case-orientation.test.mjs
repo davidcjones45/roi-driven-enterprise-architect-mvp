@@ -18,5 +18,12 @@ test('Release 5 gives each synthetic reference case a distinct purpose and route
     assert.ok(html.includes(route), `missing orientation route: ${route}`);
   }
   assert.match(html, /does not establish a real-world result, authority, compliance determination, or implementation/);
-  assert.match(app, /\$\$\('\[data-reference-view\]'\)\.forEach\(button=>button\.addEventListener\('click',\(\)=>\{ const workspace=button\.dataset\.referenceWorkspace; setWorkspace\(workspace,false\); show\(button\.dataset\.referenceView\); \}\)\)/);
+  assert.ok(
+    app.includes("$$('[data-reference-view]').forEach(button=>button.addEventListener('click',()=>{ show(button.dataset.referenceView); }))"),
+    'reference-case buttons route through guarded show(view)'
+  );
+  assert.ok(
+    app.includes("const workspace=workspaceForView(view); if(workspace!==activeWorkspace) setWorkspace(workspace,false);") ,
+    'show(view) derives and activates the workspace for the selected reference view'
+  );
 });

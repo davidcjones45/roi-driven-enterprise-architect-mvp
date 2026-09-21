@@ -1,0 +1,24 @@
+/* Additive safety UI. Keep the existing visual system and semantic color tokens. */
+.ux-workspace-safety { margin: 16px 36px 0; padding: 16px 20px; border: 1px solid var(--line, #d8e2eb); border-radius: 8px; background: white; color: var(--ink, #162c43); }
+.ux-workspace-safety p { margin: 4px 0 10px; font-size: 1rem; line-height: 1.55; overflow-wrap: anywhere; }
+.ux-workspace-safety .ux-local-notice { font-weight: 600; }
+.ux-safety-actions, .ux-draft-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ux-workspace-safety button, .ux-draft-actions button { min-height: 44px; white-space: normal; text-align: left; }
+.ux-workspace-safety button:disabled { cursor: not-allowed; opacity: .65; }
+.ux-workspace-safety button:focus-visible, .ux-draft-actions button:focus-visible { outline: 3px solid #245a91; outline-offset: 3px; }
+.ux-storage-error { color: #8b2020; border-left: 4px solid #b32929; background: #fff3f3; padding: 12px; }
+.ux-feedback { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 0 0; margin-top: 14px; border-top: 1px solid var(--line, #d8e2eb); }
+.ux-feedback p { flex: 1; }
+.ux-feedback button { flex-shrink: 0; }
+.ux-draft-actions { border-top: 1px solid var(--line, #d8e2eb); padding-top: 14px; }
+.ux-draft-actions .ux-draft-status { flex: 0 0 100%; font-weight: 400; font-size: 1rem; line-height: 1.5; margin: 0; }
+.ux-calculation-note { grid-column: 1 / -1; margin: 0; padding: 14px; background: #fff; border: 1px solid var(--line, #d8e2eb); border-radius: 6px; font-size: 1rem; overflow-wrap: anywhere; }
+.ux-workspace-safety [hidden] { display: none !important; }
+@media (max-width: 900px) { .ux-workspace-safety { margin: 16px 24px 0; } }
+@media (max-width: 590px) {
+  .ux-workspace-safety { margin: 12px 16px 0; padding: 16px; }
+  .ux-feedback { flex-direction: column; }
+  .ux-safety-actions { align-items: stretch; }
+  .ux-safety-actions button { flex: 1 1 180px; }
+}
+@media (prefers-reduced-motion: reduce) { .ux-workspace-safety *, .ux-draft-actions * { transition: none !important; scroll-behavior: auto !important; } }
