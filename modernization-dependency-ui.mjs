@@ -1,4 +1,4 @@
-// M3 dependency and candidate-wave UI for the M1/M2 modernization workspace.
+﻿// M3 dependency and candidate-wave UI for the M1/M2 modernization workspace.
 import {
   DEPENDENCY_TYPES, COUPLING_LEVELS, CRITICALITY_LEVELS,
   normalizeDependency, dependencyIssues, candidateTransitionWaves, blastRadius
@@ -10,7 +10,7 @@ const KEY='roi-ea-application-modernization-m1-v0.1';
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const pct=v=>v===null||v===undefined?'Not supplied':`${Math.round(Number(v)*100)}%`;
 const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
-const write=data=>localStorage.setItem(KEY,JSON.stringify(data));
+const write=data=>{localStorage.setItem(KEY,JSON.stringify(data));window.dispatchEvent(new CustomEvent('roi-ea-modernization-data-changed',{detail:{key:KEY,source:'modernization-dependency-ui.mjs'}}));};
 const ensure=data=>{
   data.applications||=[]; data.dependencies||=[]; data.awsDiscoveryImports||=[];
   data.candidateTransitionWaves||=null; return data;
@@ -106,7 +106,7 @@ function html(){
       <label>Direction<select name="direction"><option>DIRECTED</option><option>BIDIRECTIONAL</option><option>UNDIRECTED</option></select></label>
       <label>Criticality<select name="criticality">${criticality}</select></label>
       <label>Migration coupling<select name="migrationCoupling">${coupling}</select></label>
-      <label>Confidence (0–100)<input type="number" min="0" max="100" name="confidence"></label>
+      <label>Confidence (0â€“100)<input type="number" min="0" max="100" name="confidence"></label>
       <label>Resolution state<select name="resolutionState"><option>Resolved</option><option>Partially resolved</option><option>Unresolved</option></select></label>
       <label>Sequencing rule<select name="sequencingRule"><option>None</option><option>SOURCE_BEFORE_TARGET</option><option>TARGET_BEFORE_SOURCE</option></select></label>
       <label>Source reference<input name="sourceReference"></label>
@@ -116,7 +116,7 @@ function html(){
     </form>
     <div class="card evidence-table-wrap">
       <h3>Dependency register</h3>
-      <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Source → target</th><th>Type</th><th>Criticality / coupling</th><th>Confidence</th><th>Sequencing</th><th>Evidence state</th></tr></thead><tbody id="dep-rows"></tbody></table></div>
+      <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Source â†’ target</th><th>Type</th><th>Criticality / coupling</th><th>Confidence</th><th>Sequencing</th><th>Evidence state</th></tr></thead><tbody id="dep-rows"></tbody></table></div>
     </div>
     <div class="card" id="dep-unresolved"></div>
     <div class="card">
@@ -146,7 +146,7 @@ function render(panel){
   panel.querySelector('#dep-rows').innerHTML=data.dependencies.map(raw=>{
     const d=normalizeDependency(raw);
     const issues=dependencyIssues(d,{applications:data.applications}).issues;
-    return `<tr><td><strong>${esc(d.sourceId||'Unresolved')}</strong> → <strong>${esc(d.targetId||'Unresolved')}</strong></td>
+    return `<tr><td><strong>${esc(d.sourceId||'Unresolved')}</strong> â†’ <strong>${esc(d.targetId||'Unresolved')}</strong></td>
       <td>${esc(d.dependencyType)}<br><small>${esc(d.direction)}</small></td>
       <td>${esc(d.criticality)} / ${esc(d.migrationCoupling)}</td>
       <td>${esc(pct(d.confidence))}</td>
@@ -157,7 +157,7 @@ function render(panel){
   const awsUnresolved=data.awsDependencyUnresolved||[];
   panel.querySelector('#dep-unresolved').innerHTML=`<h3>Unresolved provider evidence</h3>
     <p>${awsUnresolved.length} AWS-discovered connection(s) currently lack unique application endpoint mapping.</p>
-    ${awsUnresolved.length?`<ul>${awsUnresolved.slice(0,20).map(x=>`<li>${esc(x.unresolvedSourceResource||'?')} → ${esc(x.unresolvedTargetResource||'?')}: ${esc(x.reason)}</li>`).join('')}</ul>`:''}`;
+    ${awsUnresolved.length?`<ul>${awsUnresolved.slice(0,20).map(x=>`<li>${esc(x.unresolvedSourceResource||'?')} â†’ ${esc(x.unresolvedTargetResource||'?')}: ${esc(x.reason)}</li>`).join('')}</ul>`:''}`;
 
   renderBlast(panel);
   renderWaves(panel,data);
@@ -170,17 +170,17 @@ function renderBlast(panel){
   if(!app){target.innerHTML='<p class="quiet-note">Select an application to inspect dependency blast radius.</p>';return;}
   const result=blastRadius(app,data.dependencies,depth);
   target.innerHTML=result.affected.length
-    ? `<ul>${result.affected.map(x=>`<li>${esc(x.applicationId)} — depth ${x.depth}, via ${esc(x.viaDependencyId)}</li>`).join('')}</ul>`
+    ? `<ul>${result.affected.map(x=>`<li>${esc(x.applicationId)} â€” depth ${x.depth}, via ${esc(x.viaDependencyId)}</li>`).join('')}</ul>`
     : '<p>No connected applications were found within the selected depth.</p>';
 }
 function renderWaves(panel,data){
   const result=data.candidateTransitionWaves;
   const target=panel.querySelector('#dep-wave-results');
   if(!result){target.innerHTML='<h3>Candidate transition waves</h3><p class="quiet-note">No analysis generated yet.</p>';return;}
-  const waves=result.candidateWaves.map(w=>`<article class="decision-item"><h4>${esc(w.id)} · sequence layer ${esc(w.sequenceLayer??'Unresolved')}</h4>
+  const waves=result.candidateWaves.map(w=>`<article class="decision-item"><h4>${esc(w.id)} Â· sequence layer ${esc(w.sequenceLayer??'Unresolved')}</h4>
     <p><strong>Applications:</strong> ${esc(w.applicationIds.join(', '))}</p>
     <p>${esc(w.rationale)}</p>
-    <p><strong>Dependency confidence:</strong> ${esc(pct(w.averageDependencyConfidence))} · <strong>Unresolved dependencies:</strong> ${w.unresolvedDependencyCount}</p>
+    <p><strong>Dependency confidence:</strong> ${esc(pct(w.averageDependencyConfidence))} Â· <strong>Unresolved dependencies:</strong> ${w.unresolvedDependencyCount}</p>
     <small>${esc(w.status)}</small></article>`).join('');
   target.innerHTML=`<h3>Candidate transition waves</h3>
     ${result.sequencingCycle?'<div class="federated-caveat"><strong>Sequencing cycle detected.</strong> No sequence layer is authoritative until the cycle is resolved.</div>':''}
@@ -191,3 +191,4 @@ function renderWaves(panel,data){
 let attempts=0;
 function wait(){if(mount())return;if(attempts++<60)setTimeout(wait,100);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wait,{once:true});else wait();
+

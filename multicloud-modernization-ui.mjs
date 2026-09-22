@@ -1,6 +1,6 @@
-import {PROVIDERS,AZURE_EXPORT_TYPES,GCP_REPORT_TYPES,importRecommendationJson,importAzureCsv,importGcpCsv,providerCandidateAlternative,providerCoexistenceSummary} from './multicloud-modernization-adapter.mjs';
+﻿import {PROVIDERS,AZURE_EXPORT_TYPES,GCP_REPORT_TYPES,importRecommendationJson,importAzureCsv,importGcpCsv,providerCandidateAlternative,providerCoexistenceSummary} from './multicloud-modernization-adapter.mjs';
 import {M6_MULTICLOUD_FIXTURE} from './multicloud-modernization-fixture.mjs';
-const KEY='roi-ea-application-modernization-m1-v0.1',esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])),pct=v=>v==null?'Not supplied':`${Math.round(Number(v)*100)}%`,read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}},write=d=>localStorage.setItem(KEY,JSON.stringify(d));
+const KEY='roi-ea-application-modernization-m1-v0.1',esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])),pct=v=>v==null?'Not supplied':`${Math.round(Number(v)*100)}%`,read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}},write=d=>{localStorage.setItem(KEY,JSON.stringify(d));window.dispatchEvent(new CustomEvent('roi-ea-modernization-data-changed',{detail:{key:KEY,source:'multicloud-modernization-ui.mjs'}}))};
 const ensure=d=>{d.applications||=[];d.alternatives||=[];d.assessments||=[];d.providerAssessments||=[];d.providerImports||=[];d.azureEvidenceImports||=[];d.gcpEvidenceImports||=[];return d};
 
 function mount(){const root=document.querySelector('#modernization.modernization-workspace');if(!root||root.querySelector('[data-mod-tab="multicloud"]'))return false;const tabs=root.querySelector('.modernization-tabs'),decision=root.querySelector('[data-mod-panel="decision"]');if(!tabs||!decision)return false;
@@ -25,3 +25,4 @@ p.querySelector('#mc-rec-rows').innerHTML=d.providerAssessments.filter(x=>[PROVI
 p.querySelector('#mc-imports').innerHTML=`<h3>Imported provider files</h3><p>Azure: ${(d.azureEvidenceImports||[]).length} file(s). Google Cloud: ${(d.gcpEvidenceImports||[]).length} file(s).</p>`}
 
 let attempts=0;function wait(){if(mount())return;if(attempts++<60)setTimeout(wait,100)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wait,{once:true});else wait();
+

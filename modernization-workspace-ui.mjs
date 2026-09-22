@@ -1,4 +1,4 @@
-import {
+﻿import {
   MODERNIZATION_DIMENSIONS, DIMENSION_LABELS, STRATEGY_CLASSES,
   normalizeApplication, normalizeConstraint, normalizeAlternative,
   normalizeModernizationAssessment, modernizationDecisionView, portfolioSummary
@@ -47,6 +47,9 @@ export function mountModernizationWorkspace(){
 
   wire(section);
   render(section);
+  window.addEventListener('roi-ea-modernization-data-changed',event=>{
+    if(event.detail?.key===KEY) render(section);
+  });
 }
 
 function workspaceHtml(){
@@ -99,8 +102,8 @@ function workspaceHtml(){
       <label>Assessment date<input required type="date" name="assessmentDate"></label>
       <label>Dimension<select required name="dimension">${dimOptions}</select></label>
       <label>Value<input required name="value" placeholder="High, Medium, Low, Long-life..."></label>
-      <label>Confidence (0–100)<input required type="number" min="0" max="100" name="confidence" value="50"></label>
-      <label>Overall confidence (0–100)<input type="number" min="0" max="100" name="overallConfidence" value="50"></label>
+      <label>Confidence (0â€“100)<input required type="number" min="0" max="100" name="confidence" value="50"></label>
+      <label>Overall confidence (0â€“100)<input type="number" min="0" max="100" name="overallConfidence" value="50"></label>
       <label class="full">Rationale<textarea required name="rationale" rows="2"></textarea></label>
       <label class="full">Evidence references<input name="evidenceRefs" placeholder="EVD-001; EVD-002"></label>
       <label class="full">Explicit assumptions<input name="assumptions" placeholder="Assumption A; Assumption B"></label>
@@ -136,8 +139,8 @@ function workspaceHtml(){
       <label>One-time cost ($)<input type="number" min="0" name="oneTimeCost"></label>
       <label>Annual run cost ($)<input type="number" min="0" name="annualRunCost"></label>
       <label>Estimated duration<input name="estimatedDuration"></label>
-      <label>Confidence (0–100)<input type="number" min="0" max="100" name="confidence" value="50"></label>
-      <label>Evidence completeness (0–100)<input type="number" min="0" max="100" name="evidenceCompleteness" value="50"></label>
+      <label>Confidence (0â€“100)<input type="number" min="0" max="100" name="confidence" value="50"></label>
+      <label>Evidence completeness (0â€“100)<input type="number" min="0" max="100" name="evidenceCompleteness" value="50"></label>
       <label class="full">Evidence references<input name="evidenceRefs"></label>
       <div class="form-actions full"><button type="submit">Add candidate alternative</button></div>
     </form>
@@ -231,8 +234,8 @@ function render(root){
 
   root.querySelector('#mod-constraint-list').innerHTML=(data.constraints||[]).map(c=>{
     const x=normalizeConstraint(c);
-    return `<div class="decision-item"><strong>${esc(x.type)} — ${esc(x.name)}</strong>
-      <p>${esc(x.condition)}</p><small>${esc(x.evaluation)} · ${esc(x.authority||'Authority not recorded')}</small></div>`;
+    return `<div class="decision-item"><strong>${esc(x.type)} â€” ${esc(x.name)}</strong>
+      <p>${esc(x.condition)}</p><small>${esc(x.evaluation)} Â· ${esc(x.authority||'Authority not recorded')}</small></div>`;
   }).join('')||'<p>No constraints recorded.</p>';
 
   root.querySelector('#mod-alt-rows').innerHTML=(data.alternatives||[]).map(raw=>{
@@ -250,17 +253,17 @@ function render(root){
       <td>${esc(a[d].value)}</td><td>${pct(a[d].confidence)}</td>
       <td>${esc(a[d].evidenceRefs.join(', ')||a[d].assumptions.join(', ')||'No evidence/assumption')}</td></tr>`).join('');
     return `<h3>${esc(app?.name||a.applicationId)}</h3>
-      <p><strong>Overall confidence:</strong> ${pct(a.overallConfidence)} · <strong>Least-regret next move:</strong> ${esc(a.leastRegretNextMove||'Not recorded')}</p>
+      <p><strong>Overall confidence:</strong> ${pct(a.overallConfidence)} Â· <strong>Least-regret next move:</strong> ${esc(a.leastRegretNextMove||'Not recorded')}</p>
       <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Dimension</th><th>Value</th><th>Confidence</th><th>Evidence / assumption</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }).join('')||'<p>No assessments recorded.</p>';
 
   root.querySelector('#mod-decision-view').innerHTML=assessments.map(a=>{
     const app=data.applications.find(x=>x.id===a.applicationId);
     const view=modernizationDecisionView(a,data);
-    const viable=view.viableAlternatives.map(x=>`<li><strong>${esc(x.name)}</strong> — ${esc(x.strategyClass)} · confidence ${pct(x.confidence)}</li>`).join('')||'<li>No viable candidate alternatives recorded.</li>';
-    const eliminated=view.eliminatedAlternatives.map(x=>`<li><strong>${esc(x.name)}</strong> — eliminated by ${esc(x.constraintResult.violatedConstraintIds.join(', '))}</li>`).join('');
+    const viable=view.viableAlternatives.map(x=>`<li><strong>${esc(x.name)}</strong> â€” ${esc(x.strategyClass)} Â· confidence ${pct(x.confidence)}</li>`).join('')||'<li>No viable candidate alternatives recorded.</li>';
+    const eliminated=view.eliminatedAlternatives.map(x=>`<li><strong>${esc(x.name)}</strong> â€” eliminated by ${esc(x.constraintResult.violatedConstraintIds.join(', '))}</li>`).join('');
     const providers=(data.providerAssessments||[]).filter(x=>x.applicationId===a.applicationId)
-      .map(x=>`<li>${esc(x.provider)}: ${esc(x.strategy)} · ${esc(x.status||'Advisory evidence only')} · ${pct(x.confidence)}</li>`).join('')||'<li>No provider assessment evidence recorded.</li>';
+      .map(x=>`<li>${esc(x.provider)}: ${esc(x.strategy)} Â· ${esc(x.status||'Advisory evidence only')} Â· ${pct(x.confidence)}</li>`).join('')||'<li>No provider assessment evidence recorded.</li>';
     return `<article class="decision-item">
       <span class="eyebrow">HUMAN REVIEW REQUIRED</span><h3>${esc(app?.name||a.applicationId)}</h3>
       <p><strong>Least-regret next move:</strong> ${esc(a.leastRegretNextMove||'Not recorded')}</p>
@@ -275,3 +278,4 @@ function render(root){
 
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mountModernizationWorkspace,{once:true});
 else mountModernizationWorkspace();
+

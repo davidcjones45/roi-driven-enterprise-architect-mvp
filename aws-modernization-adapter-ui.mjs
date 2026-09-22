@@ -1,4 +1,4 @@
-// M2 AWS adapter UI.
+﻿// M2 AWS adapter UI.
 // Adds an AWS Evidence tab to the existing M1 modernization workspace.
 import {
   importAwsRecommendationJson, importAwsDiscoveryCsv,
@@ -9,7 +9,7 @@ const KEY='roi-ea-application-modernization-m1-v0.1';
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const pct=v=>v===null||v===undefined?'Not supplied':`${Math.round(Number(v)*100)}%`;
 const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
-const write=data=>localStorage.setItem(KEY,JSON.stringify(data));
+const write=data=>{localStorage.setItem(KEY,JSON.stringify(data));window.dispatchEvent(new CustomEvent('roi-ea-modernization-data-changed',{detail:{key:KEY,source:'aws-modernization-adapter-ui.mjs'}}));};
 
 function ensureShape(data){
   data.applications ||= [];
@@ -159,8 +159,8 @@ function render(panel){
   const summary=discoveryEvidenceSummary(data.awsDiscoveryImports||[]);
   panel.querySelector('#aws-import-summary').innerHTML=`
     <h3>AWS evidence status</h3>
-    <p><strong>${data.providerAssessments.length}</strong> recommendation records ·
-       <strong>${summary.files}</strong> recognized discovery files ·
+    <p><strong>${data.providerAssessments.length}</strong> recommendation records Â·
+       <strong>${summary.files}</strong> recognized discovery files Â·
        <strong>${summary.records}</strong> discovery rows.</p>
     <p class="quiet-note">No imported AWS record grants implementation authority. Missing confidence remains missing rather than being converted to zero.</p>`;
 
@@ -187,3 +187,4 @@ function waitForM1(){
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',waitForM1,{once:true});
 else waitForM1();
+
