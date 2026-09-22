@@ -1,4 +1,4 @@
-export const M5_PORTFOLIO_FIXTURE={
+﻿export const M5_PORTFOLIO_FIXTURE={
   deliveryCapacities:[
     {id:'CAP-ARCH',type:'Architecture',availableFte:2,reservedFte:.5,maxConcurrent:3},
     {id:'CAP-DB',type:'Database engineering',availableFte:1,reservedFte:.25,maxConcurrent:2},
@@ -9,6 +9,6 @@ export const M5_PORTFOLIO_FIXTURE={
     {applicationId:'APP-CLAIMS-ADMIN',alternativeId:'ALT-REPLATFORM',capacityType:'Architecture',requiredFte:.5,durationMonths:8},
     {applicationId:'APP-CLAIMS-ADMIN',alternativeId:'ALT-REPLATFORM',capacityType:'Database engineering',requiredFte:.75,durationMonths:6,critical:true},
     {applicationId:'APP-CLAIMS-ADMIN',alternativeId:'ALT-REPLATFORM',capacityType:'Testing / QA',requiredFte:1,durationMonths:5},
-    {applicationId:'APP-CLAIMS-ADMIN',alternativeId:'ALT-REPLATFORM',capacityType:'Security',requiredFte:.5,durationMonths:4}
+    {applicationId:'APP-CLAIMS-ADMIN',alternativeId:'ALT-REPLATFORM',capacityType:'Security',requiredFte:.8,durationMonths:4,critical:true}
   ]
 };
