@@ -199,7 +199,7 @@ export function providerCandidateAlternative(raw={}){
   return {
     id:stableId(`${r.applicationId}-${r.provider}-${r.canonicalStrategy}-${r.targetDestination}`,'ALT'),
     applicationId:r.applicationId,
-    name:`${r.provider} evidence candidate â€” ${r.strategy}${r.targetDestination?` â†’ ${r.targetDestination}`:''}`,
+    name:r.provider + ' evidence candidate - ' + r.strategy + (r.targetDestination ? ' -> ' + r.targetDestination : ''),
     provider:r.provider,
     strategyClass:r.canonicalStrategy,
     description:'Candidate alternative derived from provider-generated recommendation evidence. Human review required.',
