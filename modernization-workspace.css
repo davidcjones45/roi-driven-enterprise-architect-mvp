@@ -1,0 +1,7 @@
+.modernization-workspace .modernization-actions{display:flex;gap:.75rem;flex-wrap:wrap}
+.modernization-tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+.modernization-tabs button{width:auto}
+.modernization-tabs button.active{outline:2px solid currentColor;outline-offset:2px}
+.modernization-workspace .decision-item{border-top:1px solid var(--line,#d9d9d9);padding:1rem 0}
+.modernization-workspace .decision-item:first-child{border-top:0;padding-top:0}
+.modernization-workspace h4{margin-bottom:.35rem}
