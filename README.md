@@ -25,7 +25,7 @@ See `AI_AUTHORITY_EVIDENCE_ARCHITECTURE.md` for the current-state mapping, bound
 
 ## Run it
 
-Open `index.html` in a modern desktop browser for the standard browser-local MVP. It has no sign-in, shared-client workspace, regulatory-repository connector, Microsoft Planner connector, or production-security controls.
+Run `Start-ROI-EA-Decision-Workspace.cmd` from this checkout, then use `http://127.0.0.1:8766/index.html` in a modern desktop browser. Do not open `index.html` directly from disk: browser restrictions prevent the JavaScript modules and menus from working under `file://`. The launcher uses this checkout and Python on PATH, or the installed Codex Python runtime. It has no sign-in, shared-client workspace, regulatory-repository connector, Microsoft Planner connector, or production-security controls.
 
 For the separate, single-consultant FEDARM Engagement Foundation v0.1, start the loopback-only launcher and open `http://127.0.0.1:8766/index.html?mode=consulting`. This opt-in local mode uses SQLite for engagement metadata on the trusted laptop; it is not part of the public demo and does not change existing browser-local ROI-EA working data. See [FEDARM_ENGAGEMENT_FOUNDATION_V0.1.md](FEDARM_ENGAGEMENT_FOUNDATION_V0.1.md).
 

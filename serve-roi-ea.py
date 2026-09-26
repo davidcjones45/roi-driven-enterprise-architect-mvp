@@ -57,7 +57,7 @@ class RoiEaHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         path = self.api_path()
         if path == "/api/local/health":
-            self.send_json(200, {"ok": True, "mode": "local_consulting", "data_directory": str(DATA_DIRECTORY)})
+            self.send_json(200, {"ok": True, "mode": "local_consulting", "data_directory": str(DATA_DIRECTORY), "workspace_directory": str(ROOT)})
             return
         if path == "/api/engagements":
             self.send_json(200, {"engagements": STORE.list()})

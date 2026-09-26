@@ -1,13 +1,13 @@
 [CmdletBinding()]
 param(
-  [switch]$NoBrowser
+  [switch]$NoBrowser,
+  [string]$PythonExecutable
 )
 
 $ErrorActionPreference = 'Stop'
 
-# Explicit local paths for this installed ROI-EA workspace.
-$repoPath = 'C:\Users\david\Documents\Codex\2026-08-14\notion-plugin-notion-openai-curated-remote-2\work\roi-driven-enterprise-architect-mvp'
-$serverScript = 'C:\Users\david\Documents\Codex\2026-08-14\notion-plugin-notion-openai-curated-remote-2\work\roi-driven-enterprise-architect-mvp\serve-roi-ea.py'
+$repoPath = $PSScriptRoot
+$serverScript = Join-Path $repoPath 'serve-roi-ea.py'
 $applicationUrl = 'http://127.0.0.1:8766/index.html'
 
 if (-not (Test-Path -LiteralPath $repoPath -PathType Container)) {
@@ -19,28 +19,45 @@ if (-not (Test-Path -LiteralPath $serverScript -PathType Leaf)) {
 
 function Test-LocalServer {
   try {
-    $client = [System.Net.Sockets.TcpClient]::new()
-    $client.Connect('127.0.0.1', 8766)
-    $client.Dispose()
-    return $true
+    $health = Invoke-RestMethod -Uri 'http://127.0.0.1:8766/api/local/health' -TimeoutSec 2
+    return ($health.ok -eq $true -and $health.workspace_directory -eq $repoPath)
   } catch {
     return $false
   }
 }
 
 if (-not (Test-LocalServer)) {
-  $python = Get-Command python -ErrorAction SilentlyContinue
-  if (-not $python) {
-    throw 'Python was not found on PATH. Install Python 3, then run this launcher again.'
+  $client = [System.Net.Sockets.TcpClient]::new()
+  try { $client.Connect('127.0.0.1', 8766); $portOccupied = $true }
+  catch { $portOccupied = $false }
+  finally { $client.Dispose() }
+  if ($portOccupied) {
+    throw 'Port 8766 is serving another application or checkout. Close that server before launching this workspace; it has not been stopped automatically.'
   }
-  Start-Process -FilePath $python.Source -ArgumentList @($serverScript) -WorkingDirectory $repoPath -WindowStyle Hidden
+  if (-not $PythonExecutable) {
+    $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+    if ($pythonCommand -and $pythonCommand.Source -notlike '*\WindowsApps\*') {
+      $PythonExecutable = $pythonCommand.Source
+    } else {
+      $PythonExecutable = Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+    }
+  }
+  if (-not (Test-Path -LiteralPath $PythonExecutable -PathType Leaf)) {
+    throw 'Python was not found. Install Python 3 or pass -PythonExecutable with its full path.'
+  }
+  $logDirectory = Join-Path $repoPath 'local-data'
+  New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
+  $logSuffix = [guid]::NewGuid().ToString('N')
+  $errorLog = Join-Path $logDirectory "server-$logSuffix.err.log"
+  $outputLog = Join-Path $logDirectory "server-$logSuffix.out.log"
+  Start-Process -FilePath $PythonExecutable -ArgumentList @('-u', ('"{0}"' -f $serverScript)) -WorkingDirectory $repoPath -WindowStyle Hidden -RedirectStandardError $errorLog -RedirectStandardOutput $outputLog
   $ready = $false
   for ($attempt = 0; $attempt -lt 20; $attempt++) {
     Start-Sleep -Milliseconds 250
     if (Test-LocalServer) { $ready = $true; break }
   }
   if (-not $ready) {
-    throw 'ROI-EA did not start on http://127.0.0.1:8766. Check whether another process is using the port.'
+    throw "ROI-EA did not start. See $errorLog"
   }
 }
 
