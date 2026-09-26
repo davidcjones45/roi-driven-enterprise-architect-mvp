@@ -701,10 +701,20 @@
       <div class="card" id="snapshots-local-status"><p class="quiet-note">Open a local engagement to review its issued snapshots. Recording a consultant recommendation creates a new immutable snapshot; reassessment does not replace an earlier one.</p></div>
       <div class="card evidence-table-wrap" id="snapshot-history" hidden><h3>Issued local snapshots</h3><div class="table-scroll"><table class="evidence-table"><thead><tr><th>Snapshot</th><th>Issued at</th><th>Recommendation</th><th>Content SHA-256</th><th>Handoff</th></tr></thead><tbody id="snapshot-history-rows"></tbody></table></div></div>
     </section>
-    <footer class="application-footer">© 2026 David C. Jones. All rights reserved. AI at Human Scale.</footer>
+    <footer class="application-footer">© 2026 David C. Jones. All rights reserved. AI at Human Scale. <span id="cif-framework-version"></span></footer>
   </main>
   <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+    if (window.location.protocol === 'file:') {
+      const notice = document.createElement('p');
+      notice.setAttribute('role', 'alert');
+      notice.className = 'card';
+      notice.textContent = 'To enable the menus, close this file tab and run Start-ROI-EA-Decision-Workspace.cmd from this folder. The application must open at http://127.0.0.1:8766/index.html.';
+      document.getElementById('main-content').prepend(notice);
+    }
+  </script>
   <script src="demo-config.js"></script>
+  <script type="module" src="roi-ea-cif-version-ui.mjs"></script>
   <script type="module" src="modernization-workspace-ui.mjs"></script>
   <script type="module" src="aws-modernization-adapter-ui.mjs"></script>
   <script type="module" src="modernization-dependency-ui.mjs"></script>

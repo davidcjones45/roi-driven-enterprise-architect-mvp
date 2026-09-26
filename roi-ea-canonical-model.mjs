@@ -1,13 +1,16 @@
+import { CIF_RELATIONSHIPS, CIF_RELATIONSHIP_REPRESENTATION_MODES, CIF_RELATIONSHIP_DEFINITIONS, relationshipFindings } from './roi-ea-cif-registry.mjs';
+export { CIF_RELATIONSHIPS, CIF_RELATIONSHIP_REPRESENTATION_MODES, CIF_RELATIONSHIP_DEFINITIONS } from './roi-ea-cif-registry.mjs';
+import { objectSemanticFindings } from './roi-ea-cif-semantics.mjs';
 /**
- * ROI-Driven Enterprise Architect — CIF v0.4 canonical projection foundation.
+ * ROI-Driven Enterprise Architect — CIF v0.4.1 canonical projection foundation.
  *
  * Additive compatibility module. It does not replace FACEM, BACRM,
  * authority-model, FEOA, economics, or consultant-workflow domain records.
  * Canonical projection is descriptive and must not create materially different
  * relationships by implication.
  */
-export const CIF_FRAMEWORK_VERSION = '0.4';
-export const CIF_RELATIONSHIP_GRAMMAR_VERSION = '0.2';
+export const CIF_FRAMEWORK_VERSION = '0.4.1';
+export const CIF_RELATIONSHIP_GRAMMAR_VERSION = '0.4.1';
 
 export const CIF_OBJECT_FAMILIES = Object.freeze({
   ACTOR:'OF-01', PURPOSE:'OF-02', OUTCOME:'OF-03', VALUE:'OF-04',
@@ -20,40 +23,15 @@ export const CIF_OBJECT_FAMILIES = Object.freeze({
 });
 export const CIF_EPISTEMIC_TYPES = Object.freeze([
   'CLAIM','EVIDENCE','EVIDENCE_ASSERTION','VERIFICATION','FACT',
-  'INFERENCE','RECOMMENDATION','FORECAST'
+  'INFERENCE','RECOMMENDATION','FORECAST','ASSUMPTION_PROPOSITION'
 ]);
 export const CIF_CAUSAL_ROLES = Object.freeze([
   'AMPLIFYING','MITIGATING','PREVENTIVE'
 ]);
-export const CIF_RELATIONSHIPS = Object.freeze([
-  'POSSESSES_AUTHORITY','DELEGATES_TO','IS_PERMITTED_TO','RESPONSIBLE_FOR',
-  'ACCOUNTABLE_FOR','MAKES_COMMITMENT','IS_MEMBER_OF','CONSENTS_TO',
-  'MAKES_DECISION','ASSUMES','GRANTS_EXCEPTION_TO',
-  'APPLIES_TO','REQUIRES','PROHIBITS','PERMITS',
-  'ASSERTS','SUPPORTED_BY','DERIVED_FROM','EVALUATES','CONTRADICTS',
-  'RELIES_ON','INFERS','RECOMMENDS','MAPS_TO','TRANSFORMS_TO',
-  'SUPERSEDES','CORRECTS','HAS_TRUST_STATE_FOR',
-  'PERFORMS','USES','HAS_ACCESS_TO','POSSESSES','AUTHENTICATES_AS',
-  'DEPENDS_ON','REQUESTS','OFFERS','TRANSMITS','RECEIVES','VALIDATES',
-  'ACCEPTS','COMPLETES','IMPLEMENTS_CONTROL','OPERATES_CONTROL',
-  'INTERVENES_IN','INVOKES_RECOURSE',
-  'SERVES_PURPOSE','SEEKS_OUTCOME','REALIZES_VALUE_FROM','ATTRIBUTES_VALUE_TO',
-  'CONTRIBUTES_CAUSALLY_TO','PRECEDES','BECOMES_EFFECTIVE_AT','EXPIRES_AT',
-  'SUSPENDS','REACTIVATES','RETIRES','RECOVERS_FROM'
-]);
-export const CIF_RELATIONSHIP_REPRESENTATION_MODES = Object.freeze([
-  'OBJECT_REIFIED','RELATIONSHIP_RECORD','DERIVED_VIEW','EVENT_DERIVED','ASSERTED_EDGE'
-]);
-export const CIF_RELATIONSHIP_DEFINITIONS = Object.freeze({
-  ACCOUNTABLE_FOR:{authoritativeRepresentation:'RELATIONSHIP_RECORD',requiresBasis:true,requiresScope:true},
-  RESPONSIBLE_FOR:{authoritativeRepresentation:'RELATIONSHIP_RECORD',requiresBasis:true,requiresScope:true},
-  CONSENTS_TO:{authoritativeRepresentation:'RELATIONSHIP_RECORD',requiresBasis:true,requiresScope:true},
-  IS_MEMBER_OF:{authoritativeRepresentation:'RELATIONSHIP_RECORD',requiresBasis:true,requiresScope:true},
-  CONTRIBUTES_CAUSALLY_TO:{authoritativeRepresentation:'RELATIONSHIP_RECORD',requiresBasis:true,requiresScope:true},
-  IS_PERMITTED_TO:{authoritativeRepresentation:'DERIVED_VIEW',requiresBasis:true,requiresScope:true},
-  POSSESSES_AUTHORITY:{authoritativeRepresentation:'DERIVED_VIEW',requiresBasis:true,requiresScope:true}
-});
 export const FORBIDDEN_RELATIONSHIP_ENTAILMENTS = Object.freeze([
+  ['DEPENDS_ON','RELIES_ON'],['RELIES_ON','DEPENDS_ON'],
+  ['OCCUPIES_ROLE','POSSESSES_AUTHORITY'],['REPRESENTS','POSSESSES_AUTHORITY'],
+  ['ACTS_ON_BEHALF_OF','ACCOUNTABLE_FOR'],['RECEIVES','ACCEPTS'],
   ['HAS_ACCESS_TO','IS_PERMITTED_TO'],['AUTHENTICATES_AS','IS_PERMITTED_TO'],
   ['IS_PERMITTED_TO','POSSESSES_AUTHORITY'],['POSSESSES_AUTHORITY','ACCOUNTABLE_FOR'],
   ['RESPONSIBLE_FOR','ACCOUNTABLE_FOR'],['PERFORMS','RESPONSIBLE_FOR'],
@@ -67,6 +45,10 @@ export const FORBIDDEN_RELATIONSHIP_ENTAILMENTS = Object.freeze([
   ['POSSESSES_AUTHORITY','CONSENTS_TO']
 ]);
 export const SEMANTIC_NON_ENTAILMENTS = Object.freeze([
+  ['DEPENDENCY','RELIANCE'],['RELIANCE','DEPENDENCY'],
+  ['ROLE_OCCUPANCY','AUTHORITY'],['REPRESENTATION','AUTHORITY'],
+  ['ACTS_ON_BEHALF_OF','ACCOUNTABILITY_TRANSFER'],['MACHINE_EXECUTION','INSTITUTIONAL_ACCOUNTABILITY'],
+  ['ASSUMPTION_PROPOSITION','ASSUMPTION_ADOPTION'],['ASSUMPTION_ADOPTION','FACT'],['RECEIPT','ACCEPTANCE'],
   ['CAPABILITY','AUTHORITY'],['ACCESS','PERMISSION'],['AUTHENTICATION','AUTHORIZATION'],
   ['EVIDENCE','FACT'],['FACT','INFERENCE'],['INFERENCE','RECOMMENDATION'],
   ['RECOMMENDATION','DECISION'],['FORECAST','FACT'],['CONFIDENCE','PROBABILITY'],
@@ -105,10 +87,12 @@ export function normalizeCanonicalObjectRef(record={}) {
   if(!Object.values(CIF_OBJECT_FAMILIES).includes(family)) errors.push('family is not a recognized CIF object family.');
   if(!text(record.domainType)) errors.push('domainType is required.');
   if(!text(record.domainId)) errors.push('domainId is required.');
+  errors.push(...objectSemanticFindings(record).map(x=>x.message));
   return {
+    ...record,
     canonicalId:id,family,domainType:text(record.domainType),domainId:text(record.domainId),
-    frameworkVersion:text(record.frameworkVersion||CIF_FRAMEWORK_VERSION),
-    recordVersion:text(record.recordVersion||record.version),schemaVersion:text(record.schemaVersion),
+    frameworkVersion:record.frameworkVersion === undefined ? CIF_FRAMEWORK_VERSION : record.frameworkVersion,
+    recordVersion:record.recordVersion ?? record.version ?? '',schemaVersion:record.schemaVersion ?? '',specializationVersion:record.specializationVersion ?? '',
     state:text(record.state||record.status||'active'),effectiveFrom:text(record.effectiveFrom),
     effectiveTo:text(record.effectiveTo),recordedAt:text(record.recordedAt),
     ownerRef:text(record.ownerRef),contextRef:text(record.contextRef),
@@ -132,7 +116,10 @@ export function normalizeCanonicalRelationship(record={}) {
   if(def&&representationMode!==def.authoritativeRepresentation) errors.push(`${relationshipType} authoritative representation is ${def.authoritativeRepresentation}.`);
   if(def?.requiresBasis&&!text(record.basisRef)) errors.push(`${relationshipType} requires basisRef.`);
   if(def?.requiresScope&&!text(record.scopeRef||record.scope)) errors.push(`${relationshipType} requires scope.`);
+  const findings=relationshipFindings({...record,relationshipType,representationMode});
+  errors.push(...findings.map(x=>x.message));
   return {
+    ...record, findings,
     id:text(record.id),relationshipType,representationMode,sourceId:text(record.sourceId),
     sourceFamily:text(record.sourceFamily),targetId:text(record.targetId),targetFamily:text(record.targetFamily),
     scope:text(record.scope),scopeRef:text(record.scopeRef),contextRef:text(record.contextRef),
@@ -143,15 +130,17 @@ export function normalizeCanonicalRelationship(record={}) {
     limitationRefs:unique(record.limitationRefs||record.limitations),
     evidenceRefs:unique(record.evidenceRefs||record.evidenceIds),
     reassessmentTriggerRefs:unique(record.reassessmentTriggerRefs),
-    supersedesRef:text(record.supersedesRef),supersededByRef:text(record.supersededByRef),errors
+    supersedesRef:text(record.supersedesRef),supersededByRef:text(record.supersededByRef),errors:[...new Set(errors)]
   };
 }
 
 export function validateDerivedRelationship({sourceRelationship='',proposedRelationship='',derivationBasis=[],explicitAssertion=false}={}) {
+  if (![sourceRelationship,proposedRelationship].every(x=>CIF_RELATIONSHIPS.includes(x))) return {valid:false,status:'UNREGISTERED_RELATIONSHIP',issues:['Unknown relationship cannot establish a CIF derivation.']};
   const forbidden=FORBIDDEN_RELATIONSHIP_ENTAILMENTS.some(([s,t])=>s===sourceRelationship&&t===proposedRelationship);
   const basis=unique(derivationBasis);
   if(forbidden&&!explicitAssertion) return {valid:false,status:'FORBIDDEN_ENTAILMENT',issues:[`${sourceRelationship} does not entail ${proposedRelationship}.`]};
   if(forbidden&&explicitAssertion&&!basis.length) return {valid:false,status:'INSUFFICIENT_BASIS',issues:[`Explicit ${proposedRelationship} requires an independent basis.`]};
+  if(sourceRelationship!==proposedRelationship&&(!explicitAssertion||!basis.length)) return {valid:false,status:'INDEPENDENT_BASIS_REQUIRED',issues:['Distinct material relationships require an independent explicit assertion and basis.']};
   return {valid:true,status:'PASS',issues:[]};
 }
 export function validateSemanticEntailment({sourceConcept='',proposedConcept='',derivationBasis=[],explicitAssertion=false}={}) {
@@ -159,6 +148,7 @@ export function validateSemanticEntailment({sourceConcept='',proposedConcept='',
   const forbidden=SEMANTIC_NON_ENTAILMENTS.some(([a,b])=>a===s&&b===t),basis=unique(derivationBasis);
   if(forbidden&&!explicitAssertion) return {valid:false,status:'FORBIDDEN_SEMANTIC_ENTAILMENT',issues:[`${s} does not entail ${t}.`]};
   if(forbidden&&explicitAssertion&&!basis.length) return {valid:false,status:'INSUFFICIENT_BASIS',issues:[`Explicit ${t} requires an independent basis.`]};
+  if(!s||!t||s!==t&&(!explicitAssertion||!basis.length)) return {valid:false,status:'INDEPENDENT_BASIS_REQUIRED',issues:['Distinct material concepts cannot be inferred without independent basis.']};
   return {valid:true,status:'PASS',issues:[]};
 }
 export function canonicalProjection({canonicalRef={},relationships=[],domainRecord=null}={}) {

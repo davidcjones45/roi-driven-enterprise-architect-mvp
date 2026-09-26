@@ -1,0 +1,958 @@
+{
+  "registry_id": "CIF-RELREG-0.4.1",
+  "framework_version": "0.4.1",
+  "parent_core_baseline": "0.4",
+  "status": "CURRENT_CANONICAL",
+  "relationship_count": 60,
+  "representation_modes": [
+    "OBJECT_REIFIED",
+    "RELATIONSHIP_RECORD",
+    "DERIVED_VIEW",
+    "EVENT_DERIVED",
+    "ASSERTED_EDGE"
+  ],
+  "family_group_notation": {
+    "ANY_GOVERNED_OBJECT": "any CIF object family OF-01 through OF-22, subject to relationship-specific restrictions",
+    "HUMAN_PERSON": "OF-01 Actor subtype",
+    "ROLE_OR_OFFICE": "OF-01 Actor subtype",
+    "ORGANIZATION": "OF-01 Actor subtype",
+    "GOVERNING_BODY": "OF-01 Actor subtype",
+    "TECHNICAL_SYSTEM": "OF-01 Actor subtype",
+    "AUTONOMOUS_AGENT": "OF-01 Actor subtype",
+    "OTHER_IDENTIFIED_ACTOR": "OF-01 Actor subtype"
+  },
+  "relationships": [
+    {
+      "relationship_type": "POSSESSES_AUTHORITY",
+      "category": "Institutional / normative",
+      "authoritative_representation": "DERIVED_VIEW",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-15"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Derived from effective Authority records, role/representation state, scope, context, and time."
+    },
+    {
+      "relationship_type": "DELEGATES_TO",
+      "category": "Institutional / normative",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-01"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Authoritative semantics carried by OF-15 Delegation/Authority Envelope."
+    },
+    {
+      "relationship_type": "IS_PERMITTED_TO",
+      "category": "Institutional / normative",
+      "authoritative_representation": "DERIVED_VIEW",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-18",
+        "OF-08",
+        "OF-07",
+        "OF-06"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Permission is derived from applicable rules, authority, delegation, context, conditions, and time."
+    },
+    {
+      "relationship_type": "RESPONSIBLE_FOR",
+      "category": "Institutional / normative",
+      "authoritative_representation": "RELATIONSHIP_RECORD",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-06",
+        "OF-07",
+        "OF-03",
+        "OF-16",
+        "OF-17",
+        "OF-18",
+        "OF-19",
+        "OF-21",
+        "OF-22"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Technical Actors may carry operational responsibility; responsibility does not create authority or accountability."
+    },
+    {
+      "relationship_type": "ACCOUNTABLE_FOR",
+      "category": "Institutional / normative",
+      "authoritative_representation": "RELATIONSHIP_RECORD",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Default source subtype must be HUMAN_PERSON, ROLE_OR_OFFICE, ORGANIZATION, or GOVERNING_BODY. Technical Actors do not satisfy institutional accountability unless an external governing regime independently establishes that status."
+    },
+    {
+      "relationship_type": "MAKES_COMMITMENT",
+      "category": "Institutional / normative",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-17"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Commitment object is authoritative."
+    },
+    {
+      "relationship_type": "IS_MEMBER_OF",
+      "category": "Institutional / normative",
+      "authoritative_representation": "RELATIONSHIP_RECORD",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-06"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Approval, participation, dependency, access, or service provision do not establish membership."
+    },
+    {
+      "relationship_type": "CONSENTS_TO",
+      "category": "Institutional / normative",
+      "authoritative_representation": "RELATIONSHIP_RECORD",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-18",
+        "OF-16",
+        "OF-19",
+        "OF-08",
+        "OF-07",
+        "OF-06"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Consent is scoped, purposeful, time-bounded, and independently evidenced."
+    },
+    {
+      "relationship_type": "MAKES_DECISION",
+      "category": "Institutional / normative",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-16"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Decision object is authoritative."
+    },
+    {
+      "relationship_type": "ASSUMES",
+      "category": "Institutional / normative",
+      "authoritative_representation": "DERIVED_VIEW",
+      "allowed_source": [
+        "OF-01",
+        "OF-16"
+      ],
+      "allowed_target": [
+        "OF-12"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Target must be ASSUMPTION_PROPOSITION; derived from an OF-16 ASSUMPTION_ADOPTION record."
+    },
+    {
+      "relationship_type": "GRANTS_EXCEPTION_TO",
+      "category": "Institutional / normative",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-14",
+        "OF-21"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Authoritative semantics carried by an OF-16 Exception decision."
+    },
+    {
+      "relationship_type": "OCCUPIES_ROLE",
+      "category": "Institutional / normative",
+      "authoritative_representation": "RELATIONSHIP_RECORD",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-01"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Source subtype normally HUMAN_PERSON; target subtype ROLE_OR_OFFICE. Occupancy alone does not create authority."
+    },
+    {
+      "relationship_type": "REPRESENTS",
+      "category": "Institutional / normative",
+      "authoritative_representation": "RELATIONSHIP_RECORD",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-01"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Represents another Actor under an explicit basis, scope, and effective period. Representation does not itself create authority."
+    },
+    {
+      "relationship_type": "ACTS_ON_BEHALF_OF",
+      "category": "Institutional / normative",
+      "authoritative_representation": "RELATIONSHIP_RECORD",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-01"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Contextual action relation. Does not transfer accountability unless separately established."
+    },
+    {
+      "relationship_type": "APPLIES_TO",
+      "category": "Rule semantics",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-14"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Target must be material to the cited rule's governed scope."
+    },
+    {
+      "relationship_type": "REQUIRES",
+      "category": "Rule semantics",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-14"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Target must be material to the cited rule's governed scope."
+    },
+    {
+      "relationship_type": "PROHIBITS",
+      "category": "Rule semantics",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-14"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Target must be material to the cited rule's governed scope."
+    },
+    {
+      "relationship_type": "PERMITS",
+      "category": "Rule semantics",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-14"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Target must be material to the cited rule's governed scope."
+    },
+    {
+      "relationship_type": "ASSERTS",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01",
+        "OF-12"
+      ],
+      "allowed_target": [
+        "OF-12"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Actor or source asserts an Epistemic Object."
+    },
+    {
+      "relationship_type": "SUPPORTED_BY",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-12",
+        "OF-16",
+        "OF-14",
+        "OF-21",
+        "OF-10",
+        "OF-11",
+        "OF-15"
+      ],
+      "allowed_target": [
+        "OF-12"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Target should normally be Evidence or Verification."
+    },
+    {
+      "relationship_type": "DERIVED_FROM",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-12",
+        "OF-13"
+      ],
+      "allowed_target": [
+        "OF-12",
+        "OF-13"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Derivation preserves provenance and transformation context."
+    },
+    {
+      "relationship_type": "EVALUATES",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-12"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Assessment/evaluation result evaluates a governed subject."
+    },
+    {
+      "relationship_type": "CONTRADICTS",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-12"
+      ],
+      "allowed_target": [
+        "OF-12"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Contradiction is epistemic, not automatic invalidation."
+    },
+    {
+      "relationship_type": "RELIES_ON",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Authoritative semantics carried by OF-11 Reliance."
+    },
+    {
+      "relationship_type": "INFERS",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01",
+        "OF-06",
+        "OF-12"
+      ],
+      "allowed_target": [
+        "OF-12"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Target subtype should be INFERENCE or FORECAST."
+    },
+    {
+      "relationship_type": "RECOMMENDS",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01",
+        "OF-06",
+        "OF-12"
+      ],
+      "allowed_target": [
+        "OF-12"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Target subtype should be RECOMMENDATION."
+    },
+    {
+      "relationship_type": "MAPS_TO",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-13",
+        "OF-12"
+      ],
+      "allowed_target": [
+        "OF-13",
+        "OF-12"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Mapping requires context/version where meaning may drift."
+    },
+    {
+      "relationship_type": "TRANSFORMS_TO",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-13",
+        "OF-12"
+      ],
+      "allowed_target": [
+        "OF-13",
+        "OF-12"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Transformation preserves provenance and method."
+    },
+    {
+      "relationship_type": "SUPERSEDES",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Normally same-family predecessor/successor; derived from lifecycle/supersession records."
+    },
+    {
+      "relationship_type": "CORRECTS",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-12",
+        "OF-22"
+      ],
+      "allowed_target": [
+        "OF-12",
+        "OF-16",
+        "OF-22"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Correction does not automatically supersede or erase history."
+    },
+    {
+      "relationship_type": "HAS_TRUST_STATE_FOR",
+      "category": "Epistemic / semantic",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "OF-01",
+        "OF-16",
+        "OF-06"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Authoritative semantics carried by OF-10 Trust State."
+    },
+    {
+      "relationship_type": "PERFORMS",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-18"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Performance does not create responsibility, accountability, or authority."
+    },
+    {
+      "relationship_type": "USES",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01",
+        "OF-18",
+        "OF-06"
+      ],
+      "allowed_target": [
+        "OF-08",
+        "OF-07",
+        "OF-06"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Use does not establish permission."
+    },
+    {
+      "relationship_type": "HAS_ACCESS_TO",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-08",
+        "OF-07",
+        "OF-06"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Access does not establish permission."
+    },
+    {
+      "relationship_type": "POSSESSES",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-08"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Possession does not establish reliance."
+    },
+    {
+      "relationship_type": "AUTHENTICATES_AS",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-01"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Authentication does not establish authorization; target is an identity/Actor representation."
+    },
+    {
+      "relationship_type": "DEPENDS_ON",
+      "category": "Operational",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Authoritative semantics carried by OF-09 Dependency."
+    },
+    {
+      "relationship_type": "REQUESTS",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-18",
+        "OF-08",
+        "OF-19",
+        "OF-17",
+        "OF-16"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Request does not establish commitment or acceptance."
+    },
+    {
+      "relationship_type": "OFFERS",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-17",
+        "OF-19",
+        "OF-08",
+        "OF-18"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Offer does not establish acceptance."
+    },
+    {
+      "relationship_type": "TRANSMITS",
+      "category": "Operational",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "OF-01",
+        "OF-18",
+        "OF-06"
+      ],
+      "allowed_target": [
+        "OF-19",
+        "OF-08",
+        "OF-12"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Transmission does not establish receipt."
+    },
+    {
+      "relationship_type": "RECEIVES",
+      "category": "Operational",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "OF-01",
+        "OF-06"
+      ],
+      "allowed_target": [
+        "OF-19",
+        "OF-08",
+        "OF-12"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Receipt does not establish validation or acceptance."
+    },
+    {
+      "relationship_type": "VALIDATES",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01",
+        "OF-06",
+        "OF-12"
+      ],
+      "allowed_target": [
+        "OF-12",
+        "OF-19",
+        "OF-21"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Validation is scoped and does not establish acceptance."
+    },
+    {
+      "relationship_type": "ACCEPTS",
+      "category": "Operational",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-19",
+        "OF-17",
+        "OF-18",
+        "OF-08",
+        "OF-12"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Authoritative semantics carried by OF-20 Acceptance."
+    },
+    {
+      "relationship_type": "COMPLETES",
+      "category": "Operational",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "OF-01",
+        "OF-18"
+      ],
+      "allowed_target": [
+        "OF-18",
+        "OF-17",
+        "OF-19"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Completion does not establish Outcome."
+    },
+    {
+      "relationship_type": "IMPLEMENTS_CONTROL",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01",
+        "OF-06"
+      ],
+      "allowed_target": [
+        "OF-21"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Implementation does not establish operation or effectiveness."
+    },
+    {
+      "relationship_type": "OPERATES_CONTROL",
+      "category": "Operational",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01",
+        "OF-06"
+      ],
+      "allowed_target": [
+        "OF-21"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Operation does not establish effectiveness."
+    },
+    {
+      "relationship_type": "INTERVENES_IN",
+      "category": "Operational",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "OF-01",
+        "OF-21"
+      ],
+      "allowed_target": [
+        "OF-18",
+        "OF-16",
+        "OF-06"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Intervention must satisfy I-20 where human control is claimed."
+    },
+    {
+      "relationship_type": "INVOKES_RECOURSE",
+      "category": "Operational",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "OF-21",
+        "OF-16",
+        "OF-19"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Recourse invocation does not predetermine disposition."
+    },
+    {
+      "relationship_type": "SERVES_PURPOSE",
+      "category": "Purpose / value",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "allowed_target": [
+        "OF-02"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Purpose is identified/stated/authorized; CIF does not itself establish legitimacy."
+    },
+    {
+      "relationship_type": "SEEKS_OUTCOME",
+      "category": "Purpose / value",
+      "authoritative_representation": "ASSERTED_EDGE",
+      "allowed_source": [
+        "OF-01",
+        "OF-02",
+        "OF-16",
+        "OF-18",
+        "OF-06"
+      ],
+      "allowed_target": [
+        "OF-03"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Seeking an outcome does not establish achievement."
+    },
+    {
+      "relationship_type": "REALIZES_VALUE_FROM",
+      "category": "Purpose / value",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "OF-01",
+        "OF-06"
+      ],
+      "allowed_target": [
+        "OF-03",
+        "OF-05",
+        "OF-08"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Authoritative semantics carried by OF-04 Value."
+    },
+    {
+      "relationship_type": "ATTRIBUTES_VALUE_TO",
+      "category": "Purpose / value",
+      "authoritative_representation": "OBJECT_REIFIED",
+      "allowed_source": [
+        "OF-01"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Authoritative semantics carried by OF-04 Value; attribution does not establish realized value."
+    },
+    {
+      "relationship_type": "CONTRIBUTES_CAUSALLY_TO",
+      "category": "Causal",
+      "authoritative_representation": "RELATIONSHIP_RECORD",
+      "allowed_source": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "allowed_target": [
+        "OF-03",
+        "OF-05",
+        "OF-18",
+        "OF-06",
+        "OF-22"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Requires causal claim, evidence, attribution status, period, and limitations."
+    },
+    {
+      "relationship_type": "PRECEDES",
+      "category": "Temporal / lifecycle",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Temporal ordering alone does not establish causation."
+    },
+    {
+      "relationship_type": "BECOMES_EFFECTIVE_AT",
+      "category": "Temporal / lifecycle",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "allowed_target": [
+        "OF-22"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Target should identify the effective Event/State."
+    },
+    {
+      "relationship_type": "EXPIRES_AT",
+      "category": "Temporal / lifecycle",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "allowed_target": [
+        "OF-22"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Target should identify the expiry Event/State."
+    },
+    {
+      "relationship_type": "SUSPENDS",
+      "category": "Temporal / lifecycle",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "OF-22",
+        "OF-16"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Suspension must preserve prior history and authority basis."
+    },
+    {
+      "relationship_type": "REACTIVATES",
+      "category": "Temporal / lifecycle",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "OF-22",
+        "OF-16"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Implements Authorized Resumption; technical recovery alone is insufficient."
+    },
+    {
+      "relationship_type": "RETIRES",
+      "category": "Temporal / lifecycle",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "OF-22",
+        "OF-16"
+      ],
+      "allowed_target": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "basis_requirement": "MUST",
+      "scope_requirement": "MUST",
+      "notes": "Retirement preserves historical records."
+    },
+    {
+      "relationship_type": "RECOVERS_FROM",
+      "category": "Temporal / lifecycle",
+      "authoritative_representation": "EVENT_DERIVED",
+      "allowed_source": [
+        "ANY_GOVERNED_OBJECT"
+      ],
+      "allowed_target": [
+        "OF-22"
+      ],
+      "basis_requirement": "MAY",
+      "scope_requirement": "MAY",
+      "notes": "Technical recovery does not establish assurance restoration or authorized resumption."
+    }
+  ]
+}

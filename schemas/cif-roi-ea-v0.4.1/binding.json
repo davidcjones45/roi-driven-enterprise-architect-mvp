@@ -1,0 +1,15 @@
+{
+  "binding_id": "ROI-EA-CIF-COMPAT-0.4.1-1",
+  "framework_version": "0.4.1",
+  "schema_version": "roi-ea-cif-0.4.1-1",
+  "external_validation_status": "EV-0",
+  "historical_inputs": ["CIF-MRS v0.1", "CIF-MRS v0.2", "ROI-EA CIF v0.4"],
+  "relationship_registry": "CIF_Relationships.json",
+  "actor_subtypes": ["HUMAN_PERSON", "ROLE_OR_OFFICE", "ORGANIZATION", "GOVERNING_BODY", "TECHNICAL_SYSTEM", "AUTONOMOUS_AGENT", "OTHER_IDENTIFIED_ACTOR"],
+  "institutional_actor_subtypes": ["HUMAN_PERSON", "ROLE_OR_OFFICE", "ORGANIZATION", "GOVERNING_BODY"],
+  "absence_states": ["UNKNOWN", "UNRESOLVED", "NOT_APPLICABLE", "NOT_ASSESSED"],
+  "epistemic_subtypes": ["CLAIM", "EVIDENCE", "EVIDENCE_ASSERTION", "VERIFICATION", "FACT", "INFERENCE", "RECOMMENDATION", "FORECAST", "ASSUMPTION_PROPOSITION"],
+  "decision_subtypes": ["DECISION", "ASSUMPTION", "ASSUMPTION_ADOPTION", "EXCEPTION", "RISK_ACCEPTANCE"],
+  "family_names": ["ACTOR", "PURPOSE", "OUTCOME", "VALUE", "CONSEQUENCE", "CONTEXT_SYSTEM", "CAPABILITY", "RESOURCE", "DEPENDENCY", "TRUST_STATE", "RELIANCE", "EPISTEMIC_OBJECT", "SEMANTIC_OBJECT", "RULE_OBLIGATION", "AUTHORITY", "DECISION", "COMMITMENT", "ACTION", "HANDOFF", "ACCEPTANCE", "CONTROL", "LIFECYCLE_OBJECT"],
+  "notes": "Application compatibility binding only; historical SQL, graph, core and specialization packages remain unchanged. Prose constraints are enforced by roi-ea-cif-registry.mjs and roi-ea-cif-semantics.mjs. No scalar conformance or externality score."
+}
