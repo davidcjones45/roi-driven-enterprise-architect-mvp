@@ -8,3 +8,11 @@ test('installed app bridge accepts dependency finding promotion event',()=>{
   assert.match(src,/Dependency finding added to the local Consulting Findings register/);
   assert.match(src,/local consulting engagement/);
 });
+
+
+test('installed app bridge accepts dependency analysis evidence promotion event',()=>{
+  const src=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+  assert.match(src,/roi-ea-dependency-evidence-promote/);
+  assert.match(src,/Dependency analysis added to the local Consulting evidence register/);
+  assert.match(src,/engagementEvidenceErrors/);
+});
