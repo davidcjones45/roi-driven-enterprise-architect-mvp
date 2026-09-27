@@ -546,6 +546,81 @@ export function previewDependencyMitigation(workspace={}, mitigationRaw={}, opti
   };
 }
 
+
+export function classifyMitigationTransition(beforeAnalysis={}, afterAnalysis={}) {
+  const beforeConstraint=new Set((beforeAnalysis.constrainingDependencyCandidates||[]).map(x=>x.nodeId));
+  const afterConstraint=new Set((afterAnalysis.constrainingDependencyCandidates||[]).map(x=>x.nodeId));
+  const beforeConcentration=new Set((beforeAnalysis.concentrationCandidates||[]).map(x=>x.nodeId));
+  const afterConcentration=new Set((afterAnalysis.concentrationCandidates||[]).map(x=>x.nodeId));
+
+  const relieved=[...beforeConstraint].filter(x=>!afterConstraint.has(x)).sort();
+  const introduced=[...afterConstraint].filter(x=>!beforeConstraint.has(x)).sort();
+  const persistent=[...beforeConstraint].filter(x=>afterConstraint.has(x)).sort();
+
+  let classification='UNCHANGED_EXPOSURE';
+  if(relieved.length && !introduced.length && !persistent.length) classification='RELIEVED';
+  else if(relieved.length && introduced.length) classification='TRANSFERRED_OR_RESHAPED';
+  else if(relieved.length || introduced.length || persistent.length) classification='CHANGED_EXPOSURE';
+
+  return {
+    classification,
+    relievedConstrainingNodeIds:relieved,
+    introducedConstrainingNodeIds:introduced,
+    persistentConstrainingNodeIds:persistent,
+    concentrationAdded:[...afterConcentration].filter(x=>!beforeConcentration.has(x)).sort(),
+    concentrationRelieved:[...beforeConcentration].filter(x=>!afterConcentration.has(x)).sort(),
+    interpretation:'Classification describes changes in recorded structural candidates only. It does not establish realized risk reduction, resilience, effectiveness, or business outcome.',
+  };
+}
+
+export function applyValidatedMitigationWithSnapshots(workspace={}, mitigationRaw={}, options={}) {
+  const appliedAt=String(options.appliedAt||new Date().toISOString());
+  const appliedBy=String(options.appliedBy||mitigationRaw.validatedBy||'').trim();
+  if(!appliedBy) throw new TypeError('Applied by is required for mitigation lifecycle capture.');
+
+  const beforeAnalysis=analyzeDependencyGraph(workspace,options.analysisOptions||{});
+  const beforeSnapshot=createDependencyGraphSnapshot(workspace,{
+    label:options.beforeLabel||`Before mitigation: ${mitigationRaw.label||mitigationRaw.type||'Dependency mitigation'}`,
+    note:options.beforeNote||`Automatic pre-application snapshot for mitigation ${mitigationRaw.id||'candidate'}.`,
+    capturedAt:options.beforeCapturedAt||appliedAt,
+    capturedBy:appliedBy,
+  },options.analysisOptions||{});
+
+  const appliedWorkspace=applyValidatedDependencyMitigation(workspace,mitigationRaw);
+  const afterAnalysis=analyzeDependencyGraph(appliedWorkspace,options.analysisOptions||{});
+  const afterSnapshot=createDependencyGraphSnapshot(appliedWorkspace,{
+    label:options.afterLabel||`After mitigation: ${mitigationRaw.label||mitigationRaw.type||'Dependency mitigation'}`,
+    note:options.afterNote||`Automatic post-application snapshot for mitigation ${mitigationRaw.id||'candidate'}.`,
+    capturedAt:options.afterCapturedAt||appliedAt,
+    capturedBy:appliedBy,
+  },options.analysisOptions||{});
+
+  const transition=classifyMitigationTransition(beforeAnalysis,afterAnalysis);
+  const lifecycleRecord={
+    id:stableId(`${mitigationRaw.id||'MITIGATION'}-${appliedAt}`,'DGL'),
+    mitigationId:normalizeDependencyMitigation(mitigationRaw).id,
+    appliedAt,
+    appliedBy,
+    beforeSnapshotId:beforeSnapshot.id,
+    afterSnapshotId:afterSnapshot.id,
+    transition,
+    status:'Recorded structural transition — outcome validation still required',
+  };
+
+  const next=structuredClone(appliedWorkspace);
+  next.dependencyGraphSnapshots=[
+    ...(workspace.dependencyGraphSnapshots||[]),
+    beforeSnapshot,
+    afterSnapshot,
+  ];
+  next.dependencyMitigationLifecycle=[
+    ...(workspace.dependencyMitigationLifecycle||[]),
+    lifecycleRecord,
+  ];
+
+  return {workspace:next,beforeSnapshot,afterSnapshot,transition,lifecycleRecord};
+}
+
 export function applyValidatedDependencyMitigation(workspace={}, mitigationRaw={}) {
   const graph=buildDependencyGraph(workspace);
   const checked=mitigationIssues(mitigationRaw,graph);

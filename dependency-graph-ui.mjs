@@ -4,7 +4,8 @@ import {
   analyzeDependencyGraph, createDependencyGraphSnapshot, compareDependencyGraphSnapshots,
   upsertDependencyFindingReview, normalizeDependencyFindingReview, dependencyFindingToConsultingRecord,
   DEPENDENCY_MITIGATION_TYPES, DEPENDENCY_MITIGATION_STATUSES, normalizeDependencyMitigation,
-  previewDependencyMitigation, applyValidatedDependencyMitigation
+  previewDependencyMitigation, applyValidatedDependencyMitigation,
+  applyValidatedMitigationWithSnapshots
 } from './dependency-graph-model.mjs';
 import { parseAndValidateBpmn } from './bpmn-import-pipeline.mjs';
 import { bpmnImportToDependencyGraph } from './bpmn-dependency-adapter.mjs';
@@ -160,9 +161,9 @@ function mount(){
 
   panel.querySelector('#dg-export').addEventListener('click',()=>{
     const data=ensure(read()); const analysis=analyzeDependencyGraph(data,{minimumInbound:3,minimumDependencies:4});
-    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.8',...analysis};
+    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.9',...analysis};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.8.json'; a.click(); URL.revokeObjectURL(a.href);
+    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.9.json'; a.click(); URL.revokeObjectURL(a.href);
   });
 
   panel.querySelector('#dg-snapshot-create').addEventListener('click',()=>{
@@ -271,9 +272,13 @@ function mount(){
     raw.estimatedCost=raw.estimatedCost===''?null:Number(raw.estimatedCost);
     if(raw.validatedAt)raw.validatedAt=new Date(raw.validatedAt).toISOString();
     try{
-      const next=applyValidatedDependencyMitigation(data,raw);
-      write(ensure(next)); render(panel);
-      alert('Validated mitigation applied to the working dependency graph. This records architecture intent; it does not establish implementation or control effectiveness.');
+      const lifecycle=applyValidatedMitigationWithSnapshots(data,raw,{
+        appliedAt:new Date().toISOString(),
+        appliedBy:raw.validatedBy,
+        analysisOptions:{minimumInbound:3,minimumDependencies:4}
+      });
+      write(ensure(lifecycle.workspace)); render(panel);
+      alert(`Validated mitigation applied. Structural transition: ${lifecycle.transition.classification}. Before/after snapshots were captured automatically. This does not establish implementation effectiveness or reduced risk.`);
     }catch(error){alert(error.message);}
   });
 
@@ -318,7 +323,7 @@ function html(){
   const dims=DEPENDENCY_DIMENSIONS.map(x=>`<option>${esc(x)}</option>`).join('');
   return `
   <div class="card">
-    <span class="eyebrow">DEPENDENCY GRAPH / V0.8</span>
+    <span class="eyebrow">DEPENDENCY GRAPH / V0.9</span>
     <h3>Preserve essential action by making dependencies visible.</h3>
     <p class="quiet-note">This workspace combines existing modernization dependencies with manually recorded, BPMN-derived, and Microsoft Graph-derived structure. Imported structure is evidence, not operating truth. The application does not infer authority, process effectiveness, or organizational accountability from a graph.</p>
   </div>
@@ -476,6 +481,7 @@ function html(){
     </form>
     <div id="dg-mitigation-preview"></div>
     <div id="dg-mitigation-records"></div>
+    <div id="dg-mitigation-lifecycle"></div>
   </div>
   <div class="two-column-grid">
     <div class="card"><h3>Graph quality / unresolved structure</h3><div id="dg-issues"></div></div>
@@ -569,6 +575,10 @@ function render(panel){
   panel.querySelector('#dg-mitigation-records').innerHTML=mitigations.length
     ? `<h4>Recorded mitigation candidates</h4><table class="depgraph-table"><thead><tr><th>Mitigation</th><th>Target</th><th>Status</th><th>Owner</th><th>Evidence</th></tr></thead><tbody>${mitigations.map(m=>`<tr><td><strong>${esc(m.type)}</strong><br><small>${esc(m.description)}</small></td><td>${esc(m.targetType)} · ${esc(m.targetId)}</td><td>${esc(m.status)}<br><small>${esc(m.validatedBy||'Not validated')}</small></td><td>${esc(m.owner||'Not recorded')}</td><td>${esc(m.evidenceRefs.join(', ')||m.sourceReference||'None recorded')}</td></tr>`).join('')}</tbody></table>`
     : '<p class="quiet-note">No dependency mitigation candidates recorded.</p>';
+  const lifecycleRows=data.dependencyMitigationLifecycle||[];
+  panel.querySelector('#dg-mitigation-lifecycle').innerHTML=lifecycleRows.length
+    ? `<h4>Mitigation transition history</h4><table class="depgraph-table"><thead><tr><th>Applied</th><th>Mitigation</th><th>Structural transition</th><th>Before / after</th><th>Interpretation</th></tr></thead><tbody>${lifecycleRows.map(x=>`<tr><td>${esc(x.appliedAt)}<br><small>${esc(x.appliedBy)}</small></td><td>${esc(x.mitigationId)}</td><td><strong>${esc(x.transition?.classification||'Unknown')}</strong><br><small>Relieved: ${esc((x.transition?.relievedConstrainingNodeIds||[]).join(', ')||'None')}<br>Introduced: ${esc((x.transition?.introducedConstrainingNodeIds||[]).join(', ')||'None')}</small></td><td>${esc(x.beforeSnapshotId)}<br>${esc(x.afterSnapshotId)}</td><td>${esc(x.transition?.interpretation||x.status||'')}</td></tr>`).join('')}</tbody></table>`
+    : '<p class="quiet-note">No validated mitigation transitions recorded.</p>';
   let mitigationPreview=null;
   try{mitigationPreview=panel.dataset.mitigationPreview?JSON.parse(panel.dataset.mitigationPreview):null;}catch{}
   renderMitigationPreview(panel,mitigationPreview);
