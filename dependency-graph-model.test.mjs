@@ -4,7 +4,7 @@ import {
   buildDependencyGraph, analyzeDependencyGraph, dependencyAccumulationDelta,
   normalizeContinuityAnchor, normalizeEssentialAction, graphSourceSummary,
   crossSourceConnections, reviewedCrossSourceConnections, essentialDependencyCoverage,
-  sharedFailureDomainCandidates, multiSourceNodes
+  sharedFailureDomainCandidates, multiSourceNodes, dependencyFindingsSummary
 } from './dependency-graph-model.mjs';
 import { bpmnImportToDependencyGraph } from './bpmn-dependency-adapter.mjs';
 import { microsoftGraphOrgToDependencyGraph } from './ms-graph-org-adapter.mjs';
@@ -206,4 +206,26 @@ test('ties dependency nodes to Essential Actions and Continuity Anchors for diag
   assert.equal(rows[0].anchorLabel,'Customer access');
   assert.equal(rows[0].actionLabel,'Authenticate customer');
   assert.equal(rows[0].mitigated,false);
+});
+
+
+test('derives qualified consulting review candidates rather than final findings',()=>{
+  const analysis=analyzeDependencyGraph({
+    graphNodes:[
+      {id:'IDP',label:'Identity provider',nodeType:'external-service'},
+      {id:'A',label:'A',nodeType:'application'},
+      {id:'B',label:'B',nodeType:'application'},
+      {id:'C',label:'C',nodeType:'application'},
+    ],
+    graphEdges:[
+      {id:'1',sourceId:'A',targetId:'IDP',sharedFailureDomain:'CLOUD'},
+      {id:'2',sourceId:'B',targetId:'IDP',sharedFailureDomain:'CLOUD'},
+      {id:'3',sourceId:'C',targetId:'IDP',sharedFailureDomain:'CLOUD'},
+    ],
+    continuityAnchors:[{id:'CA',label:'Customer access'}],
+    essentialActions:[{id:'EA',label:'Authenticate',anchorId:'CA',dependencyNodeIds:['IDP']}],
+  },{minimumInbound:3});
+  assert.ok(analysis.findingsSummary.some(x=>x.type==='CONSTRAINING_DEPENDENCY_CANDIDATE'));
+  assert.ok(analysis.findingsSummary.some(x=>x.type==='DEPENDENCY_CONCENTRATION_CANDIDATE'));
+  assert.ok(analysis.findingsSummary.every(x=>/Candidate only|does not|require|until/i.test(x.limitation)));
 });

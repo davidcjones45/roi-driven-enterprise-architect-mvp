@@ -40,3 +40,12 @@ test('dependency graph UI supports reviewed cross-source edges and diagnostic em
   assert.match(src,/constraining-candidate/);
   assert.match(src,/reviewed-cross-source/);
 });
+
+
+test('dependency graph UI includes demo, node focus, and candidate findings summary',()=>{
+  const src=fs.readFileSync(new URL('./dependency-graph-ui.mjs',import.meta.url),'utf8');
+  assert.match(src,/Load synthetic dependency demo/);
+  assert.match(src,/dg-node-focus/);
+  assert.match(src,/Consulting findings summary/);
+  assert.match(src,/No structural review candidates/);
+});
