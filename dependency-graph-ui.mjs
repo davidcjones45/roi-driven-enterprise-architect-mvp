@@ -42,7 +42,12 @@ function injectStyles(){
     .depgraph-node rect{fill:#f7fafc;stroke:#45657a;stroke-width:1.3}
     .depgraph-node text{font:12px system-ui,sans-serif;fill:#173247}
     .depgraph-edge{stroke:#8a9daa;stroke-width:1.2;opacity:.75}
+    .depgraph-edge.shared-domain{stroke-width:2.3;stroke-dasharray:7 3}
     .depgraph-edge-label{font:10px system-ui,sans-serif;fill:#617484}
+    .depgraph-node.source-bpmn rect{stroke-dasharray:7 3}
+    .depgraph-node.source-microsoft-graph rect{stroke-dasharray:2 2}
+    .depgraph-node.source-mixed rect{stroke-width:2.4;stroke-dasharray:8 2 2 2}
+    .depgraph-provenance-badge{display:inline-block;border:1px solid #b9c8d2;border-radius:999px;padding:2px 7px;margin:2px 4px 2px 0;font-size:.78rem;background:#f8fbfc}
     .depgraph-table{width:100%;border-collapse:collapse}.depgraph-table th,.depgraph-table td{border:1px solid #d5dde4;padding:7px;text-align:left;vertical-align:top}
     .depgraph-table th{background:#eef3f6}
     .depgraph-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -121,9 +126,11 @@ function mount(){
     }catch(err){alert(`Microsoft Graph import rejected: ${err instanceof Error?err.message:String(err)}`);} finally{e.target.value='';}
   });
 
+  panel.querySelector('#dg-source-filter').addEventListener('change',()=>render(panel));
+
   panel.querySelector('#dg-export').addEventListener('click',()=>{
     const data=ensure(read()); const analysis=analyzeDependencyGraph(data,{minimumInbound:3,minimumDependencies:4});
-    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.3',...analysis};
+    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.4',...analysis};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a');
     a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.3.json'; a.click(); URL.revokeObjectURL(a.href);
   });
@@ -175,6 +182,19 @@ function html(){
     <label>Microsoft Graph org JSON<input id="dg-msgraph-input" type="file" accept=".json,application/json"></label>
     <button type="button" id="dg-export">Export analysis JSON</button>
     <button type="button" class="secondary" id="dg-reset">Clear graph enrichment</button>
+  </div>
+  <div class="card">
+    <span class="eyebrow">CROSS-SOURCE VIEW / V0.1</span>
+    <h3>Provenance-aware graph merge</h3>
+    <p class="quiet-note">BPMN, Microsoft Graph, modernization records, and manual enrichment remain distinguishable after they are combined. Source identity is evidence context, not proof of correctness or authority.</p>
+    <div class="depgraph-grid">
+      <label>Visualization source filter<select id="dg-source-filter"><option value="">All recorded sources</option></select></label>
+      <div id="dg-source-summary"></div>
+    </div>
+    <div class="two-column-grid">
+      <div><h4>Cross-source connections</h4><div id="dg-cross-source"></div></div>
+      <div><h4>Multi-source records</h4><div id="dg-multi-source"></div></div>
+    </div>
   </div>
   <details class="card"><summary><strong>Continuity Anchors & Essential Actions</strong></summary>
     <div class="two-column-grid">
@@ -242,9 +262,12 @@ function html(){
   </div>
   <div class="two-column-grid">
     <div class="card"><h3>Fragmentation candidates</h3><div id="dg-fragmentation"></div></div>
-    <div class="card"><h3>Graph quality / unresolved structure</h3><div id="dg-issues"></div></div>
+    <div class="card"><h3>Shared failure-domain candidates</h3><div id="dg-shared-failure"></div></div>
   </div>
-  <div class="card"><h3>Imported structure</h3><div id="dg-imports"></div></div>`;
+  <div class="two-column-grid">
+    <div class="card"><h3>Graph quality / unresolved structure</h3><div id="dg-issues"></div></div>
+    <div class="card"><h3>Imported structure</h3><div id="dg-imports"></div></div>
+  </div>`;
 }
 
 function render(panel){
@@ -253,6 +276,21 @@ function render(panel){
     ['Graph nodes',graph.nodes.length],['Graph edges',graph.edges.length],['Continuity Anchors',graph.continuityAnchors.length],['Essential Actions',graph.essentialActions.length],
     ['Concentration candidates',analysis.concentrationCandidates.length],['Constraining candidates',analysis.constrainingDependencyCandidates.length]
   ].map(([l,v])=>`<div class="depgraph-metric"><span>${esc(l)}</span><strong>${esc(v)}</strong></div>`).join('');
+
+  const sourceFilter=panel.querySelector('#dg-source-filter');
+  const priorSource=sourceFilter.value;
+  const sourceTypes=analysis.sourceSummary.map(x=>x.sourceType);
+  sourceFilter.innerHTML='<option value="">All recorded sources</option>'+sourceTypes.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  if(sourceTypes.includes(priorSource))sourceFilter.value=priorSource;
+  panel.querySelector('#dg-source-summary').innerHTML=analysis.sourceSummary.length
+    ? analysis.sourceSummary.map(x=>`<span class="depgraph-provenance-badge">${esc(x.sourceType)}: ${x.nodes} nodes / ${x.edges} edges</span>`).join('')
+    : '<span class="quiet-note">No source provenance recorded.</span>';
+  panel.querySelector('#dg-cross-source').innerHTML=analysis.crossSourceConnections.length
+    ? `<ul>${analysis.crossSourceConnections.slice(0,30).map(x=>`<li><strong>${esc(x.sourceId)}</strong> → <strong>${esc(x.targetId)}</strong><br><small>${esc(x.sourceSources.join(', '))} → ${esc(x.targetSources.join(', '))} · ${esc(x.dimension)}</small></li>`).join('')}</ul>`
+    : '<p class="quiet-note">No explicit cross-source edges recorded. Add a reviewed edge between imported structures when the relationship is supported by evidence.</p>';
+  panel.querySelector('#dg-multi-source').innerHTML=analysis.multiSourceNodes.length
+    ? `<ul>${analysis.multiSourceNodes.slice(0,30).map(x=>`<li><strong>${esc(x.node.label||x.node.id)}</strong> — ${esc(x.sources.join(', '))}</li>`).join('')}</ul>`
+    : '<p class="quiet-note">No node currently carries provenance from more than one source.</p>';
 
   const anchorOpts='<option value="">Select</option>'+graph.continuityAnchors.map(a=>`<option value="${esc(a.id)}">${esc(a.label)}</option>`).join('');
   panel.querySelector('#dg-action-anchor').innerHTML=anchorOpts;
@@ -265,10 +303,11 @@ function render(panel){
   panel.querySelector('#dg-concentration').innerHTML=analysis.concentrationCandidates.length?`<ul>${analysis.concentrationCandidates.map(x=>`<li><strong>${esc(x.node?.label||x.nodeId)}</strong> — ${x.inbound} inbound dependencies</li>`).join('')}</ul>`:'<p class="quiet-note">No concentration candidates at the current threshold (3 inbound dependencies).</p>';
   panel.querySelector('#dg-constraining').innerHTML=analysis.constrainingDependencyCandidates.length?`<ul>${analysis.constrainingDependencyCandidates.map(x=>`<li><strong>${esc(graph.nodes.find(n=>n.id===x.nodeId)?.label||x.nodeId)}</strong> — ${x.unmitigatedActionIds.length} essential action(s) without recorded fallback, buffer, or recovery.</li>`).join('')}</ul>`:'<p class="quiet-note">No candidate constraining dependencies found from recorded Essential Actions.</p>';
   panel.querySelector('#dg-fragmentation').innerHTML=analysis.fragmentationCandidates.length?`<ul>${analysis.fragmentationCandidates.map(x=>`<li><strong>${esc(x.action.label)}</strong> — ${x.action.dependencyNodeIds.length} recorded dependencies; status ${esc(x.status)}.</li>`).join('')}</ul>`:'<p class="quiet-note">No Essential Actions currently cross the fragmentation threshold (4 dependencies).</p>';
+  panel.querySelector('#dg-shared-failure').innerHTML=analysis.sharedFailureDomainCandidates.length?`<ul>${analysis.sharedFailureDomainCandidates.map(x=>`<li><strong>${esc(x.domain)}</strong> — ${x.edgeIds.length} dependency edges, ${x.nodeIds.length} nodes${x.essentialActionIds.length?`, ${x.essentialActionIds.length} Essential Action(s)`:''}.<br><small>${esc(x.dimensions.join(', '))}</small></li>`).join('')}</ul>`:'<p class="quiet-note">No shared failure-domain candidates recorded. Populate shared failure domains only when supported by evidence.</p>';
   panel.querySelector('#dg-issues').innerHTML=analysis.issues.length?`<ul>${analysis.issues.slice(0,40).map(x=>`<li>${esc(x.message)}</li>`).join('')}</ul>`:'<p>No unresolved graph-edge structure detected.</p>';
   renderSnapshotHistory(panel,data);
   panel.querySelector('#dg-imports').innerHTML=data.dependencyGraphImports.length?`<table class="depgraph-table"><thead><tr><th>Type</th><th>File</th><th>Imported</th><th>Unresolved</th></tr></thead><tbody>${data.dependencyGraphImports.map(x=>`<tr><td>${esc(x.type)}</td><td>${esc(x.fileName)}</td><td>${esc(x.importedAt)}</td><td>${esc(x.unresolved)}</td></tr>`).join('')}</tbody></table>`:'<p class="quiet-note">No BPMN or Microsoft Graph structure imported into the dependency graph yet.</p>';
-  renderSvg(panel.querySelector('#dg-svg'),graph);
+  renderSvg(panel.querySelector('#dg-svg'),graph,sourceFilter.value);
 }
 
 function renderSnapshotHistory(panel,data){
@@ -309,18 +348,38 @@ function renderSnapshotComparison(panel){
     </tbody></table>`;
 }
 
-function renderSvg(svg,graph){
-  const nodes=(graph.nodes||[]).slice(0,80); const edges=graph.edges||[]; svg.innerHTML='';
-  if(!nodes.length){svg.innerHTML='<text x="30" y="50" fill="#617484">No graph nodes recorded.</text>';return;}
-  const byId=new Map(nodes.map(n=>[n.id,n]));
+function renderSvg(svg,graph,sourceFilter=''){
+  const provenanceSources=n=>[...new Set((n.provenance||[]).map(p=>p.sourceType).filter(Boolean))];
+  const sourceMatch=n=>!sourceFilter || provenanceSources(n).includes(sourceFilter) || n.sourceSystem===sourceFilter;
+  const nodes=(graph.nodes||[]).filter(sourceMatch).slice(0,80);
+  const visibleIds=new Set(nodes.map(n=>n.id));
+  const edges=(graph.edges||[]).filter(e=>visibleIds.has(e.sourceId)&&visibleIds.has(e.targetId));
+  svg.innerHTML='';
+  if(!nodes.length){svg.innerHTML='<text x="30" y="50" fill="#617484">No graph nodes match the current source filter.</text>';return;}
   const types=[...new Set(nodes.map(n=>n.nodeType))]; const rows=Math.max(1,types.length); const pos=new Map();
   types.forEach((type,row)=>{
     const group=nodes.filter(n=>n.nodeType===type); const y=55+row*(410/Math.max(1,rows-1||1));
     group.forEach((n,i)=>{const x=80+i*(920/Math.max(1,group.length-1||1));pos.set(n.id,{x,y});});
   });
   const ns='http://www.w3.org/2000/svg';
-  for(const e of edges){const a=pos.get(e.sourceId),b=pos.get(e.targetId);if(!a||!b)continue;const line=document.createElementNS(ns,'line');line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);line.setAttribute('class','depgraph-edge');svg.append(line);}
-  for(const n of nodes){const p=pos.get(n.id);const g=document.createElementNS(ns,'g');g.setAttribute('class','depgraph-node');const rect=document.createElementNS(ns,'rect');rect.setAttribute('x',p.x-62);rect.setAttribute('y',p.y-20);rect.setAttribute('width','124');rect.setAttribute('height','40');rect.setAttribute('rx','7');const text=document.createElementNS(ns,'text');text.setAttribute('x',p.x);text.setAttribute('y',p.y-2);text.setAttribute('text-anchor','middle');const label=(n.label||n.id).length>18?(n.label||n.id).slice(0,17)+'…':(n.label||n.id);text.textContent=label;const sub=document.createElementNS(ns,'text');sub.setAttribute('x',p.x);sub.setAttribute('y',p.y+12);sub.setAttribute('text-anchor','middle');sub.setAttribute('font-size','9');sub.textContent=n.nodeType;g.append(rect,text,sub);svg.append(g);}
+  for(const e of edges){
+    const a=pos.get(e.sourceId),b=pos.get(e.targetId);if(!a||!b)continue;
+    const line=document.createElementNS(ns,'line');line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
+    line.setAttribute('class',`depgraph-edge${e.sharedFailureDomain?' shared-domain':''}`);
+    if(e.sharedFailureDomain){const title=document.createElementNS(ns,'title');title.textContent=`Shared failure domain: ${e.sharedFailureDomain}`;line.append(title);}
+    svg.append(line);
+  }
+  for(const n of nodes){
+    const p=pos.get(n.id);const g=document.createElementNS(ns,'g');
+    const sources=provenanceSources(n); const sourceClass=(sources.length>1?'mixed':(sources[0]||n.sourceSystem||'unknown')).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    g.setAttribute('class',`depgraph-node source-${sourceClass}`);
+    const rect=document.createElementNS(ns,'rect');rect.setAttribute('x',p.x-68);rect.setAttribute('y',p.y-25);rect.setAttribute('width','136');rect.setAttribute('height','50');rect.setAttribute('rx','7');
+    const text=document.createElementNS(ns,'text');text.setAttribute('x',p.x);text.setAttribute('y',p.y-7);text.setAttribute('text-anchor','middle');const label=(n.label||n.id).length>18?(n.label||n.id).slice(0,17)+'…':(n.label||n.id);text.textContent=label;
+    const sub=document.createElementNS(ns,'text');sub.setAttribute('x',p.x);sub.setAttribute('y',p.y+6);sub.setAttribute('text-anchor','middle');sub.setAttribute('font-size','9');sub.textContent=n.nodeType;
+    const prov=document.createElementNS(ns,'text');prov.setAttribute('x',p.x);prov.setAttribute('y',p.y+18);prov.setAttribute('text-anchor','middle');prov.setAttribute('font-size','8');const provText=(sources.length?sources:[n.sourceSystem||'Unknown']).join('+');prov.textContent=provText.length>22?provText.slice(0,21)+'…':provText;
+    const title=document.createElementNS(ns,'title');title.textContent=`${n.label||n.id}\nType: ${n.nodeType}\nSource: ${(sources.length?sources:[n.sourceSystem||'Unknown']).join(', ')}\nReference: ${n.sourceReference||'Not recorded'}`;
+    g.append(rect,text,sub,prov,title);svg.append(g);
+  }
 }
 
 let attempts=0;function wait(){if(mount())return;if(attempts++<80)setTimeout(wait,100);}

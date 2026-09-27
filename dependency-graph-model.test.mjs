@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildDependencyGraph, analyzeDependencyGraph, dependencyAccumulationDelta,
-  normalizeContinuityAnchor, normalizeEssentialAction
+  normalizeContinuityAnchor, normalizeEssentialAction, graphSourceSummary,
+  crossSourceConnections, sharedFailureDomainCandidates, multiSourceNodes
 } from './dependency-graph-model.mjs';
 import { bpmnImportToDependencyGraph } from './bpmn-dependency-adapter.mjs';
 import { microsoftGraphOrgToDependencyGraph } from './ms-graph-org-adapter.mjs';
@@ -109,4 +110,65 @@ test('comparison reports new and relieved candidate findings as reassessment sig
   assert.deepEqual(c.newlyConcentratedNodeIds,['N1']);
   assert.deepEqual(c.newlyConstrainingNodeIds,['N1']);
   assert.match(c.interpretation.join(' '),/human validation/i);
+});
+
+
+test('preserves provenance when graph records from more than one source share an ID',()=>{
+  const graph=buildDependencyGraph({
+    applications:[{id:'APP-A',name:'Claims'}],
+    graphNodes:[{id:'APP-A',label:'Claims',nodeType:'application',sourceSystem:'Manual',sourceReference:'Interview-1'}]
+  });
+  const node=graph.nodes.find(x=>x.id==='APP-A');
+  assert.ok(node);
+  assert.deepEqual(new Set(node.provenance.map(x=>x.sourceType)),new Set(['Modernization','Manual']));
+  assert.equal(multiSourceNodes(graph)[0].node.id,'APP-A');
+});
+
+test('summarizes source provenance across a unified graph',()=>{
+  const graph=buildDependencyGraph({
+    applications:[{id:'APP-A',name:'A'}],
+    graphNodes:[{id:'P1',label:'Person',nodeType:'person',sourceSystem:'Microsoft Graph'}],
+    graphEdges:[{id:'E1',sourceId:'P1',targetId:'APP-A',edgeType:'owns',dimension:'organizational',sourceSystem:'Manual'}]
+  });
+  const summary=graphSourceSummary(graph);
+  assert.ok(summary.some(x=>x.sourceType==='Modernization'&&x.nodes===1));
+  assert.ok(summary.some(x=>x.sourceType==='Microsoft Graph'&&x.nodes===1));
+  assert.ok(summary.some(x=>x.sourceType==='Manual'&&x.edges===1));
+});
+
+test('identifies explicit cross-source connections without inferring them',()=>{
+  const graph=buildDependencyGraph({
+    graphNodes:[
+      {id:'BPMN-T1',label:'Review',nodeType:'activity',sourceSystem:'BPMN'},
+      {id:'MSUSER-1',label:'Analyst',nodeType:'person',sourceSystem:'Microsoft Graph'},
+    ],
+    graphEdges:[{id:'E1',sourceId:'MSUSER-1',targetId:'BPMN-T1',edgeType:'performs',dimension:'human',sourceSystem:'Manual'}]
+  });
+  const rows=crossSourceConnections(graph);
+  assert.equal(rows.length,1);
+  assert.deepEqual(rows[0].sourceSources,['Microsoft Graph']);
+  assert.deepEqual(rows[0].targetSources,['BPMN']);
+});
+
+test('identifies recorded shared failure domains affecting multiple dependencies',()=>{
+  const graph=buildDependencyGraph({
+    graphNodes:[
+      {id:'A',label:'App A',nodeType:'application'},
+      {id:'B',label:'App B',nodeType:'application'},
+      {id:'IDP',label:'Identity provider',nodeType:'external-service'},
+    ],
+    graphEdges:[
+      {id:'E1',sourceId:'A',targetId:'IDP',edgeType:'depends-on',dimension:'authority',sharedFailureDomain:'Enterprise identity'},
+      {id:'E2',sourceId:'B',targetId:'IDP',edgeType:'depends-on',dimension:'authority',sharedFailureDomain:'Enterprise identity'},
+    ],
+    essentialActions:[
+      {id:'EA1',label:'Serve A',dependencyNodeIds:['IDP']},
+      {id:'EA2',label:'Serve B',dependencyNodeIds:['IDP']},
+    ]
+  });
+  const rows=sharedFailureDomainCandidates(graph);
+  assert.equal(rows.length,1);
+  assert.equal(rows[0].domain,'Enterprise identity');
+  assert.equal(rows[0].edgeIds.length,2);
+  assert.equal(rows[0].essentialActionIds.length,2);
 });

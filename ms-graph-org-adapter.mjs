@@ -19,6 +19,7 @@ export function microsoftGraphOrgToDependencyGraph(input={}) {
       nodeType:'person',
       owner:text(user.managerDisplayName),
       sourceSystem:'Microsoft Graph',
+      provenance:[{sourceType:'Microsoft Graph',sourceId:id,sourceReference:id,observedAt:text(input.retrievedAt)}],
       sourceReference:id,
       tags:[text(user.jobTitle),text(user.department),text(user.officeLocation),text(user.companyName)].filter(Boolean),
       attributes:{
@@ -45,6 +46,8 @@ export function microsoftGraphOrgToDependencyGraph(input={}) {
       edgeType:'reports-to',
       dimension:'organizational',
       resolutionState:'Resolved',
+      sourceSystem:'Microsoft Graph',
+      provenance:[{sourceType:'Microsoft Graph',sourceId:`${employeeId}->${managerId}`,sourceReference:'Microsoft Graph manager/directReports relationship',observedAt:text(input.retrievedAt)}],
       sourceReference:'Microsoft Graph manager/directReports relationship',
     }));
   }
