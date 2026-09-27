@@ -28,6 +28,7 @@ export function bpmnImportToDependencyGraph(model={}) {
       nodeType:NODE_TYPE_BY_BPMN[e.bpmnType],
       description:e.bpmnType,
       sourceSystem:'BPMN',
+      provenance:[{sourceType:'BPMN',sourceId:e.sourceId,sourceReference:`${model.source?.sha256||'unknown'}#${e.sourceId}`}],
       sourceReference:`${model.source?.sha256||'unknown'}#${e.sourceId}`,
       tags:[e.bpmnType],
     }));
@@ -46,6 +47,8 @@ export function bpmnImportToDependencyGraph(model={}) {
       sourceId,targetId,
       edgeType:semantics[0], dimension:semantics[1],
       resolutionState:'Resolved',
+      sourceSystem:'BPMN',
+      provenance:[{sourceType:'BPMN',sourceId:`${rel.kind}:${rel.sourceId}->${rel.targetId}`,sourceReference:`${model.source?.sha256||'unknown'}#${rel.sourceId}->${rel.targetId}`}],
       sourceReference:`${model.source?.sha256||'unknown'}#${rel.sourceId}->${rel.targetId}`,
     }));
   }

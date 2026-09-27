@@ -27,6 +27,23 @@ const finiteOrNull = value => {
   const n = Number(value); return Number.isFinite(n) ? n : null;
 };
 
+const provenanceKey = p => `${p.sourceType||''}|${p.sourceId||''}|${p.sourceReference||''}|${p.observedAt||''}`;
+function normalizeProvenance(raw={}, fallback={}) {
+  const entries=Array.isArray(raw.provenance)?raw.provenance:[];
+  const derived={
+    sourceType: raw.sourceSystem || fallback.sourceType || 'Manual',
+    sourceId: raw.sourceId || fallback.sourceId || '',
+    sourceReference: raw.sourceReference || fallback.sourceReference || '',
+    observedAt: raw.observedAt || fallback.observedAt || '',
+  };
+  const seed = entries.length && String(derived.sourceType).trim()==='Mixed' ? entries : [...entries,derived];
+  const normalized=seed
+    .map(x=>({sourceType:String(x?.sourceType||'Unknown').trim()||'Unknown',sourceId:String(x?.sourceId||'').trim(),sourceReference:String(x?.sourceReference||'').trim(),observedAt:String(x?.observedAt||'').trim()}));
+  const map=new Map(); normalized.forEach(x=>map.set(provenanceKey(x),x));
+  return [...map.values()];
+}
+function mergeProvenance(a=[],b=[]){ const map=new Map(); [...a,...b].forEach(x=>map.set(provenanceKey(x),x)); return [...map.values()]; }
+
 export function normalizeGraphNode(raw={}) {
   const nodeType = GRAPH_NODE_TYPES.includes(raw.nodeType) ? raw.nodeType : 'unknown';
   const label = String(raw.label || raw.name || raw.id || 'Unlabeled node').trim();
@@ -37,8 +54,9 @@ export function normalizeGraphNode(raw={}) {
     nodeType,
     description: raw.description || '',
     owner: raw.owner || '',
-    sourceSystem: raw.sourceSystem || '',
+    sourceSystem: raw.sourceSystem || 'Manual',
     sourceReference: raw.sourceReference || '',
+    provenance: normalizeProvenance(raw,{sourceType:raw.sourceSystem||'Manual',sourceReference:raw.sourceReference||''}),
     evidenceRefs: unique(list(raw.evidenceRefs)),
     tags: unique(list(raw.tags)),
     active: raw.active !== false,
@@ -64,7 +82,9 @@ export function normalizeGraphEdge(raw={}) {
       : (sourceId && targetId ? 'Resolved' : 'Unresolved'),
     toleranceMinutes: finiteOrNull(raw.toleranceMinutes),
     failureImpact: raw.failureImpact || '',
+    sourceSystem: raw.sourceSystem || 'Manual',
     sourceReference: raw.sourceReference || '',
+    provenance: normalizeProvenance(raw,{sourceType:raw.sourceSystem||'Manual',sourceReference:raw.sourceReference||''}),
     evidenceRefs: unique(list(raw.evidenceRefs)),
     sharedFailureDomain: raw.sharedFailureDomain || '',
     notes: raw.notes || '',
@@ -110,7 +130,8 @@ function modernizationNode(app={}) {
     label: app.name || app.id,
     nodeType: 'application',
     owner: app.businessOwner || app.technicalOwner || '',
-    sourceSystem: 'ROI-EA modernization workspace',
+    sourceSystem: 'Modernization',
+    provenance:[{sourceType:'Modernization',sourceId:app.id||'',sourceReference:'ROI-EA modernization workspace'}],
     evidenceRefs: app.evidenceRefs || [],
   });
 }
@@ -133,26 +154,60 @@ function modernizationEdge(dep={}) {
     confidence: dep.confidence,
     resolutionState: dep.resolutionState,
     failureImpact: dep.failureImpact || '',
+    sourceSystem:'Modernization',
     sourceReference: dep.sourceReference || '',
+    provenance:[{sourceType:'Modernization',sourceId:dep.id||'',sourceReference:dep.sourceReference||'ROI-EA modernization workspace'}],
     evidenceRefs: dep.evidenceRefs || [],
+  });
+}
+
+export function mergeGraphNodeRecords(existingRaw, incomingRaw) {
+  const existing=normalizeGraphNode(existingRaw||{}), incoming=normalizeGraphNode(incomingRaw||{});
+  if(!existingRaw) return incoming;
+  return normalizeGraphNode({
+    ...existing,
+    ...incoming,
+    id:existing.id||incoming.id,
+    label:incoming.label||existing.label,
+    nodeType:existing.nodeType!=='unknown'?existing.nodeType:incoming.nodeType,
+    description:existing.description||incoming.description,
+    owner:existing.owner||incoming.owner,
+    sourceSystem:existing.sourceSystem===incoming.sourceSystem?existing.sourceSystem:'Mixed',
+    sourceReference:existing.sourceReference||incoming.sourceReference,
+    provenance:mergeProvenance(existing.provenance,incoming.provenance),
+    evidenceRefs:unique([...existing.evidenceRefs,...incoming.evidenceRefs]),
+    tags:unique([...existing.tags,...incoming.tags]),
+  });
+}
+
+export function mergeGraphEdgeRecords(existingRaw, incomingRaw) {
+  const existing=normalizeGraphEdge(existingRaw||{}), incoming=normalizeGraphEdge(incomingRaw||{});
+  if(!existingRaw) return incoming;
+  return normalizeGraphEdge({
+    ...existing,
+    ...incoming,
+    id:existing.id||incoming.id,
+    sourceId:existing.sourceId||incoming.sourceId,
+    targetId:existing.targetId||incoming.targetId,
+    edgeType:existing.edgeType||incoming.edgeType,
+    dimension:existing.dimension!=='unknown'?existing.dimension:incoming.dimension,
+    sourceSystem:existing.sourceSystem===incoming.sourceSystem?existing.sourceSystem:'Mixed',
+    sourceReference:existing.sourceReference||incoming.sourceReference,
+    provenance:mergeProvenance(existing.provenance,incoming.provenance),
+    evidenceRefs:unique([...existing.evidenceRefs,...incoming.evidenceRefs]),
+    sharedFailureDomain:existing.sharedFailureDomain||incoming.sharedFailureDomain,
   });
 }
 
 export function buildDependencyGraph(workspace={}) {
   const nodes = new Map();
   const edges = new Map();
-  (workspace.applications || []).forEach(app => {
-    const node = modernizationNode(app); nodes.set(node.id,node);
-  });
-  (workspace.graphNodes || []).forEach(raw => {
-    const node = normalizeGraphNode(raw); nodes.set(node.id,node);
-  });
-  (workspace.dependencies || []).forEach(dep => {
-    const edge = modernizationEdge(dep); edges.set(edge.id,edge);
-  });
-  (workspace.graphEdges || []).forEach(raw => {
-    const edge = normalizeGraphEdge(raw); edges.set(edge.id,edge);
-  });
+  const addNode=raw=>{ const node=normalizeGraphNode(raw); nodes.set(node.id,nodes.has(node.id)?mergeGraphNodeRecords(nodes.get(node.id),node):node); };
+  const addEdge=raw=>{ const edge=normalizeGraphEdge(raw); edges.set(edge.id,edges.has(edge.id)?mergeGraphEdgeRecords(edges.get(edge.id),edge):edge); };
+  (workspace.applications || []).forEach(app => addNode(modernizationNode(app)));
+  (workspace.graphNodes || []).forEach(addNode);
+  (workspace.dependencies || []).forEach(dep => addEdge(modernizationEdge(dep)));
+  (workspace.graphEdges || []).forEach(addEdge);
   return {
     nodes:[...nodes.values()],
     edges:[...edges.values()],
@@ -266,12 +321,73 @@ export function dependencyAccumulationDelta(priorGraph={}, currentGraph={}) {
   };
 }
 
+export function graphSourceSummary(graph={}) {
+  const counts=new Map();
+  const add=(source,kind)=>{
+    const key=String(source||'Unknown').trim()||'Unknown';
+    if(!counts.has(key))counts.set(key,{sourceType:key,nodes:0,edges:0});
+    counts.get(key)[kind]+=1;
+  };
+  (graph.nodes||[]).forEach(n=>{
+    const sources=unique((n.provenance||[]).map(p=>p.sourceType).filter(Boolean));
+    (sources.length?sources:[n.sourceSystem||'Unknown']).forEach(x=>add(x,'nodes'));
+  });
+  (graph.edges||[]).forEach(e=>{
+    const sources=unique((e.provenance||[]).map(p=>p.sourceType).filter(Boolean));
+    (sources.length?sources:[e.sourceSystem||'Unknown']).forEach(x=>add(x,'edges'));
+  });
+  return [...counts.values()].sort((a,b)=>a.sourceType.localeCompare(b.sourceType));
+}
+
+export function crossSourceConnections(graph={}) {
+  const nodes=new Map((graph.nodes||[]).map(n=>[n.id,n]));
+  const primary=n=>unique((n?.provenance||[]).map(p=>p.sourceType).filter(Boolean));
+  const results=[];
+  for(const edge of graph.edges||[]){
+    const sourceSources=primary(nodes.get(edge.sourceId));
+    const targetSources=primary(nodes.get(edge.targetId));
+    const sourceSet=new Set(sourceSources); const overlap=targetSources.some(x=>sourceSet.has(x));
+    if(sourceSources.length && targetSources.length && !overlap){
+      results.push({edgeId:edge.id,sourceId:edge.sourceId,targetId:edge.targetId,sourceSources,targetSources,dimension:edge.dimension,edgeType:edge.edgeType});
+    }
+  }
+  return results;
+}
+
+export function sharedFailureDomainCandidates(graph={}) {
+  const groups=new Map();
+  for(const raw of graph.edges||[]){
+    const edge=normalizeGraphEdge(raw); const domain=String(edge.sharedFailureDomain||'').trim();
+    if(!domain)continue;
+    if(!groups.has(domain))groups.set(domain,{domain,edgeIds:[],nodeIds:new Set(),dimensions:new Set()});
+    const g=groups.get(domain); g.edgeIds.push(edge.id); g.nodeIds.add(edge.sourceId); g.nodeIds.add(edge.targetId); g.dimensions.add(edge.dimension);
+  }
+  const actionByNode=new Map();
+  for(const action of graph.essentialActions||[]){
+    for(const nodeId of action.dependencyNodeIds||[]){ if(!actionByNode.has(nodeId))actionByNode.set(nodeId,[]); actionByNode.get(nodeId).push(action.id); }
+  }
+  return [...groups.values()].map(g=>{
+    const essentialActionIds=unique([...g.nodeIds].flatMap(id=>actionByNode.get(id)||[]));
+    return {domain:g.domain,edgeIds:g.edgeIds.sort(),nodeIds:[...g.nodeIds].filter(Boolean).sort(),dimensions:[...g.dimensions].sort(),essentialActionIds,status:'Candidate shared failure domain — human validation required'};
+  }).filter(g=>g.edgeIds.length>=2 || g.essentialActionIds.length>=2)
+    .sort((a,b)=>b.essentialActionIds.length-a.essentialActionIds.length || b.edgeIds.length-a.edgeIds.length || a.domain.localeCompare(b.domain));
+}
+
+export function multiSourceNodes(graph={}) {
+  return (graph.nodes||[]).map(n=>({node:n,sources:unique((n.provenance||[]).map(p=>p.sourceType).filter(Boolean))}))
+    .filter(x=>x.sources.length>1).sort((a,b)=>b.sources.length-a.sources.length || a.node.id.localeCompare(b.node.id));
+}
+
 export function analyzeDependencyGraph(workspace={}, options={}) {
   const graph=buildDependencyGraph(workspace);
   return {
     graph,
     issues:graphIssues(graph),
     degrees:dependencyDegree(graph),
+    sourceSummary:graphSourceSummary(graph),
+    crossSourceConnections:crossSourceConnections(graph),
+    multiSourceNodes:multiSourceNodes(graph),
+    sharedFailureDomainCandidates:sharedFailureDomainCandidates(graph),
     concentrationCandidates:concentrationCandidates(graph,options),
     fragmentationCandidates:fragmentationCandidates(graph,options),
     constrainingDependencyCandidates:constrainingDependencyCandidates(graph),
@@ -294,6 +410,10 @@ function snapshotAnalysis(graph, options={}) {
   return {
     issues:graphIssues(graph),
     degrees:dependencyDegree(graph),
+    sourceSummary:graphSourceSummary(graph),
+    crossSourceConnections:crossSourceConnections(graph),
+    multiSourceNodes:multiSourceNodes(graph),
+    sharedFailureDomainCandidates:sharedFailureDomainCandidates(graph),
     concentrationCandidates:concentrationCandidates(graph,options),
     fragmentationCandidates:fragmentationCandidates(graph,options),
     constrainingDependencyCandidates:constrainingDependencyCandidates(graph),

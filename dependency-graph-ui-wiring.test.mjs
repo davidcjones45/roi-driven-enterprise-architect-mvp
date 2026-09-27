@@ -19,3 +19,13 @@ test('dependency graph UI exposes persisted snapshots and change comparison',()=
   assert.match(src,/Compare snapshots/);
   assert.match(src,/Reassessment signal only/);
 });
+
+
+test('dependency graph UI exposes provenance-aware merge and shared failure-domain analysis',()=>{
+  const src=fs.readFileSync(new URL('./dependency-graph-ui.mjs',import.meta.url),'utf8');
+  assert.match(src,/Provenance-aware graph merge/);
+  assert.match(src,/dg-source-filter/);
+  assert.match(src,/Cross-source connections/);
+  assert.match(src,/Shared failure-domain candidates/);
+  assert.match(src,/shared-domain/);
+});
