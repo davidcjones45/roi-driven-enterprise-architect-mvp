@@ -28,6 +28,13 @@ const finiteOrNull = value => {
   const n = Number(value); return Number.isFinite(n) ? n : null;
 };
 
+const clamp01 = value => {
+  if(value === '' || value === null || value === undefined) return null;
+  const n = Number(value);
+  if(!Number.isFinite(n)) return null;
+  return Math.max(0,Math.min(1,n>1?n/100:n));
+};
+
 const provenanceKey = p => `${p.sourceType||''}|${p.sourceId||''}|${p.sourceReference||''}|${p.observedAt||''}`;
 function normalizeProvenance(raw={}, fallback={}) {
   const entries=Array.isArray(raw.provenance)?raw.provenance:[];
@@ -426,6 +433,205 @@ export function multiSourceNodes(graph={}) {
 }
 
 
+
+
+export const DEPENDENCY_MITIGATION_TYPES = ['Buffer','Redundancy','Substitution','Fallback','Coordination','Recovery'];
+export const DEPENDENCY_MITIGATION_STATUSES = ['Candidate','Validated','Implemented','Rejected','Deferred'];
+
+export function normalizeDependencyMitigation(raw={}) {
+  const type=DEPENDENCY_MITIGATION_TYPES.includes(raw.type) ? raw.type : 'Fallback';
+  const status=DEPENDENCY_MITIGATION_STATUSES.includes(raw.status) ? raw.status : 'Candidate';
+  const targetType=['Essential Action','Dependency Node'].includes(raw.targetType) ? raw.targetType : 'Essential Action';
+  const label=String(raw.label||raw.description||`${type} mitigation`).trim();
+  return {
+    ...raw,
+    id:raw.id||stableId(`${targetType}-${raw.targetId||'unknown'}-${type}-${label}`,'DGM'),
+    label,
+    targetType,
+    targetId:String(raw.targetId||'').trim(),
+    type,
+    status,
+    owner:String(raw.owner||'').trim(),
+    description:String(raw.description||'').trim(),
+    expectedEffect:String(raw.expectedEffect||'').trim(),
+    replacementNodeId:String(raw.replacementNodeId||'').trim(),
+    evidenceRefs:unique(list(raw.evidenceRefs)),
+    sourceReference:String(raw.sourceReference||'').trim(),
+    confidence:clamp01(raw.confidence),
+    estimatedCost:finiteOrNull(raw.estimatedCost),
+    estimatedEffort:String(raw.estimatedEffort||'').trim(),
+    linkedFindingCandidateId:String(raw.linkedFindingCandidateId||'').trim(),
+    validatedBy:String(raw.validatedBy||'').trim(),
+    validatedAt:String(raw.validatedAt||'').trim(),
+    notes:String(raw.notes||'').trim(),
+  };
+}
+
+export function mitigationIssues(raw={}, graph={}) {
+  const m=normalizeDependencyMitigation(raw);
+  const issues=[];
+  if(!m.targetId)issues.push('Mitigation target is required.');
+  if(!m.description)issues.push('Mitigation description is required.');
+  if(!m.owner)issues.push('Mitigation owner is required.');
+  if(!m.evidenceRefs.length && !m.sourceReference)issues.push('Mitigation has no evidence or source reference.');
+  if(['Fallback','Redundancy','Substitution'].includes(m.type) && !m.replacementNodeId){
+    issues.push(`${m.type} mitigation requires a replacement/fallback node.`);
+  }
+  if(m.targetType==='Essential Action' && !(graph.essentialActions||[]).some(a=>a.id===m.targetId)){
+    issues.push(`Essential Action ${m.targetId||'(missing)'} is not in the graph.`);
+  }
+  if(m.targetType==='Dependency Node' && !(graph.nodes||[]).some(n=>n.id===m.targetId)){
+    issues.push(`Dependency node ${m.targetId||'(missing)'} is not in the graph.`);
+  }
+  if(m.replacementNodeId && !(graph.nodes||[]).some(n=>n.id===m.replacementNodeId)){
+    issues.push(`Replacement/fallback node ${m.replacementNodeId} is not in the graph.`);
+  }
+  return {mitigation:m,issues,valid:issues.length===0};
+}
+
+function applyMitigationToWorkspace(workspace={}, mitigationRaw={}) {
+  const next=structuredClone(workspace);
+  next.essentialActions=(next.essentialActions||[]).map(normalizeEssentialAction);
+  next.graphNodes=(next.graphNodes||[]).map(normalizeGraphNode);
+  next.graphEdges=(next.graphEdges||[]).map(normalizeGraphEdge);
+  const m=normalizeDependencyMitigation(mitigationRaw);
+
+  if(m.targetType==='Essential Action'){
+    const action=next.essentialActions.find(a=>a.id===m.targetId);
+    if(action){
+      if(m.type==='Buffer') action.bufferDescription=m.description;
+      if(m.type==='Recovery') action.recoveryDescription=m.description;
+      if(['Fallback','Redundancy','Substitution'].includes(m.type) && m.replacementNodeId){
+        action.fallbackNodeIds=unique([...(action.fallbackNodeIds||[]),m.replacementNodeId]);
+      }
+      if(m.type==='Coordination'){
+        action.coordinationMitigation=m.description;
+      }
+    }
+  } else if(m.targetType==='Dependency Node'){
+    for(const action of next.essentialActions){
+      if(!(action.dependencyNodeIds||[]).includes(m.targetId))continue;
+      if(['Fallback','Redundancy','Substitution'].includes(m.type) && m.replacementNodeId){
+        action.fallbackNodeIds=unique([...(action.fallbackNodeIds||[]),m.replacementNodeId]);
+      }
+      if(m.type==='Buffer') action.bufferDescription=action.bufferDescription||m.description;
+      if(m.type==='Recovery') action.recoveryDescription=action.recoveryDescription||m.description;
+      if(m.type==='Coordination') action.coordinationMitigation=m.description;
+    }
+  }
+  return next;
+}
+
+export function previewDependencyMitigation(workspace={}, mitigationRaw={}, options={}) {
+  const baseline=analyzeDependencyGraph(workspace,options);
+  const checked=mitigationIssues(mitigationRaw,baseline.graph);
+  if(!checked.valid) return {valid:false,mitigation:checked.mitigation,issues:checked.issues,baseline,nullScenario:null};
+  const scenarioWorkspace=applyMitigationToWorkspace(workspace,checked.mitigation);
+  const scenario=analyzeDependencyGraph(scenarioWorkspace,options);
+  const baseConstraint=new Set(baseline.constrainingDependencyCandidates.map(x=>x.nodeId));
+  const scenarioConstraint=new Set(scenario.constrainingDependencyCandidates.map(x=>x.nodeId));
+  return {
+    valid:true,
+    mitigation:checked.mitigation,
+    issues:[],
+    baseline,
+    scenario,
+    structuralEffect:{
+      constrainingCandidatesBefore:baseConstraint.size,
+      constrainingCandidatesAfter:scenarioConstraint.size,
+      relievedCandidateNodeIds:[...baseConstraint].filter(x=>!scenarioConstraint.has(x)).sort(),
+      newCandidateNodeIds:[...scenarioConstraint].filter(x=>!baseConstraint.has(x)).sort(),
+      interpretation:'Structural scenario only. A modeled reduction in candidate exposure does not establish implemented control effectiveness or reduced real-world risk.',
+    }
+  };
+}
+
+export function applyValidatedDependencyMitigation(workspace={}, mitigationRaw={}) {
+  const graph=buildDependencyGraph(workspace);
+  const checked=mitigationIssues(mitigationRaw,graph);
+  if(!checked.valid) throw new TypeError(checked.issues.join(' '));
+  if(!['Validated','Implemented'].includes(checked.mitigation.status)){
+    throw new TypeError('Only Validated or Implemented mitigations can be applied to the working graph.');
+  }
+  if(!checked.mitigation.validatedBy || !checked.mitigation.validatedAt){
+    throw new TypeError('Validated by and validated at are required before applying a mitigation.');
+  }
+  const next=applyMitigationToWorkspace(workspace,checked.mitigation);
+  next.dependencyMitigations=[...(workspace.dependencyMitigations||[]).filter(x=>x.id!==checked.mitigation.id),checked.mitigation];
+  return next;
+}
+
+export const DEPENDENCY_FINDING_DISPOSITIONS = ['Pending review','Accept','Revise','Reject','Defer'];
+
+export function dependencyFindingCandidateId(finding={}) {
+  return stableId(`${finding.type||'candidate'}-${finding.subjectId||'unknown'}`,'DGF');
+}
+
+export function normalizeDependencyFindingReview(raw={}) {
+  const disposition=DEPENDENCY_FINDING_DISPOSITIONS.includes(raw.disposition) ? raw.disposition : 'Pending review';
+  return {
+    id: raw.id || dependencyFindingCandidateId(raw),
+    candidateId: raw.candidateId || raw.id || '',
+    disposition,
+    reviewer: String(raw.reviewer||'').trim(),
+    reviewedAt: String(raw.reviewedAt||'').trim(),
+    note: String(raw.note||'').trim(),
+    revisedStatement: String(raw.revisedStatement||'').trim(),
+    owner: String(raw.owner||'').trim(),
+    requiredAction: String(raw.requiredAction||'').trim(),
+    decisionImpact: ['Informational','Material','Decision-blocking'].includes(raw.decisionImpact) ? raw.decisionImpact : 'Material',
+    severity: ['Observation','Low','Moderate','High','Decision-critical'].includes(raw.severity) ? raw.severity : 'Moderate',
+  };
+}
+
+export function upsertDependencyFindingReview(reviews=[], candidate={}, rawReview={}) {
+  const candidateId=dependencyFindingCandidateId(candidate);
+  const review=normalizeDependencyFindingReview({
+    ...rawReview,
+    id:rawReview.id||candidateId,
+    candidateId,
+  });
+  const next=(reviews||[]).filter(item=>(item.candidateId||item.id)!==candidateId);
+  next.push(review);
+  return next.map(normalizeDependencyFindingReview)
+    .sort((a,b)=>(a.candidateId||a.id).localeCompare(b.candidateId||b.id));
+}
+
+export function dependencyFindingToConsultingRecord(candidate={}, reviewRaw={}) {
+  const review=normalizeDependencyFindingReview(reviewRaw);
+  if(!['Accept','Revise'].includes(review.disposition)) {
+    throw new TypeError('Only accepted or revised dependency finding candidates can be promoted.');
+  }
+  if(!review.reviewer || !review.owner || !review.requiredAction) {
+    throw new TypeError('Reviewer, owner, and required action are required before promotion.');
+  }
+  const statement=review.disposition==='Revise' && review.revisedStatement
+    ? review.revisedStatement
+    : candidate.statement || '';
+  return {
+    finding_id:'',
+    title:`Dependency review: ${candidate.subjectId||'Unspecified subject'}`,
+    domain:'Architecture',
+    finding_statement:statement,
+    severity:review.severity,
+    status:'Open',
+    supporting_evidence:[
+      `Dependency candidate: ${dependencyFindingCandidateId(candidate)}`,
+      `Candidate type: ${candidate.type||'Unknown'}`,
+      `Subject: ${candidate.subjectId||'Unknown'}`,
+      candidate.limitation ? `Original limitation: ${candidate.limitation}` : '',
+      review.note ? `Reviewer note: ${review.note}` : '',
+    ].filter(Boolean).join(' | '),
+    contradictory_evidence:'',
+    decision_impact:review.decisionImpact,
+    owner:review.owner,
+    required_action:review.requiredAction,
+    due_date:'',
+    resolution:'',
+    recorded_at:review.reviewedAt||new Date().toISOString(),
+  };
+}
+
 export function dependencyFindingsSummary(graph={}, analysis={}) {
   const concentration = analysis.concentrationCandidates || concentrationCandidates(graph);
   const fragmentation = analysis.fragmentationCandidates || fragmentationCandidates(graph);
@@ -469,7 +675,8 @@ export function dependencyFindingsSummary(graph={}, analysis={}) {
       limitation:'The recorded domain is evidence context only until common-cause failure semantics are validated.',
     });
   }
-  return findings.sort((a,b)=>a.type.localeCompare(b.type)||a.subjectId.localeCompare(b.subjectId));
+  return findings.map(item=>({...item,candidateId:dependencyFindingCandidateId(item)}))
+    .sort((a,b)=>a.type.localeCompare(b.type)||a.subjectId.localeCompare(b.subjectId));
 }
 
 export function analyzeDependencyGraph(workspace={}, options={}) {

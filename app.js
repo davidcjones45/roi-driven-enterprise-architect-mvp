@@ -1,4 +1,4 @@
-﻿import { createGuardedStore, calculateBaseline, finiteInput, baselineExplanation, removeLocalRecord, undoLocalRemoval, validateWorkspaceShape } from './ux-safety-model.mjs';
+import { createGuardedStore, calculateBaseline, finiteInput, baselineExplanation, removeLocalRecord, undoLocalRemoval, validateWorkspaceShape } from './ux-safety-model.mjs';
 import { installSafetyUI } from './ux-safety-ui.mjs';
 import { createArchitectureEditor } from './ux-architecture-editor.mjs';
 import { normalizeAuthority, appendDecision, effectiveAuthorityState, erirImpact, ERIR_EXAMPLE_GRAPH, getAuthorityPortfolio, getAuthorityExceptions, getActiveAuthorityEvidenceExceptions, stableId } from './authority-model.mjs';
@@ -523,6 +523,30 @@ import { createOperatingCycleShellController } from './roi-ea-operating-cycle-ui
     undoRemoval: restoreLastRemovedRecord,
     formAdapters: { 'architecture-form': architectureEditor }
   });
+
+  async function promoteDependencyFindingToConsulting(event){
+    const finding=normalizeFinding(event?.detail?.finding||{});
+    if(!consultingMode){
+      toast('Consulting finding handoff requires local consulting mode; export the finding handoff JSON instead.');
+      return;
+    }
+    const engagement=currentEngagement();
+    if(!engagement){
+      toast('Open a local consulting engagement before promoting the dependency finding.');
+      return;
+    }
+    const errors=findingErrors(finding);
+    if(errors.length){toast(errors.join(' '));return;}
+    try{
+      const saved=await localEngagementRequest(`/api/engagements/${encodeURIComponent(engagement.engagement_id)}/findings`,{method:'POST',body:JSON.stringify(finding)});
+      engagements=engagements.map(record=>record.engagement_id===saved.engagement_id?saved:record);
+      renderFindingsQuestions();
+      renderEngagements();
+      toast('Dependency finding added to the local Consulting Findings register.');
+    }catch(error){toast(error.message);}
+  }
+  window.addEventListener('roi-ea-dependency-finding-promote',promoteDependencyFindingToConsulting);
+
   wireForms(); wireEvidence(); wireInventory(); wireComplianceCost(); wireRegulatory(); wireAuthorityViews(); wireFederated(); wireWorkspaceNavigation(); wireGlobal(); wireDemoPortfolio(); wireMortgageDemo(); wireGuidedDemo(); wireEngagements(); wireDiscovery(); operatingCycleShell = createOperatingCycleShellController({ root:document, navigate:view=>show(view) }); operatingCycleShell.setView('overview'); renderAll(); uxSafety.hydrateDrafts();
   createBpmnReviewController({getWorkspace: () => data.feoa,
     setWorkspace: (workspace) => { data.feoa = workspace; persist(); },

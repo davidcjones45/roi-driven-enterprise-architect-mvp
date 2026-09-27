@@ -1,7 +1,10 @@
 import {
   GRAPH_NODE_TYPES, GRAPH_EDGE_TYPES, DEPENDENCY_DIMENSIONS,
   normalizeGraphNode, normalizeGraphEdge, normalizeContinuityAnchor, normalizeEssentialAction,
-  analyzeDependencyGraph, createDependencyGraphSnapshot, compareDependencyGraphSnapshots
+  analyzeDependencyGraph, createDependencyGraphSnapshot, compareDependencyGraphSnapshots,
+  upsertDependencyFindingReview, normalizeDependencyFindingReview, dependencyFindingToConsultingRecord,
+  DEPENDENCY_MITIGATION_TYPES, DEPENDENCY_MITIGATION_STATUSES, normalizeDependencyMitigation,
+  previewDependencyMitigation, applyValidatedDependencyMitigation
 } from './dependency-graph-model.mjs';
 import { parseAndValidateBpmn } from './bpmn-import-pipeline.mjs';
 import { bpmnImportToDependencyGraph } from './bpmn-dependency-adapter.mjs';
@@ -157,9 +160,9 @@ function mount(){
 
   panel.querySelector('#dg-export').addEventListener('click',()=>{
     const data=ensure(read()); const analysis=analyzeDependencyGraph(data,{minimumInbound:3,minimumDependencies:4});
-    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.6',...analysis};
+    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.8',...analysis};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.6.json'; a.click(); URL.revokeObjectURL(a.href);
+    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.8.json'; a.click(); URL.revokeObjectURL(a.href);
   });
 
   panel.querySelector('#dg-snapshot-create').addEventListener('click',()=>{
@@ -202,6 +205,78 @@ function mount(){
 
   panel.querySelector('#dg-fit-view').addEventListener('click',()=>render(panel));
 
+
+  panel.querySelector('#dg-finding-review-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const data=ensure(read()); const analysis=analyzeDependencyGraph(data,{minimumInbound:3,minimumDependencies:4});
+    const raw=Object.fromEntries(new FormData(e.currentTarget).entries());
+    const candidate=analysis.findingsSummary.find(x=>x.candidateId===raw.candidateId);
+    if(!candidate){alert('Select a current dependency finding candidate.');return;}
+    raw.reviewedAt=new Date().toISOString();
+    data.dependencyFindingReviews=upsertDependencyFindingReview(data.dependencyFindingReviews,candidate,raw);
+    write(data); render(panel);
+  });
+
+  panel.querySelector('#dg-promote-finding').addEventListener('click',()=>{
+    const data=ensure(read()); const analysis=analyzeDependencyGraph(data,{minimumInbound:3,minimumDependencies:4});
+    const candidateId=panel.querySelector('#dg-finding-candidate').value;
+    const candidate=analysis.findingsSummary.find(x=>x.candidateId===candidateId);
+    const review=(data.dependencyFindingReviews||[]).map(normalizeDependencyFindingReview).find(x=>x.candidateId===candidateId);
+    if(!candidate||!review){alert('Record an Accept or Revise disposition first.');return;}
+    try{
+      const finding=dependencyFindingToConsultingRecord(candidate,review);
+      window.dispatchEvent(new CustomEvent('roi-ea-dependency-finding-promote',{detail:{finding,candidate,review}}));
+    }catch(error){alert(error.message);}
+  });
+
+  panel.querySelector('#dg-export-finding-handoff').addEventListener('click',()=>{
+    const data=ensure(read()); const analysis=analyzeDependencyGraph(data,{minimumInbound:3,minimumDependencies:4});
+    const candidateId=panel.querySelector('#dg-finding-candidate').value;
+    const candidate=analysis.findingsSummary.find(x=>x.candidateId===candidateId);
+    const review=(data.dependencyFindingReviews||[]).map(normalizeDependencyFindingReview).find(x=>x.candidateId===candidateId);
+    if(!candidate||!review){alert('Record a candidate disposition before export.');return;}
+    const payload={profile:'AIHS-DEPENDENCY-FINDING-HANDOFF-V0.1',exportedAt:new Date().toISOString(),candidate,review};
+    if(['Accept','Revise'].includes(review.disposition)){
+      try{payload.consultingFinding=dependencyFindingToConsultingRecord(candidate,review);}catch{}
+    }
+    download('dependency-finding-handoff.json',payload);
+  });
+
+
+  panel.querySelector('#dg-preview-mitigation').addEventListener('click',()=>{
+    const data=ensure(read()); const form=panel.querySelector('#dg-mitigation-form');
+    const raw=Object.fromEntries(new FormData(form).entries());
+    raw.confidence=raw.confidence===''?null:Number(raw.confidence)/100;
+    raw.estimatedCost=raw.estimatedCost===''?null:Number(raw.estimatedCost);
+    if(raw.validatedAt)raw.validatedAt=new Date(raw.validatedAt).toISOString();
+    const preview=previewDependencyMitigation(data,raw,{minimumInbound:3,minimumDependencies:4});
+    panel.dataset.mitigationPreview=JSON.stringify(preview);
+    renderMitigationPreview(panel,preview);
+  });
+
+  panel.querySelector('#dg-mitigation-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const data=ensure(read()); const raw=Object.fromEntries(new FormData(e.currentTarget).entries());
+    raw.confidence=raw.confidence===''?null:Number(raw.confidence)/100;
+    raw.estimatedCost=raw.estimatedCost===''?null:Number(raw.estimatedCost);
+    if(raw.validatedAt)raw.validatedAt=new Date(raw.validatedAt).toISOString();
+    const normalized=normalizeDependencyMitigation(raw);
+    data.dependencyMitigations=[...(data.dependencyMitigations||[]).filter(x=>x.id!==normalized.id),normalized];
+    write(data); render(panel);
+  });
+
+  panel.querySelector('#dg-apply-mitigation').addEventListener('click',()=>{
+    const data=ensure(read()); const raw=Object.fromEntries(new FormData(panel.querySelector('#dg-mitigation-form')).entries());
+    raw.confidence=raw.confidence===''?null:Number(raw.confidence)/100;
+    raw.estimatedCost=raw.estimatedCost===''?null:Number(raw.estimatedCost);
+    if(raw.validatedAt)raw.validatedAt=new Date(raw.validatedAt).toISOString();
+    try{
+      const next=applyValidatedDependencyMitigation(data,raw);
+      write(ensure(next)); render(panel);
+      alert('Validated mitigation applied to the working dependency graph. This records architecture intent; it does not establish implementation or control effectiveness.');
+    }catch(error){alert(error.message);}
+  });
+
   render(panel); return true;
 }
 
@@ -243,7 +318,7 @@ function html(){
   const dims=DEPENDENCY_DIMENSIONS.map(x=>`<option>${esc(x)}</option>`).join('');
   return `
   <div class="card">
-    <span class="eyebrow">DEPENDENCY GRAPH / V0.6</span>
+    <span class="eyebrow">DEPENDENCY GRAPH / V0.8</span>
     <h3>Preserve essential action by making dependencies visible.</h3>
     <p class="quiet-note">This workspace combines existing modernization dependencies with manually recorded, BPMN-derived, and Microsoft Graph-derived structure. Imported structure is evidence, not operating truth. The application does not infer authority, process effectiveness, or organizational accountability from a graph.</p>
   </div>
@@ -361,10 +436,67 @@ function html(){
     <div class="card"><h3>Shared failure-domain candidates</h3><div id="dg-shared-failure"></div></div>
   </div>
   <div class="card"><h3>Consulting findings summary</h3><p class="quiet-note">Review candidates derived from recorded structure; not final findings, risk ratings, or recommendations.</p><div id="dg-findings"></div></div>
+  <div class="card"><h3>Candidate review & handoff</h3>
+    <p class="quiet-note">Disposition is a consultant action. Accepted/revised candidates may be handed to the existing local Consulting Findings register when a consulting engagement is open; otherwise export the handoff JSON.</p>
+    <form id="dg-finding-review-form" class="form-grid">
+      <label>Candidate<select required name="candidateId" id="dg-finding-candidate"></select></label>
+      <label>Disposition<select required name="disposition"><option>Pending review</option><option>Accept</option><option>Revise</option><option>Reject</option><option>Defer</option></select></label>
+      <label>Reviewer<input required name="reviewer" placeholder="Named consultant"></label>
+      <label>Finding owner<input name="owner" placeholder="Required for promotion"></label>
+      <label>Severity<select name="severity"><option>Observation</option><option>Low</option><option selected>Moderate</option><option>High</option><option>Decision-critical</option></select></label>
+      <label>Decision impact<select name="decisionImpact"><option>Informational</option><option selected>Material</option><option>Decision-blocking</option></select></label>
+      <label class="full">Required action<textarea name="requiredAction" rows="2" placeholder="Required for promotion"></textarea></label>
+      <label class="full">Revised statement<textarea name="revisedStatement" rows="2" placeholder="Use when disposition is Revise"></textarea></label>
+      <label class="full">Review note<textarea required name="note" rows="2" placeholder="Basis, evidence, and limitations of the disposition"></textarea></label>
+      <div class="full"><button type="submit">Record disposition</button> <button type="button" class="secondary" id="dg-promote-finding">Send accepted/revised finding to Consulting register</button> <button type="button" class="secondary" id="dg-export-finding-handoff">Export finding handoff JSON</button></div>
+    </form>
+    <div id="dg-finding-reviews"></div>
+  </div>
+  <div class="card"><h3>Dependency mitigation scenario</h3>
+    <p class="quiet-note">Model candidate buffers, redundancy, substitution, fallback, coordination, or recovery before changing the working graph. Scenario output is structural evidence only; it does not prove feasibility, implementation, control effectiveness, or reduced risk.</p>
+    <form id="dg-mitigation-form" class="form-grid">
+      <label>Target type<select name="targetType"><option>Essential Action</option><option>Dependency Node</option></select></label>
+      <label>Target<select required name="targetId" id="dg-mitigation-target"></select></label>
+      <label>Mitigation type<select required name="type">${DEPENDENCY_MITIGATION_TYPES.map(x=>`<option>${x}</option>`).join('')}</select></label>
+      <label>Status<select required name="status">${DEPENDENCY_MITIGATION_STATUSES.map(x=>`<option>${x}</option>`).join('')}</select></label>
+      <label>Owner<input required name="owner"></label>
+      <label>Replacement / fallback node<select name="replacementNodeId" id="dg-mitigation-replacement"></select></label>
+      <label>Confidence (0-100)<input type="number" min="0" max="100" name="confidence"></label>
+      <label>Estimated cost<input type="number" min="0" step="0.01" name="estimatedCost"></label>
+      <label>Estimated effort<input name="estimatedEffort" placeholder="e.g. 2 weeks"></label>
+      <label>Linked dependency finding<input name="linkedFindingCandidateId" placeholder="Optional DGF-..."></label>
+      <label class="full">Description<textarea required name="description" rows="2"></textarea></label>
+      <label class="full">Expected effect<textarea name="expectedEffect" rows="2"></textarea></label>
+      <label class="full">Evidence references<input name="evidenceRefs" placeholder="EVD-001; source record"></label>
+      <label class="full">Source reference<input name="sourceReference"></label>
+      <label>Validated by<input name="validatedBy"></label>
+      <label>Validated at<input type="datetime-local" name="validatedAt"></label>
+      <label class="full">Notes<textarea name="notes" rows="2"></textarea></label>
+      <div class="full"><button type="button" id="dg-preview-mitigation">Preview structural scenario</button> <button type="submit">Save mitigation record</button> <button type="button" class="secondary" id="dg-apply-mitigation">Apply validated mitigation to working graph</button></div>
+    </form>
+    <div id="dg-mitigation-preview"></div>
+    <div id="dg-mitigation-records"></div>
+  </div>
   <div class="two-column-grid">
     <div class="card"><h3>Graph quality / unresolved structure</h3><div id="dg-issues"></div></div>
     <div class="card"><h3>Imported structure</h3><div id="dg-imports"></div></div>
   </div>`;
+}
+
+
+function renderMitigationPreview(panel,preview){
+  const target=panel.querySelector('#dg-mitigation-preview');
+  if(!preview){target.innerHTML='<p class="quiet-note">No mitigation scenario previewed.</p>';return;}
+  if(!preview.valid){
+    target.innerHTML=`<div class="federated-caveat"><strong>Scenario cannot be evaluated.</strong><ul>${preview.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+    return;
+  }
+  const e=preview.structuralEffect;
+  target.innerHTML=`<h4>Structural scenario preview</h4>
+    <p><strong>Candidate constraining dependencies:</strong> ${e.constrainingCandidatesBefore} → ${e.constrainingCandidatesAfter}</p>
+    <p><strong>Relieved candidate nodes:</strong> ${esc(e.relievedCandidateNodeIds.join(', ')||'None')}</p>
+    <p><strong>New candidate nodes:</strong> ${esc(e.newCandidateNodeIds.join(', ')||'None')}</p>
+    <p class="quiet-note">${esc(e.interpretation)}</p>`;
 }
 
 function render(panel){
@@ -409,9 +541,38 @@ function render(panel){
   panel.querySelector('#dg-findings').innerHTML=analysis.findingsSummary.length
     ? `<table class="depgraph-table"><thead><tr><th>Candidate</th><th>Subject</th><th>Statement</th><th>Limitation</th></tr></thead><tbody>${analysis.findingsSummary.map(x=>`<tr><td><strong>${esc(x.type)}</strong><br><small>${esc(x.severity)}</small></td><td>${esc(x.subjectId)}</td><td>${esc(x.statement)}</td><td>${esc(x.limitation)}</td></tr>`).join('')}</tbody></table>`
     : '<p class="quiet-note">No structural review candidates are currently derived from the recorded graph.</p>';
+  const candidateSelect=panel.querySelector('#dg-finding-candidate'), priorCandidate=candidateSelect.value;
+  candidateSelect.innerHTML='<option value="">Select candidate</option>'+analysis.findingsSummary.map(x=>`<option value="${esc(x.candidateId)}">${esc(x.type)} · ${esc(x.subjectId)}</option>`).join('');
+  if(analysis.findingsSummary.some(x=>x.candidateId===priorCandidate))candidateSelect.value=priorCandidate;
+  const reviewMap=new Map((data.dependencyFindingReviews||[]).map(x=>[x.candidateId||x.id,normalizeDependencyFindingReview(x)]));
+  panel.querySelector('#dg-finding-reviews').innerHTML=reviewMap.size
+    ? `<table class="depgraph-table"><thead><tr><th>Candidate</th><th>Disposition</th><th>Reviewer</th><th>Owner / action</th><th>Note</th></tr></thead><tbody>${[...reviewMap.values()].map(x=>`<tr><td>${esc(x.candidateId)}</td><td><strong>${esc(x.disposition)}</strong><br><small>${esc(x.severity)} / ${esc(x.decisionImpact)}</small></td><td>${esc(x.reviewer||'Not recorded')}<br><small>${esc(x.reviewedAt||'')}</small></td><td>${esc(x.owner||'Not recorded')}<br><small>${esc(x.requiredAction||'No required action')}</small></td><td>${esc(x.note||'No note')}</td></tr>`).join('')}</tbody></table>`
+    : '<p class="quiet-note">No dependency finding candidate dispositions recorded.</p>';
   panel.querySelector('#dg-essential-coverage').innerHTML=analysis.essentialDependencyCoverage.length
     ? `<table class="depgraph-table"><thead><tr><th>Continuity Anchor</th><th>Essential Action</th><th>Dependency</th><th>Mitigation recorded</th><th>Tolerance</th></tr></thead><tbody>${analysis.essentialDependencyCoverage.map(x=>`<tr><td>${esc(x.anchorLabel)}</td><td>${esc(x.actionLabel)}</td><td><strong>${esc(x.node?.label||x.nodeId)}</strong><br><small>${esc(x.node?.nodeType||'Missing node')}</small></td><td>${x.mitigated?'Yes':'No'}${x.fallbackNodeIds.length?`<br><small>Fallback: ${esc(x.fallbackNodeIds.join(', '))}</small>`:''}</td><td>${esc(x.toleranceMinutes??'Not recorded')}</td></tr>`).join('')}</tbody></table>`
     : '<p class="quiet-note">No Essential Action dependency coverage is recorded yet.</p>';
+
+  const mitigationTarget=panel.querySelector('#dg-mitigation-target');
+  const mitigationReplacement=panel.querySelector('#dg-mitigation-replacement');
+  const targetType=panel.querySelector('#dg-mitigation-form [name="targetType"]').value;
+  const priorMitigationTarget=mitigationTarget.value, priorReplacement=mitigationReplacement.value;
+  const targetOptions=targetType==='Dependency Node'
+    ? graph.nodes.map(n=>`<option value="${esc(n.id)}">${esc(n.label)} [${esc(n.nodeType)}]</option>`).join('')
+    : graph.essentialActions.map(a=>`<option value="${esc(a.id)}">${esc(a.label)}</option>`).join('');
+  mitigationTarget.innerHTML='<option value="">Select target</option>'+targetOptions;
+  if([...mitigationTarget.options].some(o=>o.value===priorMitigationTarget))mitigationTarget.value=priorMitigationTarget;
+  mitigationReplacement.innerHTML='<option value="">Select when required</option>'+graph.nodes.map(n=>`<option value="${esc(n.id)}">${esc(n.label)} [${esc(n.nodeType)}]</option>`).join('');
+  if([...mitigationReplacement.options].some(o=>o.value===priorReplacement))mitigationReplacement.value=priorReplacement;
+  panel.querySelector('#dg-mitigation-form [name="targetType"]').onchange=()=>render(panel);
+
+  const mitigations=(data.dependencyMitigations||[]).map(normalizeDependencyMitigation);
+  panel.querySelector('#dg-mitigation-records').innerHTML=mitigations.length
+    ? `<h4>Recorded mitigation candidates</h4><table class="depgraph-table"><thead><tr><th>Mitigation</th><th>Target</th><th>Status</th><th>Owner</th><th>Evidence</th></tr></thead><tbody>${mitigations.map(m=>`<tr><td><strong>${esc(m.type)}</strong><br><small>${esc(m.description)}</small></td><td>${esc(m.targetType)} · ${esc(m.targetId)}</td><td>${esc(m.status)}<br><small>${esc(m.validatedBy||'Not validated')}</small></td><td>${esc(m.owner||'Not recorded')}</td><td>${esc(m.evidenceRefs.join(', ')||m.sourceReference||'None recorded')}</td></tr>`).join('')}</tbody></table>`
+    : '<p class="quiet-note">No dependency mitigation candidates recorded.</p>';
+  let mitigationPreview=null;
+  try{mitigationPreview=panel.dataset.mitigationPreview?JSON.parse(panel.dataset.mitigationPreview):null;}catch{}
+  renderMitigationPreview(panel,mitigationPreview);
+
   renderSnapshotHistory(panel,data);
   panel.querySelector('#dg-imports').innerHTML=data.dependencyGraphImports.length?`<table class="depgraph-table"><thead><tr><th>Type</th><th>File</th><th>Imported</th><th>Unresolved</th></tr></thead><tbody>${data.dependencyGraphImports.map(x=>`<tr><td>${esc(x.type)}</td><td>${esc(x.fileName)}</td><td>${esc(x.importedAt)}</td><td>${esc(x.unresolved)}</td></tr>`).join('')}</tbody></table>`:'<p class="quiet-note">No BPMN or Microsoft Graph structure imported into the dependency graph yet.</p>';
   const focus=panel.querySelector('#dg-node-focus'); const priorFocus=focus.value;
