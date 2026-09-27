@@ -278,3 +278,99 @@ export function analyzeDependencyGraph(workspace={}, options={}) {
     authorityState:'Advisory dependency analysis only — human validation required',
   };
 }
+
+function canonicalSnapshotGraph(workspace={}) {
+  const graph=buildDependencyGraph(workspace);
+  const sortById=items=>[...items].map(x=>JSON.parse(JSON.stringify(x))).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+  return {
+    nodes:sortById(graph.nodes),
+    edges:sortById(graph.edges),
+    continuityAnchors:sortById(graph.continuityAnchors),
+    essentialActions:sortById(graph.essentialActions),
+  };
+}
+
+function snapshotAnalysis(graph, options={}) {
+  return {
+    issues:graphIssues(graph),
+    degrees:dependencyDegree(graph),
+    concentrationCandidates:concentrationCandidates(graph,options),
+    fragmentationCandidates:fragmentationCandidates(graph,options),
+    constrainingDependencyCandidates:constrainingDependencyCandidates(graph),
+  };
+}
+
+export function createDependencyGraphSnapshot(workspace={}, metadata={}, options={}) {
+  const graph=canonicalSnapshotGraph(workspace);
+  const capturedAt=metadata.capturedAt || new Date().toISOString();
+  const label=String(metadata.label || `Dependency graph ${capturedAt}`).trim();
+  const analysis=snapshotAnalysis(graph,options);
+  return {
+    profile:'AIHS-DEPENDENCY-GRAPH-SNAPSHOT-V0.1',
+    id:metadata.id || stableId(`${capturedAt}-${label}`,'DGS'),
+    label,
+    capturedAt,
+    capturedBy:String(metadata.capturedBy || '').trim(),
+    note:String(metadata.note || '').trim(),
+    graph,
+    analysis,
+    limitations:[
+      'Snapshot preserves recorded dependency evidence at a point in time; it does not establish operating truth or authority.',
+      'Candidate concentration, fragmentation, and constraining-dependency findings require human validation.',
+    ],
+  };
+}
+
+function changedRecords(prior=[], current=[]) {
+  const before=new Map((prior||[]).map(x=>[x.id,x]));
+  const after=new Map((current||[]).map(x=>[x.id,x]));
+  const added=[...after.keys()].filter(id=>!before.has(id)).sort();
+  const removed=[...before.keys()].filter(id=>!after.has(id)).sort();
+  const changed=[];
+  for(const id of [...after.keys()].filter(id=>before.has(id)).sort()){
+    if(JSON.stringify(before.get(id))!==JSON.stringify(after.get(id))) changed.push(id);
+  }
+  return {added,removed,changed};
+}
+
+function ids(items=[]){ return new Set(items.map(x=>x.nodeId || x.id)); }
+function setDiff(a,b){ return [...a].filter(x=>!b.has(x)).sort(); }
+
+export function compareDependencyGraphSnapshots(priorSnapshot={}, currentSnapshot={}) {
+  if(priorSnapshot.profile!=='AIHS-DEPENDENCY-GRAPH-SNAPSHOT-V0.1' || currentSnapshot.profile!=='AIHS-DEPENDENCY-GRAPH-SNAPSHOT-V0.1') {
+    throw new TypeError('Two dependency graph snapshots are required.');
+  }
+  const prior=priorSnapshot.graph||{}; const current=currentSnapshot.graph||{};
+  const recordChanges={
+    nodes:changedRecords(prior.nodes,current.nodes),
+    edges:changedRecords(prior.edges,current.edges),
+    continuityAnchors:changedRecords(prior.continuityAnchors,current.continuityAnchors),
+    essentialActions:changedRecords(prior.essentialActions,current.essentialActions),
+  };
+  const priorConcentration=ids(priorSnapshot.analysis?.concentrationCandidates||[]);
+  const currentConcentration=ids(currentSnapshot.analysis?.concentrationCandidates||[]);
+  const priorConstraining=ids(priorSnapshot.analysis?.constrainingDependencyCandidates||[]);
+  const currentConstraining=ids(currentSnapshot.analysis?.constrainingDependencyCandidates||[]);
+  const priorFragmentation=new Set((priorSnapshot.analysis?.fragmentationCandidates||[]).map(x=>x.action?.id).filter(Boolean));
+  const currentFragmentation=new Set((currentSnapshot.analysis?.fragmentationCandidates||[]).map(x=>x.action?.id).filter(Boolean));
+  const accumulation=dependencyAccumulationDelta(prior,current);
+  return {
+    profile:'AIHS-DEPENDENCY-GRAPH-COMPARISON-V0.1',
+    priorSnapshotId:priorSnapshot.id,
+    currentSnapshotId:currentSnapshot.id,
+    priorCapturedAt:priorSnapshot.capturedAt,
+    currentCapturedAt:currentSnapshot.capturedAt,
+    recordChanges,
+    accumulation,
+    newlyConcentratedNodeIds:setDiff(currentConcentration,priorConcentration),
+    concentrationRelievedNodeIds:setDiff(priorConcentration,currentConcentration),
+    newlyConstrainingNodeIds:setDiff(currentConstraining,priorConstraining),
+    constrainingRelievedNodeIds:setDiff(priorConstraining,currentConstraining),
+    newlyFragmentedActionIds:setDiff(currentFragmentation,priorFragmentation),
+    fragmentationRelievedActionIds:setDiff(priorFragmentation,currentFragmentation),
+    interpretation:[
+      'Graph change is descriptive and does not by itself establish increased or reduced risk.',
+      'New or relieved concentration, fragmentation, and constraining-dependency candidates are reassessment signals requiring human validation.',
+    ],
+  };
+}

@@ -10,3 +10,12 @@ test('dependency graph UI uses existing modernization local-storage workspace',(
   assert.match(src,/Continuity Anchor/);
   assert.match(src,/Essential Action/);
 });
+
+test('dependency graph UI exposes persisted snapshots and change comparison',()=>{
+  const src=fs.readFileSync(new URL('./dependency-graph-ui.mjs',import.meta.url),'utf8');
+  assert.match(src,/createDependencyGraphSnapshot/);
+  assert.match(src,/compareDependencyGraphSnapshots/);
+  assert.match(src,/Capture snapshot/);
+  assert.match(src,/Compare snapshots/);
+  assert.match(src,/Reassessment signal only/);
+});

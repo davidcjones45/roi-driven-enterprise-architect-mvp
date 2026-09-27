@@ -81,3 +81,32 @@ test('Microsoft Graph adapter reconstructs reporting relationships but does not 
   assert.equal(result.edges[0].edgeType,'reports-to');
   assert.match(result.limitations[0],/not process ownership or decision authority/i);
 });
+
+import { createDependencyGraphSnapshot, compareDependencyGraphSnapshots } from './dependency-graph-model.mjs';
+
+test('captures immutable point-in-time dependency snapshots and compares accumulation',()=>{
+  const base={
+    graphNodes:[{id:'A',label:'A',nodeType:'application'},{id:'B',label:'B',nodeType:'vendor'}],
+    graphEdges:[{id:'E1',sourceId:'A',targetId:'B',edgeType:'depends-on',dimension:'vendor'}],
+    continuityAnchors:[{id:'CA-1',label:'Service continuity'}],
+    essentialActions:[{id:'EA-1',label:'Serve customer',anchorId:'CA-1',dependencyNodeIds:['B']}]
+  };
+  const prior=createDependencyGraphSnapshot(base,{id:'S1',label:'Before',capturedAt:'2026-09-01T00:00:00.000Z'});
+  const current=createDependencyGraphSnapshot({...base,graphNodes:[...base.graphNodes,{id:'C',label:'C',nodeType:'vendor'}],graphEdges:[...base.graphEdges,{id:'E2',sourceId:'A',targetId:'C',edgeType:'depends-on',dimension:'vendor'}]},{id:'S2',label:'After',capturedAt:'2026-09-02T00:00:00.000Z'});
+  const c=compareDependencyGraphSnapshots(prior,current);
+  assert.equal(c.accumulation.nodeDelta,1);
+  assert.equal(c.accumulation.edgeDelta,1);
+  assert.deepEqual(c.recordChanges.nodes.added,['C']);
+  assert.deepEqual(c.recordChanges.edges.added,['E2']);
+});
+
+test('comparison reports new and relieved candidate findings as reassessment signals',()=>{
+  const mk=(id,graph,analysis)=>({profile:'AIHS-DEPENDENCY-GRAPH-SNAPSHOT-V0.1',id,capturedAt:`2026-09-0${id==='P'?1:2}T00:00:00.000Z`,graph,analysis});
+  const graph={nodes:[{id:'N1'}],edges:[],continuityAnchors:[],essentialActions:[]};
+  const prior=mk('P',graph,{concentrationCandidates:[],constrainingDependencyCandidates:[],fragmentationCandidates:[]});
+  const current=mk('C',graph,{concentrationCandidates:[{nodeId:'N1'}],constrainingDependencyCandidates:[{nodeId:'N1'}],fragmentationCandidates:[]});
+  const c=compareDependencyGraphSnapshots(prior,current);
+  assert.deepEqual(c.newlyConcentratedNodeIds,['N1']);
+  assert.deepEqual(c.newlyConstrainingNodeIds,['N1']);
+  assert.match(c.interpretation.join(' '),/human validation/i);
+});

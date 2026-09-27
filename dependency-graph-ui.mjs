@@ -1,7 +1,7 @@
 import {
   GRAPH_NODE_TYPES, GRAPH_EDGE_TYPES, DEPENDENCY_DIMENSIONS,
   normalizeGraphNode, normalizeGraphEdge, normalizeContinuityAnchor, normalizeEssentialAction,
-  analyzeDependencyGraph
+  analyzeDependencyGraph, createDependencyGraphSnapshot, compareDependencyGraphSnapshots
 } from './dependency-graph-model.mjs';
 import { parseAndValidateBpmn } from './bpmn-import-pipeline.mjs';
 import { bpmnImportToDependencyGraph } from './bpmn-dependency-adapter.mjs';
@@ -14,7 +14,7 @@ const ensure=data=>{
   data.applications||=[]; data.dependencies||=[];
   data.graphNodes||=[]; data.graphEdges||=[];
   data.continuityAnchors||=[]; data.essentialActions||=[];
-  data.dependencyGraphImports||=[];
+  data.dependencyGraphImports||=[]; data.dependencyGraphSnapshots||=[];
   return data;
 };
 const write=data=>{
@@ -123,13 +123,36 @@ function mount(){
 
   panel.querySelector('#dg-export').addEventListener('click',()=>{
     const data=ensure(read()); const analysis=analyzeDependencyGraph(data,{minimumInbound:3,minimumDependencies:4});
-    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.1',...analysis};
+    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.3',...analysis};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.1.json'; a.click(); URL.revokeObjectURL(a.href);
+    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.3.json'; a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  panel.querySelector('#dg-snapshot-create').addEventListener('click',()=>{
+    const data=ensure(read());
+    const label=panel.querySelector('#dg-snapshot-label').value.trim() || `Dependency graph ${new Date().toLocaleString()}`;
+    const note=panel.querySelector('#dg-snapshot-note').value.trim();
+    const snapshot=createDependencyGraphSnapshot(data,{label,note,capturedAt:new Date().toISOString()},{minimumInbound:3,minimumDependencies:4});
+    data.dependencyGraphSnapshots.push(snapshot); write(data);
+    panel.querySelector('#dg-snapshot-label').value=''; panel.querySelector('#dg-snapshot-note').value='';
+    render(panel);
+  });
+
+  panel.querySelector('#dg-snapshot-compare').addEventListener('click',()=>{
+    renderSnapshotComparison(panel);
+  });
+
+  panel.querySelector('#dg-snapshot-export').addEventListener('click',()=>{
+    const data=ensure(read()); const a=panel.querySelector('#dg-snapshot-prior').value, b=panel.querySelector('#dg-snapshot-current').value;
+    const prior=data.dependencyGraphSnapshots.find(x=>x.id===a), current=data.dependencyGraphSnapshots.find(x=>x.id===b);
+    if(!prior||!current){ alert('Select two snapshots first.'); return; }
+    const payload=compareDependencyGraphSnapshots(prior,current);
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const link=document.createElement('a');
+    link.href=URL.createObjectURL(blob); link.download='dependency-graph-comparison-v0.1.json'; link.click(); URL.revokeObjectURL(link.href);
   });
 
   panel.querySelector('#dg-reset').addEventListener('click',()=>{
-    if(!confirm('Clear only dependency-graph enrichment, continuity anchors, and essential actions? Existing modernization applications and dependencies are preserved.'))return;
+    if(!confirm('Clear current dependency-graph enrichment, continuity anchors, and essential actions? Existing modernization applications, dependencies, and saved snapshots are preserved.'))return;
     const data=ensure(read()); data.graphNodes=[]; data.graphEdges=[]; data.continuityAnchors=[]; data.essentialActions=[]; data.dependencyGraphImports=[]; write(data); render(panel);
   });
 
@@ -142,7 +165,7 @@ function html(){
   const dims=DEPENDENCY_DIMENSIONS.map(x=>`<option>${esc(x)}</option>`).join('');
   return `
   <div class="card">
-    <span class="eyebrow">DEPENDENCY GRAPH / V0.1</span>
+    <span class="eyebrow">DEPENDENCY GRAPH / V0.3</span>
     <h3>Preserve essential action by making dependencies visible.</h3>
     <p class="quiet-note">This workspace combines existing modernization dependencies with manually recorded, BPMN-derived, and Microsoft Graph-derived structure. Imported structure is evidence, not operating truth. The application does not infer authority, process effectiveness, or organizational accountability from a graph.</p>
   </div>
@@ -195,6 +218,23 @@ function html(){
       </form>
     </div>
   </details>
+  <div class="card">
+    <span class="eyebrow">GRAPH HISTORY / V0.1</span>
+    <h3>Persist and compare dependency states</h3>
+    <p class="quiet-note">Snapshots preserve the recorded graph and candidate analysis at a point in time. A changed graph is a reassessment signal, not proof of increased or reduced risk.</p>
+    <div class="depgraph-grid">
+      <label>Snapshot label<input id="dg-snapshot-label" placeholder="e.g. Pre-modernization baseline"></label>
+      <label>Note<input id="dg-snapshot-note" placeholder="Reason for capture or material change"></label>
+    </div>
+    <div class="depgraph-actions"><button type="button" id="dg-snapshot-create">Capture snapshot</button></div>
+    <div id="dg-snapshot-history"></div>
+    <div class="depgraph-grid">
+      <label>Prior snapshot<select id="dg-snapshot-prior"></select></label>
+      <label>Current snapshot<select id="dg-snapshot-current"></select></label>
+    </div>
+    <div class="depgraph-actions"><button type="button" id="dg-snapshot-compare">Compare snapshots</button><button type="button" class="secondary" id="dg-snapshot-export">Export comparison JSON</button></div>
+    <div id="dg-snapshot-comparison"></div>
+  </div>
   <div class="card"><h3>Dependency topology</h3><div class="depgraph-svg-wrap"><svg id="dg-svg" class="depgraph-svg" viewBox="0 0 1100 520" role="img" aria-label="Dependency graph visualization"></svg></div></div>
   <div class="two-column-grid">
     <div class="card"><h3>Concentration candidates</h3><div id="dg-concentration"></div></div>
@@ -226,8 +266,47 @@ function render(panel){
   panel.querySelector('#dg-constraining').innerHTML=analysis.constrainingDependencyCandidates.length?`<ul>${analysis.constrainingDependencyCandidates.map(x=>`<li><strong>${esc(graph.nodes.find(n=>n.id===x.nodeId)?.label||x.nodeId)}</strong> — ${x.unmitigatedActionIds.length} essential action(s) without recorded fallback, buffer, or recovery.</li>`).join('')}</ul>`:'<p class="quiet-note">No candidate constraining dependencies found from recorded Essential Actions.</p>';
   panel.querySelector('#dg-fragmentation').innerHTML=analysis.fragmentationCandidates.length?`<ul>${analysis.fragmentationCandidates.map(x=>`<li><strong>${esc(x.action.label)}</strong> — ${x.action.dependencyNodeIds.length} recorded dependencies; status ${esc(x.status)}.</li>`).join('')}</ul>`:'<p class="quiet-note">No Essential Actions currently cross the fragmentation threshold (4 dependencies).</p>';
   panel.querySelector('#dg-issues').innerHTML=analysis.issues.length?`<ul>${analysis.issues.slice(0,40).map(x=>`<li>${esc(x.message)}</li>`).join('')}</ul>`:'<p>No unresolved graph-edge structure detected.</p>';
+  renderSnapshotHistory(panel,data);
   panel.querySelector('#dg-imports').innerHTML=data.dependencyGraphImports.length?`<table class="depgraph-table"><thead><tr><th>Type</th><th>File</th><th>Imported</th><th>Unresolved</th></tr></thead><tbody>${data.dependencyGraphImports.map(x=>`<tr><td>${esc(x.type)}</td><td>${esc(x.fileName)}</td><td>${esc(x.importedAt)}</td><td>${esc(x.unresolved)}</td></tr>`).join('')}</tbody></table>`:'<p class="quiet-note">No BPMN or Microsoft Graph structure imported into the dependency graph yet.</p>';
   renderSvg(panel.querySelector('#dg-svg'),graph);
+}
+
+function renderSnapshotHistory(panel,data){
+  const snapshots=data.dependencyGraphSnapshots||[];
+  const history=panel.querySelector('#dg-snapshot-history');
+  history.innerHTML=snapshots.length?`<table class="depgraph-table"><thead><tr><th>Snapshot</th><th>Captured</th><th>Nodes / edges</th><th>Candidate findings</th></tr></thead><tbody>${snapshots.map(s=>`<tr><td><strong>${esc(s.label)}</strong><br><small>${esc(s.note||'No note')}</small></td><td>${esc(s.capturedAt)}</td><td>${s.graph?.nodes?.length||0} / ${s.graph?.edges?.length||0}</td><td>Concentration ${s.analysis?.concentrationCandidates?.length||0}; constraining ${s.analysis?.constrainingDependencyCandidates?.length||0}; fragmentation ${s.analysis?.fragmentationCandidates?.length||0}</td></tr>`).join('')}</tbody></table>`:'<p class="quiet-note">No dependency graph snapshots captured.</p>';
+  const options='<option value="">Select</option>'+snapshots.map(s=>`<option value="${esc(s.id)}">${esc(s.label)} — ${esc(s.capturedAt)}</option>`).join('');
+  const prior=panel.querySelector('#dg-snapshot-prior'), current=panel.querySelector('#dg-snapshot-current');
+  const priorValue=prior.value, currentValue=current.value;
+  prior.innerHTML=options; current.innerHTML=options;
+  if(snapshots.some(s=>s.id===priorValue))prior.value=priorValue; else if(snapshots.length>1)prior.value=snapshots.at(-2).id;
+  if(snapshots.some(s=>s.id===currentValue))current.value=currentValue; else if(snapshots.length)current.value=snapshots.at(-1).id;
+  renderSnapshotComparison(panel);
+}
+
+function renderSnapshotComparison(panel){
+  const data=ensure(read()); const target=panel.querySelector('#dg-snapshot-comparison');
+  const prior=data.dependencyGraphSnapshots.find(x=>x.id===panel.querySelector('#dg-snapshot-prior').value);
+  const current=data.dependencyGraphSnapshots.find(x=>x.id===panel.querySelector('#dg-snapshot-current').value);
+  if(!prior||!current){target.innerHTML='<p class="quiet-note">Capture and select two snapshots to compare dependency change.</p>';return;}
+  if(prior.id===current.id){target.innerHTML='<p class="quiet-note">Select two different snapshots.</p>';return;}
+  const c=compareDependencyGraphSnapshots(prior,current);
+  const changed=c.recordChanges;
+  const listIds=ids=>ids.length?esc(ids.join(', ')):'None';
+  target.innerHTML=`<div class="depgraph-warning"><strong>Reassessment signal only.</strong> Graph changes and candidate findings require human interpretation against Continuity Anchors and Essential Actions.</div>
+    <div class="depgraph-grid">
+      <div class="depgraph-metric"><span>Node delta</span><strong>${esc(c.accumulation.nodeDelta)}</strong></div>
+      <div class="depgraph-metric"><span>Edge delta</span><strong>${esc(c.accumulation.edgeDelta)}</strong></div>
+      <div class="depgraph-metric"><span>New concentration</span><strong>${c.newlyConcentratedNodeIds.length}</strong></div>
+      <div class="depgraph-metric"><span>New constraining</span><strong>${c.newlyConstrainingNodeIds.length}</strong></div>
+    </div>
+    <table class="depgraph-table"><thead><tr><th>Change</th><th>Added</th><th>Removed / relieved</th><th>Changed</th></tr></thead><tbody>
+      <tr><td>Nodes</td><td>${listIds(changed.nodes.added)}</td><td>${listIds(changed.nodes.removed)}</td><td>${listIds(changed.nodes.changed)}</td></tr>
+      <tr><td>Edges</td><td>${listIds(changed.edges.added)}</td><td>${listIds(changed.edges.removed)}</td><td>${listIds(changed.edges.changed)}</td></tr>
+      <tr><td>Concentration candidates</td><td>${listIds(c.newlyConcentratedNodeIds)}</td><td>${listIds(c.concentrationRelievedNodeIds)}</td><td>Not applicable</td></tr>
+      <tr><td>Constraining candidates</td><td>${listIds(c.newlyConstrainingNodeIds)}</td><td>${listIds(c.constrainingRelievedNodeIds)}</td><td>Not applicable</td></tr>
+      <tr><td>Fragmentation candidates</td><td>${listIds(c.newlyFragmentedActionIds)}</td><td>${listIds(c.fragmentationRelievedActionIds)}</td><td>Not applicable</td></tr>
+    </tbody></table>`;
 }
 
 function renderSvg(svg,graph){
