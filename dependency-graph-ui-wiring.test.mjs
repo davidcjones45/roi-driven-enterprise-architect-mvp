@@ -87,3 +87,12 @@ test('dependency graph UI exposes CIF alignment and consulting evidence handoff'
   assert.match(src,/roi-ea-dependency-evidence-promote/);
   assert.match(src,/dependencyAnalysisEngagementEvidence/);
 });
+
+
+test('dependency graph UI defines a JSON download helper used by CIF and finding handoffs',()=>{
+  const src=fs.readFileSync(new URL('./dependency-graph-ui.mjs',import.meta.url),'utf8');
+  assert.match(src,/const download=\(filename,payload\)=>/);
+  assert.match(src,/URL\.createObjectURL/);
+  assert.match(src,/dependency-cif-handoff-v0\.1\.json/);
+  assert.match(src,/dependency-finding-handoff\.json/);
+});

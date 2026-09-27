@@ -20,6 +20,7 @@ const ensure=data=>{
   data.graphNodes||=[]; data.graphEdges||=[];
   data.continuityAnchors||=[]; data.essentialActions||=[];
   data.dependencyGraphImports||=[]; data.dependencyGraphSnapshots||=[];
+  data.dependencyFindingReviews||=[]; data.dependencyMitigations||=[]; data.dependencyMitigationLifecycle||=[];
   return data;
 };
 const write=data=>{
@@ -27,6 +28,16 @@ const write=data=>{
   window.dispatchEvent(new CustomEvent('roi-ea-modernization-data-changed',{detail:{key:KEY,source:'dependency-graph-ui.mjs'}}));
 };
 const list=value=>String(value||'').split(/[;,\n]/).map(v=>v.trim()).filter(Boolean);
+const download=(filename,payload)=>{
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download=filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(link.href);
+};
 const mergeById=(existing,incoming)=>{
   const map=new Map((existing||[]).map(x=>[x.id,x]));
   (incoming||[]).forEach(x=>map.set(x.id,{...map.get(x.id),...x}));
