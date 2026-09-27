@@ -157,9 +157,9 @@ function mount(){
 
   panel.querySelector('#dg-export').addEventListener('click',()=>{
     const data=ensure(read()); const analysis=analyzeDependencyGraph(data,{minimumInbound:3,minimumDependencies:4});
-    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.5',...analysis};
+    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.6',...analysis};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.5.json'; a.click(); URL.revokeObjectURL(a.href);
+    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.6.json'; a.click(); URL.revokeObjectURL(a.href);
   });
 
   panel.querySelector('#dg-snapshot-create').addEventListener('click',()=>{
@@ -190,7 +190,51 @@ function mount(){
     const data=ensure(read()); data.graphNodes=[]; data.graphEdges=[]; data.continuityAnchors=[]; data.essentialActions=[]; data.dependencyGraphImports=[]; write(data); render(panel);
   });
 
+
+  panel.querySelector('#dg-load-demo').addEventListener('click',()=>{
+    const data=ensure(read()); const demo=dependencyDemo();
+    data.graphNodes=demo.graphNodes; data.graphEdges=demo.graphEdges;
+    data.continuityAnchors=demo.continuityAnchors; data.essentialActions=demo.essentialActions;
+    data.dependencyGraphSnapshots=[];
+    write(data); render(panel);
+    alert('Synthetic dependency diagnostic demo loaded. All findings remain illustrative and advisory.');
+  });
+
+  panel.querySelector('#dg-fit-view').addEventListener('click',()=>render(panel));
+
   render(panel); return true;
+}
+
+
+function dependencyDemo(){
+  return {
+    continuityAnchors:[
+      {id:'CA-ORDERS',label:'Continue priority-order fulfillment',description:'Synthetic demo continuity anchor',owner:'COO'},
+      {id:'CA-CUSTOMER',label:'Maintain customer access',description:'Synthetic demo continuity anchor',owner:'CIO'},
+    ],
+    essentialActions:[
+      {id:'EA-AUTH',label:'Authenticate customers',anchorId:'CA-CUSTOMER',essentiality:'Essential',toleranceMinutes:15,dependencyNodeIds:['DEMO-IDP'],fallbackNodeIds:[],bufferDescription:'',recoveryDescription:''},
+      {id:'EA-FULFILL',label:'Release priority orders',anchorId:'CA-ORDERS',essentiality:'Essential',toleranceMinutes:60,dependencyNodeIds:['DEMO-ERP','DEMO-IDP','DEMO-OPS'],fallbackNodeIds:['DEMO-MANUAL'],bufferDescription:'Four-hour approved-order queue',recoveryDescription:'Manual reduced-volume release procedure.'},
+      {id:'EA-NOTIFY',label:'Notify customers of material changes',anchorId:'CA-ORDERS',essentiality:'Essential',toleranceMinutes:120,dependencyNodeIds:['DEMO-CRM','DEMO-MSG','DEMO-OPS','DEMO-LEGAL'],fallbackNodeIds:[],bufferDescription:'',recoveryDescription:''},
+    ],
+    graphNodes:[
+      {id:'DEMO-IDP',label:'Enterprise identity provider',nodeType:'external-service',sourceSystem:'Manual',tags:['Synthetic demo']},
+      {id:'DEMO-ERP',label:'Order management platform',nodeType:'application',sourceSystem:'Modernization',tags:['Synthetic demo']},
+      {id:'DEMO-CRM',label:'Customer CRM',nodeType:'application',sourceSystem:'Modernization',tags:['Synthetic demo']},
+      {id:'DEMO-MSG',label:'Messaging gateway',nodeType:'external-service',sourceSystem:'Manual',tags:['Synthetic demo']},
+      {id:'DEMO-OPS',label:'Operations analyst role',nodeType:'role',sourceSystem:'Microsoft Graph',tags:['Synthetic demo']},
+      {id:'DEMO-LEGAL',label:'Customer-notice review',nodeType:'activity',sourceSystem:'BPMN',tags:['Synthetic demo']},
+      {id:'DEMO-MANUAL',label:'Manual reduced-volume procedure',nodeType:'process',sourceSystem:'Manual',tags:['Synthetic demo']},
+    ],
+    graphEdges:[
+      {id:'DEMO-E1',sourceId:'DEMO-ERP',targetId:'DEMO-IDP',edgeType:'depends-on',dimension:'technical',criticality:'Mission critical',sharedFailureDomain:'PRIMARY-CLOUD-REGION',reviewState:'Reviewed',reviewer:'Synthetic reviewer',reviewedAt:'2026-09-27T12:00:00.000Z',reviewNote:'Illustrative reviewed edge',evidenceRefs:['DEMO-EVD-1'],sourceSystem:'Reviewed cross-source'},
+      {id:'DEMO-E2',sourceId:'DEMO-CRM',targetId:'DEMO-IDP',edgeType:'depends-on',dimension:'technical',criticality:'High',sharedFailureDomain:'PRIMARY-CLOUD-REGION',sourceSystem:'Manual'},
+      {id:'DEMO-E3',sourceId:'DEMO-MSG',targetId:'DEMO-IDP',edgeType:'depends-on',dimension:'technical',criticality:'High',sharedFailureDomain:'PRIMARY-CLOUD-REGION',sourceSystem:'Manual'},
+      {id:'DEMO-E4',sourceId:'DEMO-OPS',targetId:'DEMO-ERP',edgeType:'uses-service',dimension:'human',sourceSystem:'Manual'},
+      {id:'DEMO-E5',sourceId:'DEMO-LEGAL',targetId:'DEMO-CRM',edgeType:'depends-on',dimension:'process',reviewState:'Reviewed',reviewer:'Synthetic reviewer',reviewedAt:'2026-09-27T12:00:00.000Z',reviewNote:'Illustrative BPMN-to-application relationship',evidenceRefs:['DEMO-EVD-2'],sourceSystem:'Reviewed cross-source'},
+      {id:'DEMO-E6',sourceId:'DEMO-OPS',targetId:'DEMO-MSG',edgeType:'uses-service',dimension:'human',sourceSystem:'Manual'},
+    ]
+  };
 }
 
 function html(){
@@ -199,7 +243,7 @@ function html(){
   const dims=DEPENDENCY_DIMENSIONS.map(x=>`<option>${esc(x)}</option>`).join('');
   return `
   <div class="card">
-    <span class="eyebrow">DEPENDENCY GRAPH / V0.5</span>
+    <span class="eyebrow">DEPENDENCY GRAPH / V0.6</span>
     <h3>Preserve essential action by making dependencies visible.</h3>
     <p class="quiet-note">This workspace combines existing modernization dependencies with manually recorded, BPMN-derived, and Microsoft Graph-derived structure. Imported structure is evidence, not operating truth. The application does not infer authority, process effectiveness, or organizational accountability from a graph.</p>
   </div>
@@ -208,6 +252,8 @@ function html(){
     <label>BPMN XML<input id="dg-bpmn-input" type="file" accept=".bpmn,.xml,application/xml,text/xml,application/bpmn+xml"></label>
     <label>Microsoft Graph org JSON<input id="dg-msgraph-input" type="file" accept=".json,application/json"></label>
     <button type="button" id="dg-export">Export analysis JSON</button>
+    <button type="button" class="secondary" id="dg-load-demo">Load synthetic dependency demo</button>
+    <button type="button" class="secondary" id="dg-fit-view">Fit graph to view</button>
     <button type="button" class="secondary" id="dg-reset">Clear graph enrichment</button>
   </div>
   <div class="card">
@@ -302,6 +348,7 @@ function html(){
   <div class="card"><h3>Dependency topology</h3>
     <p class="quiet-note">Diagnostic emphasis is derived from recorded Essential Actions, candidate constraining dependencies, reviewed cross-source relationships, and shared failure domains. It remains advisory.</p>
     <div class="depgraph-legend"><span>Thick border: Essential Action dependency</span><span>Dashed heavy border: candidate constraining dependency</span><span>Dotted border: shared failure-domain node</span><span>Heavy edge: reviewed cross-source relationship</span></div>
+    <div class="form-grid"><label>Node focus<select id="dg-node-focus"><option value="">All nodes</option></select></label></div>
     <div class="depgraph-svg-wrap"><svg id="dg-svg" class="depgraph-svg" viewBox="0 0 1100 520" role="img" aria-label="Dependency graph visualization"></svg></div>
     <h4>Essential Action dependency coverage</h4><div id="dg-essential-coverage"></div>
   </div>
@@ -313,6 +360,7 @@ function html(){
     <div class="card"><h3>Fragmentation candidates</h3><div id="dg-fragmentation"></div></div>
     <div class="card"><h3>Shared failure-domain candidates</h3><div id="dg-shared-failure"></div></div>
   </div>
+  <div class="card"><h3>Consulting findings summary</h3><p class="quiet-note">Review candidates derived from recorded structure; not final findings, risk ratings, or recommendations.</p><div id="dg-findings"></div></div>
   <div class="two-column-grid">
     <div class="card"><h3>Graph quality / unresolved structure</h3><div id="dg-issues"></div></div>
     <div class="card"><h3>Imported structure</h3><div id="dg-imports"></div></div>
@@ -358,12 +406,19 @@ function render(panel){
   panel.querySelector('#dg-fragmentation').innerHTML=analysis.fragmentationCandidates.length?`<ul>${analysis.fragmentationCandidates.map(x=>`<li><strong>${esc(x.action.label)}</strong> — ${x.action.dependencyNodeIds.length} recorded dependencies; status ${esc(x.status)}.</li>`).join('')}</ul>`:'<p class="quiet-note">No Essential Actions currently cross the fragmentation threshold (4 dependencies).</p>';
   panel.querySelector('#dg-shared-failure').innerHTML=analysis.sharedFailureDomainCandidates.length?`<ul>${analysis.sharedFailureDomainCandidates.map(x=>`<li><strong>${esc(x.domain)}</strong> — ${x.edgeIds.length} dependency edges, ${x.nodeIds.length} nodes${x.essentialActionIds.length?`, ${x.essentialActionIds.length} Essential Action(s)`:''}.<br><small>${esc(x.dimensions.join(', '))}</small></li>`).join('')}</ul>`:'<p class="quiet-note">No shared failure-domain candidates recorded. Populate shared failure domains only when supported by evidence.</p>';
   panel.querySelector('#dg-issues').innerHTML=analysis.issues.length?`<ul>${analysis.issues.slice(0,40).map(x=>`<li>${esc(x.message)}</li>`).join('')}</ul>`:'<p>No unresolved graph-edge structure detected.</p>';
+  panel.querySelector('#dg-findings').innerHTML=analysis.findingsSummary.length
+    ? `<table class="depgraph-table"><thead><tr><th>Candidate</th><th>Subject</th><th>Statement</th><th>Limitation</th></tr></thead><tbody>${analysis.findingsSummary.map(x=>`<tr><td><strong>${esc(x.type)}</strong><br><small>${esc(x.severity)}</small></td><td>${esc(x.subjectId)}</td><td>${esc(x.statement)}</td><td>${esc(x.limitation)}</td></tr>`).join('')}</tbody></table>`
+    : '<p class="quiet-note">No structural review candidates are currently derived from the recorded graph.</p>';
   panel.querySelector('#dg-essential-coverage').innerHTML=analysis.essentialDependencyCoverage.length
     ? `<table class="depgraph-table"><thead><tr><th>Continuity Anchor</th><th>Essential Action</th><th>Dependency</th><th>Mitigation recorded</th><th>Tolerance</th></tr></thead><tbody>${analysis.essentialDependencyCoverage.map(x=>`<tr><td>${esc(x.anchorLabel)}</td><td>${esc(x.actionLabel)}</td><td><strong>${esc(x.node?.label||x.nodeId)}</strong><br><small>${esc(x.node?.nodeType||'Missing node')}</small></td><td>${x.mitigated?'Yes':'No'}${x.fallbackNodeIds.length?`<br><small>Fallback: ${esc(x.fallbackNodeIds.join(', '))}</small>`:''}</td><td>${esc(x.toleranceMinutes??'Not recorded')}</td></tr>`).join('')}</tbody></table>`
     : '<p class="quiet-note">No Essential Action dependency coverage is recorded yet.</p>';
   renderSnapshotHistory(panel,data);
   panel.querySelector('#dg-imports').innerHTML=data.dependencyGraphImports.length?`<table class="depgraph-table"><thead><tr><th>Type</th><th>File</th><th>Imported</th><th>Unresolved</th></tr></thead><tbody>${data.dependencyGraphImports.map(x=>`<tr><td>${esc(x.type)}</td><td>${esc(x.fileName)}</td><td>${esc(x.importedAt)}</td><td>${esc(x.unresolved)}</td></tr>`).join('')}</tbody></table>`:'<p class="quiet-note">No BPMN or Microsoft Graph structure imported into the dependency graph yet.</p>';
-  renderSvg(panel.querySelector('#dg-svg'),graph,sourceFilter.value,analysis);
+  const focus=panel.querySelector('#dg-node-focus'); const priorFocus=focus.value;
+  focus.innerHTML='<option value="">All nodes</option>'+graph.nodes.map(n=>`<option value="${esc(n.id)}">${esc(n.label)}</option>`).join('');
+  if(graph.nodes.some(n=>n.id===priorFocus))focus.value=priorFocus;
+  focus.onchange=()=>renderSvg(panel.querySelector('#dg-svg'),graph,sourceFilter.value,analysis,focus.value);
+  renderSvg(panel.querySelector('#dg-svg'),graph,sourceFilter.value,analysis,focus.value);
 }
 
 function renderSnapshotHistory(panel,data){
@@ -404,10 +459,20 @@ function renderSnapshotComparison(panel){
     </tbody></table>`;
 }
 
-function renderSvg(svg,graph,sourceFilter='',analysis={}){
+function renderSvg(svg,graph,sourceFilter='',analysis={},focusNodeId=''){
   const provenanceSources=n=>[...new Set((n.provenance||[]).map(p=>p.sourceType).filter(Boolean))];
   const sourceMatch=n=>!sourceFilter || provenanceSources(n).includes(sourceFilter) || n.sourceSystem===sourceFilter;
-  const nodes=(graph.nodes||[]).filter(sourceMatch).slice(0,80);
+  const sourceNodes=(graph.nodes||[]).filter(sourceMatch);
+  let nodes=sourceNodes;
+  if(focusNodeId){
+    const neighborIds=new Set([focusNodeId]);
+    for(const e of graph.edges||[]){
+      if(e.sourceId===focusNodeId)neighborIds.add(e.targetId);
+      if(e.targetId===focusNodeId)neighborIds.add(e.sourceId);
+    }
+    nodes=sourceNodes.filter(n=>neighborIds.has(n.id));
+  }
+  nodes=nodes.slice(0,80);
   const visibleIds=new Set(nodes.map(n=>n.id));
   const edges=(graph.edges||[]).filter(e=>visibleIds.has(e.sourceId)&&visibleIds.has(e.targetId));
   const constrainingIds=new Set((analysis.constrainingDependencyCandidates||[]).map(x=>x.nodeId));

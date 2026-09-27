@@ -425,6 +425,53 @@ export function multiSourceNodes(graph={}) {
     .filter(x=>x.sources.length>1).sort((a,b)=>b.sources.length-a.sources.length || a.node.id.localeCompare(b.node.id));
 }
 
+
+export function dependencyFindingsSummary(graph={}, analysis={}) {
+  const concentration = analysis.concentrationCandidates || concentrationCandidates(graph);
+  const fragmentation = analysis.fragmentationCandidates || fragmentationCandidates(graph);
+  const constraining = analysis.constrainingDependencyCandidates || constrainingDependencyCandidates(graph);
+  const shared = analysis.sharedFailureDomainCandidates || sharedFailureDomainCandidates(graph);
+  const findings=[];
+
+  for(const item of constraining){
+    findings.push({
+      type:'CONSTRAINING_DEPENDENCY_CANDIDATE',
+      severity:'High review priority',
+      subjectId:item.nodeId,
+      statement:`Dependency ${item.nodeId} supports essential action(s) without a recorded fallback, buffer, or recovery path.`,
+      limitation:'Candidate only. Human validation of essentiality, tolerance, operating dependency, and mitigation is required.',
+    });
+  }
+  for(const item of concentration){
+    findings.push({
+      type:'DEPENDENCY_CONCENTRATION_CANDIDATE',
+      severity:'Review',
+      subjectId:item.nodeId,
+      statement:`${item.inbound} recorded dependencies converge on ${item.node?.label||item.nodeId}.`,
+      limitation:'Inbound degree is descriptive and does not by itself establish fragility or risk.',
+    });
+  }
+  for(const item of fragmentation){
+    findings.push({
+      type:'FRAGMENTATION_CANDIDATE',
+      severity:'Review',
+      subjectId:item.action.id,
+      statement:`Essential Action "${item.action.label}" depends on ${item.action.dependencyNodeIds.length} recorded nodes.`,
+      limitation:'Dependency count alone does not prove coordination failure; ownership, sequencing, and operating behavior require review.',
+    });
+  }
+  for(const item of shared){
+    findings.push({
+      type:'SHARED_FAILURE_DOMAIN_CANDIDATE',
+      severity:'Review',
+      subjectId:item.domain,
+      statement:`Shared failure domain "${item.domain}" is recorded across ${item.edgeIds.length} dependency edges.`,
+      limitation:'The recorded domain is evidence context only until common-cause failure semantics are validated.',
+    });
+  }
+  return findings.sort((a,b)=>a.type.localeCompare(b.type)||a.subjectId.localeCompare(b.subjectId));
+}
+
 export function analyzeDependencyGraph(workspace={}, options={}) {
   const graph=buildDependencyGraph(workspace);
   return {
@@ -440,6 +487,12 @@ export function analyzeDependencyGraph(workspace={}, options={}) {
     concentrationCandidates:concentrationCandidates(graph,options),
     fragmentationCandidates:fragmentationCandidates(graph,options),
     constrainingDependencyCandidates:constrainingDependencyCandidates(graph),
+    findingsSummary:dependencyFindingsSummary(graph,{
+      concentrationCandidates:concentrationCandidates(graph,options),
+      fragmentationCandidates:fragmentationCandidates(graph,options),
+      constrainingDependencyCandidates:constrainingDependencyCandidates(graph),
+      sharedFailureDomainCandidates:sharedFailureDomainCandidates(graph),
+    }),
     authorityState:'Advisory dependency analysis only — human validation required',
   };
 }
