@@ -29,3 +29,14 @@ test('dependency graph UI exposes provenance-aware merge and shared failure-doma
   assert.match(src,/Shared failure-domain candidates/);
   assert.match(src,/shared-domain/);
 });
+
+
+test('dependency graph UI supports reviewed cross-source edges and diagnostic emphasis',()=>{
+  const src=fs.readFileSync(new URL('./dependency-graph-ui.mjs',import.meta.url),'utf8');
+  assert.match(src,/Add reviewed cross-source relationship/);
+  assert.match(src,/dg-reviewed-cross-source-form/);
+  assert.match(src,/reviewState='Reviewed'/);
+  assert.match(src,/Essential Action dependency coverage/);
+  assert.match(src,/constraining-candidate/);
+  assert.match(src,/reviewed-cross-source/);
+});

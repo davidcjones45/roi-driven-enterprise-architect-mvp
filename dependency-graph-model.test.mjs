@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {
   buildDependencyGraph, analyzeDependencyGraph, dependencyAccumulationDelta,
   normalizeContinuityAnchor, normalizeEssentialAction, graphSourceSummary,
-  crossSourceConnections, sharedFailureDomainCandidates, multiSourceNodes
+  crossSourceConnections, reviewedCrossSourceConnections, essentialDependencyCoverage,
+  sharedFailureDomainCandidates, multiSourceNodes
 } from './dependency-graph-model.mjs';
 import { bpmnImportToDependencyGraph } from './bpmn-dependency-adapter.mjs';
 import { microsoftGraphOrgToDependencyGraph } from './ms-graph-org-adapter.mjs';
@@ -171,4 +172,38 @@ test('identifies recorded shared failure domains affecting multiple dependencies
   assert.equal(rows[0].domain,'Enterprise identity');
   assert.equal(rows[0].edgeIds.length,2);
   assert.equal(rows[0].essentialActionIds.length,2);
+});
+
+
+test('distinguishes explicitly reviewed cross-source relationships from merely recorded cross-source edges',()=>{
+  const graph=buildDependencyGraph({
+    graphNodes:[
+      {id:'BPMN-T1',label:'Review claim',nodeType:'activity',sourceSystem:'BPMN'},
+      {id:'MSUSER-1',label:'Analyst',nodeType:'person',sourceSystem:'Microsoft Graph'},
+    ],
+    graphEdges:[
+      {id:'E-UNREVIEWED',sourceId:'MSUSER-1',targetId:'BPMN-T1',edgeType:'performs',dimension:'human',sourceSystem:'Manual'},
+      {id:'E-REVIEWED',sourceId:'BPMN-T1',targetId:'MSUSER-1',edgeType:'depends-on',dimension:'human',sourceSystem:'Reviewed cross-source',
+       reviewState:'Reviewed',reviewer:'Consultant',reviewedAt:'2026-09-27T12:00:00.000Z',reviewNote:'Interview-confirmed',evidenceRefs:['EVD-1']},
+    ]
+  });
+  assert.equal(crossSourceConnections(graph).length,2);
+  const reviewed=reviewedCrossSourceConnections(graph);
+  assert.equal(reviewed.length,1);
+  assert.equal(reviewed[0].edgeId,'E-REVIEWED');
+  assert.equal(reviewed[0].reviewer,'Consultant');
+});
+
+test('ties dependency nodes to Essential Actions and Continuity Anchors for diagnostic emphasis',()=>{
+  const graph=buildDependencyGraph({
+    graphNodes:[{id:'IDP',label:'Identity provider',nodeType:'external-service'}],
+    continuityAnchors:[{id:'CA-1',label:'Customer access'}],
+    essentialActions:[{id:'EA-1',label:'Authenticate customer',anchorId:'CA-1',dependencyNodeIds:['IDP'],toleranceMinutes:5}]
+  });
+  const rows=essentialDependencyCoverage(graph);
+  assert.equal(rows.length,1);
+  assert.equal(rows[0].nodeId,'IDP');
+  assert.equal(rows[0].anchorLabel,'Customer access');
+  assert.equal(rows[0].actionLabel,'Authenticate customer');
+  assert.equal(rows[0].mitigated,false);
 });

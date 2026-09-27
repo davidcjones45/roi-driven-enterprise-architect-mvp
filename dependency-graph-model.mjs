@@ -16,6 +16,7 @@ export const DEPENDENCY_DIMENSIONS = [
 ];
 
 export const DEPENDENCY_STATES = ['Resolved','Partially resolved','Unresolved'];
+export const REVIEW_STATES = ['Unreviewed','Reviewed','Rejected'];
 export const ESSENTIALITY_LEVELS = ['Unknown','Supporting','Important','Essential'];
 
 const list = value => Array.isArray(value)
@@ -87,6 +88,10 @@ export function normalizeGraphEdge(raw={}) {
     provenance: normalizeProvenance(raw,{sourceType:raw.sourceSystem||'Manual',sourceReference:raw.sourceReference||''}),
     evidenceRefs: unique(list(raw.evidenceRefs)),
     sharedFailureDomain: raw.sharedFailureDomain || '',
+    reviewState: REVIEW_STATES.includes(raw.reviewState) ? raw.reviewState : 'Unreviewed',
+    reviewer: raw.reviewer || '',
+    reviewedAt: raw.reviewedAt || '',
+    reviewNote: raw.reviewNote || '',
     notes: raw.notes || '',
   };
 }
@@ -354,6 +359,48 @@ export function crossSourceConnections(graph={}) {
   return results;
 }
 
+
+export function reviewedCrossSourceConnections(graph={}) {
+  const cross=new Map(crossSourceConnections(graph).map(x=>[x.edgeId,x]));
+  return (graph.edges||[]).map(normalizeGraphEdge)
+    .filter(edge=>cross.has(edge.id) && edge.reviewState==='Reviewed')
+    .map(edge=>({
+      ...cross.get(edge.id),
+      reviewState:edge.reviewState,
+      reviewer:edge.reviewer,
+      reviewedAt:edge.reviewedAt,
+      reviewNote:edge.reviewNote,
+      evidenceRefs:edge.evidenceRefs,
+      sharedFailureDomain:edge.sharedFailureDomain,
+      status:'Explicitly reviewed cross-source relationship',
+    }))
+    .sort((a,b)=>a.edgeId.localeCompare(b.edgeId));
+}
+
+export function essentialDependencyCoverage(graph={}) {
+  const nodes=new Map((graph.nodes||[]).map(n=>[n.id,n]));
+  const anchors=new Map((graph.continuityAnchors||[]).map(a=>[a.id,a]));
+  const rows=[];
+  for(const actionRaw of graph.essentialActions||[]){
+    const action=normalizeEssentialAction(actionRaw);
+    const anchor=anchors.get(action.anchorId)||null;
+    for(const nodeId of action.dependencyNodeIds){
+      rows.push({
+        nodeId,
+        node:nodes.get(nodeId)||null,
+        actionId:action.id,
+        actionLabel:action.label,
+        anchorId:action.anchorId,
+        anchorLabel:anchor?.label||action.anchorId||'Unlinked',
+        toleranceMinutes:action.toleranceMinutes,
+        mitigated:Boolean(action.fallbackNodeIds.length || action.bufferDescription || action.recoveryDescription),
+        fallbackNodeIds:[...action.fallbackNodeIds],
+      });
+    }
+  }
+  return rows.sort((a,b)=>a.anchorLabel.localeCompare(b.anchorLabel)||a.actionLabel.localeCompare(b.actionLabel)||a.nodeId.localeCompare(b.nodeId));
+}
+
 export function sharedFailureDomainCandidates(graph={}) {
   const groups=new Map();
   for(const raw of graph.edges||[]){
@@ -386,7 +433,9 @@ export function analyzeDependencyGraph(workspace={}, options={}) {
     degrees:dependencyDegree(graph),
     sourceSummary:graphSourceSummary(graph),
     crossSourceConnections:crossSourceConnections(graph),
+    reviewedCrossSourceConnections:reviewedCrossSourceConnections(graph),
     multiSourceNodes:multiSourceNodes(graph),
+    essentialDependencyCoverage:essentialDependencyCoverage(graph),
     sharedFailureDomainCandidates:sharedFailureDomainCandidates(graph),
     concentrationCandidates:concentrationCandidates(graph,options),
     fragmentationCandidates:fragmentationCandidates(graph,options),
@@ -412,7 +461,9 @@ function snapshotAnalysis(graph, options={}) {
     degrees:dependencyDegree(graph),
     sourceSummary:graphSourceSummary(graph),
     crossSourceConnections:crossSourceConnections(graph),
+    reviewedCrossSourceConnections:reviewedCrossSourceConnections(graph),
     multiSourceNodes:multiSourceNodes(graph),
+    essentialDependencyCoverage:essentialDependencyCoverage(graph),
     sharedFailureDomainCandidates:sharedFailureDomainCandidates(graph),
     concentrationCandidates:concentrationCandidates(graph,options),
     fragmentationCandidates:fragmentationCandidates(graph,options),
