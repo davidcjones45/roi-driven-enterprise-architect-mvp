@@ -16,3 +16,10 @@ test('installed app bridge accepts dependency analysis evidence promotion event'
   assert.match(src,/Dependency analysis added to the local Consulting evidence register/);
   assert.match(src,/engagementEvidenceErrors/);
 });
+
+
+test('installed dependency evidence bridge appends returned evidence record to active engagement',()=>{
+  const src=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+  assert.match(src,/record\.engagement_id===engagement\.engagement_id/);
+  assert.match(src,/evidence_register:\[\.\.\.\(record\.evidence_register\|\|\[\]\),saved\]/);
+});
