@@ -69,3 +69,12 @@ test('dependency graph UI supports mitigation scenario preview and validated app
   assert.match(src,/Structural scenario preview/);
   assert.match(src,/does not prove feasibility, implementation, control effectiveness, or reduced risk/i);
 });
+
+
+test('dependency graph UI captures mitigation lifecycle and transition history',()=>{
+  const src=fs.readFileSync(new URL('./dependency-graph-ui.mjs',import.meta.url),'utf8');
+  assert.match(src,/applyValidatedMitigationWithSnapshots/);
+  assert.match(src,/Mitigation transition history/);
+  assert.match(src,/Before\/after snapshots were captured automatically/);
+  assert.match(src,/TRANSFERRED_OR_RESHAPED|transition\.classification/);
+});

@@ -4,7 +4,7 @@ import {
   buildDependencyGraph, analyzeDependencyGraph, dependencyAccumulationDelta,
   normalizeContinuityAnchor, normalizeEssentialAction, graphSourceSummary,
   crossSourceConnections, reviewedCrossSourceConnections, essentialDependencyCoverage,
-  sharedFailureDomainCandidates, multiSourceNodes, dependencyFindingsSummary, upsertDependencyFindingReview, dependencyFindingToConsultingRecord, normalizeDependencyMitigation, previewDependencyMitigation, applyValidatedDependencyMitigation
+  sharedFailureDomainCandidates, multiSourceNodes, dependencyFindingsSummary, upsertDependencyFindingReview, dependencyFindingToConsultingRecord, normalizeDependencyMitigation, previewDependencyMitigation, applyValidatedDependencyMitigation, classifyMitigationTransition, applyValidatedMitigationWithSnapshots
 } from './dependency-graph-model.mjs';
 import { bpmnImportToDependencyGraph } from './bpmn-dependency-adapter.mjs';
 import { microsoftGraphOrgToDependencyGraph } from './ms-graph-org-adapter.mjs';
@@ -297,4 +297,38 @@ test('applies only validated mitigation to working graph',()=>{
   });
   assert.deepEqual(next.essentialActions[0].fallbackNodeIds,['ALT']);
   assert.equal(next.dependencyMitigations.length,1);
+});
+
+
+test('captures automatic before and after snapshots when applying a validated mitigation',()=>{
+  const workspace={
+    graphNodes:[
+      {id:'IDP',label:'Identity provider',nodeType:'external-service'},
+      {id:'ALT',label:'Alternate identity provider',nodeType:'external-service'},
+    ],
+    continuityAnchors:[{id:'CA',label:'Customer access'}],
+    essentialActions:[{id:'EA',label:'Authenticate',anchorId:'CA',dependencyNodeIds:['IDP']}],
+    dependencyGraphSnapshots:[]
+  };
+  const result=applyValidatedMitigationWithSnapshots(workspace,{
+    id:'MIT-1',label:'Alternate IDP fallback',targetType:'Essential Action',targetId:'EA',
+    type:'Fallback',status:'Validated',owner:'CIO',description:'Use alternate identity provider',
+    replacementNodeId:'ALT',evidenceRefs:['EVD-1'],validatedBy:'Architect',validatedAt:'2026-09-27T19:00:00.000Z'
+  },{
+    appliedAt:'2026-09-27T19:05:00.000Z',appliedBy:'Architect',analysisOptions:{minimumInbound:3,minimumDependencies:4}
+  });
+  assert.equal(result.workspace.dependencyGraphSnapshots.length,2);
+  assert.equal(result.workspace.dependencyMitigationLifecycle.length,1);
+  assert.equal(result.transition.classification,'RELIEVED');
+  assert.deepEqual(result.transition.relievedConstrainingNodeIds,['IDP']);
+  assert.match(result.transition.interpretation,/does not establish/i);
+});
+
+test('classifies mitigation change as transferred or reshaped when one candidate is relieved and another introduced',()=>{
+  const before={constrainingDependencyCandidates:[{nodeId:'A'}],concentrationCandidates:[]};
+  const after={constrainingDependencyCandidates:[{nodeId:'B'}],concentrationCandidates:[]};
+  const result=classifyMitigationTransition(before,after);
+  assert.equal(result.classification,'TRANSFERRED_OR_RESHAPED');
+  assert.deepEqual(result.relievedConstrainingNodeIds,['A']);
+  assert.deepEqual(result.introducedConstrainingNodeIds,['B']);
 });
