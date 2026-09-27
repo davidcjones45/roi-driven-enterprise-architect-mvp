@@ -4,7 +4,7 @@ import {
   buildDependencyGraph, analyzeDependencyGraph, dependencyAccumulationDelta,
   normalizeContinuityAnchor, normalizeEssentialAction, graphSourceSummary,
   crossSourceConnections, reviewedCrossSourceConnections, essentialDependencyCoverage,
-  sharedFailureDomainCandidates, multiSourceNodes, dependencyFindingsSummary
+  sharedFailureDomainCandidates, multiSourceNodes, dependencyFindingsSummary, upsertDependencyFindingReview, dependencyFindingToConsultingRecord
 } from './dependency-graph-model.mjs';
 import { bpmnImportToDependencyGraph } from './bpmn-dependency-adapter.mjs';
 import { microsoftGraphOrgToDependencyGraph } from './ms-graph-org-adapter.mjs';
@@ -228,4 +228,31 @@ test('derives qualified consulting review candidates rather than final findings'
   assert.ok(analysis.findingsSummary.some(x=>x.type==='CONSTRAINING_DEPENDENCY_CANDIDATE'));
   assert.ok(analysis.findingsSummary.some(x=>x.type==='DEPENDENCY_CONCENTRATION_CANDIDATE'));
   assert.ok(analysis.findingsSummary.every(x=>/Candidate only|does not|require|until/i.test(x.limitation)));
+});
+
+
+test('records candidate disposition and converts accepted finding to consulting record',()=>{
+  const candidate={
+    type:'CONSTRAINING_DEPENDENCY_CANDIDATE',
+    subjectId:'IDP',
+    statement:'Identity dependency may constrain authentication.',
+    limitation:'Candidate only.'
+  };
+  const reviews=upsertDependencyFindingReview([],candidate,{
+    disposition:'Accept',reviewer:'Consultant',reviewedAt:'2026-09-27T18:00:00.000Z',
+    owner:'CIO',requiredAction:'Validate fallback and tolerance.',severity:'High',decisionImpact:'Material',note:'Supported by reviewed dependency evidence.'
+  });
+  assert.equal(reviews.length,1);
+  assert.equal(reviews[0].disposition,'Accept');
+  const finding=dependencyFindingToConsultingRecord(candidate,reviews[0]);
+  assert.equal(finding.domain,'Architecture');
+  assert.equal(finding.severity,'High');
+  assert.equal(finding.owner,'CIO');
+  assert.match(finding.supporting_evidence,/CONSTRAINING_DEPENDENCY_CANDIDATE/);
+});
+
+test('rejects promotion when candidate disposition is not accepted or revised',()=>{
+  const candidate={type:'FRAGMENTATION_CANDIDATE',subjectId:'EA-1',statement:'Candidate',limitation:'Review required'};
+  const review=upsertDependencyFindingReview([],candidate,{disposition:'Reject',reviewer:'Consultant',owner:'COO',requiredAction:'None',note:'Rejected'})[0];
+  assert.throws(()=>dependencyFindingToConsultingRecord(candidate,review),/accepted or revised/i);
 });

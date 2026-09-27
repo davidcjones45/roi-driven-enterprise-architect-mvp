@@ -426,6 +426,78 @@ export function multiSourceNodes(graph={}) {
 }
 
 
+
+export const DEPENDENCY_FINDING_DISPOSITIONS = ['Pending review','Accept','Revise','Reject','Defer'];
+
+export function dependencyFindingCandidateId(finding={}) {
+  return stableId(`${finding.type||'candidate'}-${finding.subjectId||'unknown'}`,'DGF');
+}
+
+export function normalizeDependencyFindingReview(raw={}) {
+  const disposition=DEPENDENCY_FINDING_DISPOSITIONS.includes(raw.disposition) ? raw.disposition : 'Pending review';
+  return {
+    id: raw.id || dependencyFindingCandidateId(raw),
+    candidateId: raw.candidateId || raw.id || '',
+    disposition,
+    reviewer: String(raw.reviewer||'').trim(),
+    reviewedAt: String(raw.reviewedAt||'').trim(),
+    note: String(raw.note||'').trim(),
+    revisedStatement: String(raw.revisedStatement||'').trim(),
+    owner: String(raw.owner||'').trim(),
+    requiredAction: String(raw.requiredAction||'').trim(),
+    decisionImpact: ['Informational','Material','Decision-blocking'].includes(raw.decisionImpact) ? raw.decisionImpact : 'Material',
+    severity: ['Observation','Low','Moderate','High','Decision-critical'].includes(raw.severity) ? raw.severity : 'Moderate',
+  };
+}
+
+export function upsertDependencyFindingReview(reviews=[], candidate={}, rawReview={}) {
+  const candidateId=dependencyFindingCandidateId(candidate);
+  const review=normalizeDependencyFindingReview({
+    ...rawReview,
+    id:rawReview.id||candidateId,
+    candidateId,
+  });
+  const next=(reviews||[]).filter(item=>(item.candidateId||item.id)!==candidateId);
+  next.push(review);
+  return next.map(normalizeDependencyFindingReview)
+    .sort((a,b)=>(a.candidateId||a.id).localeCompare(b.candidateId||b.id));
+}
+
+export function dependencyFindingToConsultingRecord(candidate={}, reviewRaw={}) {
+  const review=normalizeDependencyFindingReview(reviewRaw);
+  if(!['Accept','Revise'].includes(review.disposition)) {
+    throw new TypeError('Only accepted or revised dependency finding candidates can be promoted.');
+  }
+  if(!review.reviewer || !review.owner || !review.requiredAction) {
+    throw new TypeError('Reviewer, owner, and required action are required before promotion.');
+  }
+  const statement=review.disposition==='Revise' && review.revisedStatement
+    ? review.revisedStatement
+    : candidate.statement || '';
+  return {
+    finding_id:'',
+    title:`Dependency review: ${candidate.subjectId||'Unspecified subject'}`,
+    domain:'Architecture',
+    finding_statement:statement,
+    severity:review.severity,
+    status:'Open',
+    supporting_evidence:[
+      `Dependency candidate: ${dependencyFindingCandidateId(candidate)}`,
+      `Candidate type: ${candidate.type||'Unknown'}`,
+      `Subject: ${candidate.subjectId||'Unknown'}`,
+      candidate.limitation ? `Original limitation: ${candidate.limitation}` : '',
+      review.note ? `Reviewer note: ${review.note}` : '',
+    ].filter(Boolean).join(' | '),
+    contradictory_evidence:'',
+    decision_impact:review.decisionImpact,
+    owner:review.owner,
+    required_action:review.requiredAction,
+    due_date:'',
+    resolution:'',
+    recorded_at:review.reviewedAt||new Date().toISOString(),
+  };
+}
+
 export function dependencyFindingsSummary(graph={}, analysis={}) {
   const concentration = analysis.concentrationCandidates || concentrationCandidates(graph);
   const fragmentation = analysis.fragmentationCandidates || fragmentationCandidates(graph);
@@ -469,7 +541,8 @@ export function dependencyFindingsSummary(graph={}, analysis={}) {
       limitation:'The recorded domain is evidence context only until common-cause failure semantics are validated.',
     });
   }
-  return findings.sort((a,b)=>a.type.localeCompare(b.type)||a.subjectId.localeCompare(b.subjectId));
+  return findings.map(item=>({...item,candidateId:dependencyFindingCandidateId(item)}))
+    .sort((a,b)=>a.type.localeCompare(b.type)||a.subjectId.localeCompare(b.subjectId));
 }
 
 export function analyzeDependencyGraph(workspace={}, options={}) {

@@ -49,3 +49,13 @@ test('dependency graph UI includes demo, node focus, and candidate findings summ
   assert.match(src,/Consulting findings summary/);
   assert.match(src,/No structural review candidates/);
 });
+
+
+test('dependency graph UI supports candidate disposition and consulting handoff',()=>{
+  const src=fs.readFileSync(new URL('./dependency-graph-ui.mjs',import.meta.url),'utf8');
+  assert.match(src,/Candidate review & handoff/);
+  assert.match(src,/Record disposition/);
+  assert.match(src,/Send accepted\/revised finding to Consulting register/);
+  assert.match(src,/roi-ea-dependency-finding-promote/);
+  assert.match(src,/AIHS-DEPENDENCY-FINDING-HANDOFF-V0\.1/);
+});
