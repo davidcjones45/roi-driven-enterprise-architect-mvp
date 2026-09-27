@@ -10,6 +10,7 @@ import {
 import { parseAndValidateBpmn } from './bpmn-import-pipeline.mjs';
 import { bpmnImportToDependencyGraph } from './bpmn-dependency-adapter.mjs';
 import { microsoftGraphOrgToDependencyGraph } from './ms-graph-org-adapter.mjs';
+import { dependencyGraphCifProjection, dependencyAnalysisEngagementEvidence } from './dependency-cif-bridge.mjs';
 
 const KEY='roi-ea-application-modernization-m1-v0.1';
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -161,9 +162,9 @@ function mount(){
 
   panel.querySelector('#dg-export').addEventListener('click',()=>{
     const data=ensure(read()); const analysis=analyzeDependencyGraph(data,{minimumInbound:3,minimumDependencies:4});
-    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.9',...analysis};
+    const payload={exportedAt:new Date().toISOString(),profile:'AIHS-DEPENDENCY-GRAPH-V0.10',...analysis};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.9.json'; a.click(); URL.revokeObjectURL(a.href);
+    a.href=URL.createObjectURL(blob); a.download='dependency-graph-v0.10.json'; a.click(); URL.revokeObjectURL(a.href);
   });
 
   panel.querySelector('#dg-snapshot-create').addEventListener('click',()=>{
@@ -282,6 +283,19 @@ function mount(){
     }catch(error){alert(error.message);}
   });
 
+
+  panel.querySelector('#dg-export-cif').addEventListener('click',()=>{
+    const data=ensure(read());
+    download('dependency-cif-handoff-v0.1.json',dependencyGraphCifProjection(data));
+  });
+
+  panel.querySelector('#dg-send-consulting-evidence').addEventListener('click',()=>{
+    const data=ensure(read());
+    const reviewer=panel.querySelector('#dg-cif-reviewer').value.trim();
+    const evidence=dependencyAnalysisEngagementEvidence(data,{reviewer,observedAt:new Date().toISOString()});
+    window.dispatchEvent(new CustomEvent('roi-ea-dependency-evidence-promote',{detail:{evidence,cifProjection:dependencyGraphCifProjection(data)}}));
+  });
+
   render(panel); return true;
 }
 
@@ -323,7 +337,7 @@ function html(){
   const dims=DEPENDENCY_DIMENSIONS.map(x=>`<option>${esc(x)}</option>`).join('');
   return `
   <div class="card">
-    <span class="eyebrow">DEPENDENCY GRAPH / V0.9</span>
+    <span class="eyebrow">DEPENDENCY GRAPH / V0.10</span>
     <h3>Preserve essential action by making dependencies visible.</h3>
     <p class="quiet-note">This workspace combines existing modernization dependencies with manually recorded, BPMN-derived, and Microsoft Graph-derived structure. Imported structure is evidence, not operating truth. The application does not infer authority, process effectiveness, or organizational accountability from a graph.</p>
   </div>
@@ -483,6 +497,17 @@ function html(){
     <div id="dg-mitigation-records"></div>
     <div id="dg-mitigation-lifecycle"></div>
   </div>
+  <div class="card"><h3>CIF alignment & consulting handoff</h3>
+    <p class="quiet-note">Project dependency analysis into CIF v0.4.1 semantics without duplicating CIF objects. Continuity Anchors and mitigations remain local specializations unless a qualified human explicitly classifies them.</p>
+    <div id="dg-cif-summary"></div>
+    <div class="form-grid">
+      <label>Reviewer for consulting evidence<input id="dg-cif-reviewer" placeholder="Named consultant"></label>
+    </div>
+    <div class="form-actions">
+      <button type="button" id="dg-export-cif">Export CIF-aligned handoff JSON</button>
+      <button type="button" class="secondary" id="dg-send-consulting-evidence">Send dependency analysis to Consulting evidence register</button>
+    </div>
+  </div>
   <div class="two-column-grid">
     <div class="card"><h3>Graph quality / unresolved structure</h3><div id="dg-issues"></div></div>
     <div class="card"><h3>Imported structure</h3><div id="dg-imports"></div></div>
@@ -582,6 +607,17 @@ function render(panel){
   let mitigationPreview=null;
   try{mitigationPreview=panel.dataset.mitigationPreview?JSON.parse(panel.dataset.mitigationPreview):null;}catch{}
   renderMitigationPreview(panel,mitigationPreview);
+
+
+  const cifProjection=dependencyGraphCifProjection(data);
+  panel.querySelector('#dg-cif-summary').innerHTML=`<div class="depgraph-grid">
+    <div><span>CIF version</span><strong>${esc(cifProjection.cifFrameworkVersion)}</strong></div>
+    <div><span>Dependency candidates</span><strong>${cifProjection.summary.dependencyCandidates}</strong></div>
+    <div><span>Conformant candidates</span><strong>${cifProjection.summary.dependencyPass}</strong></div>
+    <div><span>Insufficient evidence</span><strong>${cifProjection.summary.dependencyInsufficient}</strong></div>
+    <div><span>Failed mappings</span><strong>${cifProjection.summary.dependencyFail}</strong></div>
+    <div><span>Human classification required</span><strong>${cifProjection.summary.unresolvedNodeMappings + cifProjection.continuityAnchors.length + cifProjection.mitigations.length}</strong></div>
+  </div><p class="quiet-note">${esc(cifProjection.localAuthorityBoundary)}</p>`;
 
   renderSnapshotHistory(panel,data);
   panel.querySelector('#dg-imports').innerHTML=data.dependencyGraphImports.length?`<table class="depgraph-table"><thead><tr><th>Type</th><th>File</th><th>Imported</th><th>Unresolved</th></tr></thead><tbody>${data.dependencyGraphImports.map(x=>`<tr><td>${esc(x.type)}</td><td>${esc(x.fileName)}</td><td>${esc(x.importedAt)}</td><td>${esc(x.unresolved)}</td></tr>`).join('')}</tbody></table>`:'<p class="quiet-note">No BPMN or Microsoft Graph structure imported into the dependency graph yet.</p>';

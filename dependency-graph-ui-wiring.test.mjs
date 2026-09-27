@@ -78,3 +78,12 @@ test('dependency graph UI captures mitigation lifecycle and transition history',
   assert.match(src,/Before\/after snapshots were captured automatically/);
   assert.match(src,/TRANSFERRED_OR_RESHAPED|transition\.classification/);
 });
+
+
+test('dependency graph UI exposes CIF alignment and consulting evidence handoff',()=>{
+  const src=fs.readFileSync(new URL('./dependency-graph-ui.mjs',import.meta.url),'utf8');
+  assert.match(src,/CIF alignment & consulting handoff/);
+  assert.match(src,/Export CIF-aligned handoff JSON/);
+  assert.match(src,/roi-ea-dependency-evidence-promote/);
+  assert.match(src,/dependencyAnalysisEngagementEvidence/);
+});

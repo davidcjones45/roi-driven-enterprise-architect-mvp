@@ -547,6 +547,29 @@ import { createOperatingCycleShellController } from './roi-ea-operating-cycle-ui
   }
   window.addEventListener('roi-ea-dependency-finding-promote',promoteDependencyFindingToConsulting);
 
+  async function promoteDependencyEvidenceToConsulting(event){
+    const evidence=normalizeEngagementEvidence(event?.detail?.evidence||{});
+    if(!consultingMode){
+      toast('Consulting evidence handoff requires local consulting mode; export the CIF-aligned handoff JSON instead.');
+      return;
+    }
+    const engagement=currentEngagement();
+    if(!engagement){
+      toast('Open a local consulting engagement before promoting dependency analysis evidence.');
+      return;
+    }
+    const errors=engagementEvidenceErrors(evidence);
+    if(errors.length){toast(errors.join(' '));return;}
+    try{
+      const saved=await localEngagementRequest(`/api/engagements/${encodeURIComponent(engagement.engagement_id)}/evidence`,{method:'POST',body:JSON.stringify(evidence)});
+      engagements=engagements.map(record=>record.engagement_id===saved.engagement_id?saved:record);
+      renderEngagementEvidence();
+      renderEngagements();
+      toast('Dependency analysis added to the local Consulting evidence register.');
+    }catch(error){toast(error.message);}
+  }
+  window.addEventListener('roi-ea-dependency-evidence-promote',promoteDependencyEvidenceToConsulting);
+
   wireForms(); wireEvidence(); wireInventory(); wireComplianceCost(); wireRegulatory(); wireAuthorityViews(); wireFederated(); wireWorkspaceNavigation(); wireGlobal(); wireDemoPortfolio(); wireMortgageDemo(); wireGuidedDemo(); wireEngagements(); wireDiscovery(); operatingCycleShell = createOperatingCycleShellController({ root:document, navigate:view=>show(view) }); operatingCycleShell.setView('overview'); renderAll(); uxSafety.hydrateDrafts();
   createBpmnReviewController({getWorkspace: () => data.feoa,
     setWorkspace: (workspace) => { data.feoa = workspace; persist(); },
