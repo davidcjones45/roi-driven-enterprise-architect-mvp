@@ -17,6 +17,14 @@ test('continuity assurance UI exposes core continuity and nonhierarchical analyt
   assert.match(src,/Constraining dependency validation/);
 });
 
+test('Reliance Claim Essential Action selector uses dependency-architecture Essential Actions and has an explicit empty state',()=>{
+  assert.match(src,/data\.essentialActions/);
+  assert.match(src,/Select Essential Action/);
+  assert.match(src,/No Essential Actions recorded/);
+  assert.match(src,/Manage Essential Actions/);
+  assert.match(src,/data-mod-tab="dependency-graph"/);
+});
+
 test('continuity assurance UI exposes outcome, reassessment, successor, and optional human-centered views',()=>{
   assert.match(src,/Intervention \/ consequence \/ outcome \/ residual exposure/);
   assert.match(src,/Reassessment queue/);

@@ -27,7 +27,8 @@ function html(){return `
     <form class="card form-grid" id="ca-reliance-form">
       <div class="full"><span class="eyebrow">RELIANCE CLAIM</span><p class="quiet-note">Record what is currently justified as relied upon for an Essential Action, within explicit scope and boundary. A dependency alone never makes this SUPPORTED.</p></div>
       <label>Relying actor/reference<input name="relyingActorRef" required></label>
-      <label>Essential Action<select name="essentialActionRef" id="ca-action-select" required></select></label>
+      <label>Essential Action<select name="essentialActionRef" id="ca-action-select" required></select><small id="ca-action-hint" class="quiet-note"></small></label>
+      <div class="full"><button type="button" class="secondary" id="ca-manage-actions">Manage Essential Actions</button></div>
       <label class="full">Reliance object references<input name="relianceObjectRefs" placeholder="service; role; resource"></label>
       <label class="full">Dependency references<input name="dependencyRefs" placeholder="dependency edge IDs"></label>
       <label class="full">Evidence references<input name="evidenceRefs" placeholder="evidence IDs"></label>
@@ -61,7 +62,20 @@ function table(headers,rows){if(!rows.length)return '<p class="quiet-note">No re
 function render(panel){
   const data=read(),summary=continuityAssuranceSummary(data);
   panel.querySelector('#ca-summary').innerHTML=[['Reliance Claims',summary.relianceClaims],['Unqualified supported',summary.supported],['Qualified',summary.qualified],['Unresolved / suspended',summary.unresolved],['Validated constraints',summary.validatedConstraints],['Open reassessments',summary.reassessmentOpen],['Unresolved evidence conflicts',summary.unresolvedEvidenceConflicts]].map(([a,b])=>`<div class="depgraph-metric"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join('');
-  const actionSelect=panel.querySelector('#ca-action-select');const prior=actionSelect.value;actionSelect.innerHTML='<option value="">Select Essential Action</option>'+(data.essentialActions||[]).map(a=>`<option value="${esc(a.id)}">${esc(a.label||a.id)}</option>`).join('');if([...actionSelect.options].some(o=>o.value===prior))actionSelect.value=prior;
+  const actionSelect=panel.querySelector('#ca-action-select');
+  const actionHint=panel.querySelector('#ca-action-hint');
+  const actions=Array.isArray(data.essentialActions)?data.essentialActions:[];
+  const prior=actionSelect.value;
+  if(actions.length){
+    actionSelect.disabled=false;
+    actionSelect.innerHTML='<option value="">Select Essential Action</option>'+actions.map(a=>`<option value="${esc(a.id)}">${esc(a.label||a.name||a.id)}</option>`).join('');
+    actionHint.textContent=`${actions.length} Essential Action${actions.length===1?'':'s'} available from the dependency architecture.`;
+    if([...actionSelect.options].some(o=>o.value===prior))actionSelect.value=prior;
+  }else{
+    actionSelect.disabled=true;
+    actionSelect.innerHTML='<option value="">No Essential Actions recorded</option>';
+    actionHint.textContent='Create an Essential Action in the Dependency graph view before recording a Reliance Claim.';
+  }
 
   const claims=(data.relianceClaims||[]).map(c=>evaluateRelianceClaim(c,data));
   panel.querySelector('#ca-reliance-table').innerHTML=table(['Essential Action','Reliance','Evidence state','Status','Boundary / qualification'],claims.map(x=>[
@@ -100,6 +114,11 @@ function mount(){
   const panel=document.createElement('div');panel.dataset.modPanel='continuity-assurance';panel.hidden=true;panel.innerHTML=html();(dep||decision).insertAdjacentElement('afterend',panel);
   btn.addEventListener('click',()=>{root.querySelectorAll('[data-mod-panel]').forEach(p=>p.hidden=p.dataset.modPanel!=='continuity-assurance');root.querySelectorAll('[data-mod-tab]').forEach(b=>b.classList.toggle('active',b===btn));render(panel);});
   panel.querySelector('#ca-refresh').addEventListener('click',()=>render(panel));
+  panel.querySelector('#ca-manage-actions').addEventListener('click',()=>{
+    const dependencyTab=root.querySelector('[data-mod-tab="dependency-graph"]');
+    if(dependencyTab)dependencyTab.click();
+    else alert('Dependency graph view is not available.');
+  });
   panel.querySelector('#ca-export').addEventListener('click',()=>download('continuity-assurance-cif-handoff-v0.1.json',continuityAssuranceCifHandoff(read())));
   panel.querySelector('#ca-reliance-form').addEventListener('submit',e=>{e.preventDefault();const data=read(),raw=Object.fromEntries(new FormData(e.currentTarget).entries());raw.relianceObjectRefs=list(raw.relianceObjectRefs);raw.dependencyRefs=list(raw.dependencyRefs);raw.evidenceRefs=list(raw.evidenceRefs);raw.conditions=list(raw.conditions);raw.createdAt=new Date().toISOString();raw.updatedAt=raw.createdAt;data.relianceClaims.push(normalizeRelianceClaim(raw));write(data);e.currentTarget.reset();render(panel);});
   panel.querySelector('#ca-reassessment-form').addEventListener('submit',e=>{e.preventDefault();const data=read(),raw=Object.fromEntries(new FormData(e.currentTarget).entries());raw.evidenceRefs=list(raw.evidenceRefs);raw.createdAt=new Date().toISOString();data.reassessmentRecords.push(normalizeReassessmentRecord(raw));write(data);e.currentTarget.reset();render(panel);});
