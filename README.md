@@ -1,8 +1,8 @@
-# ROI-Driven Enterprise Architect MVP
+﻿# ROI-Driven Enterprise Architect MVP
 
 ## Copyright notice
 
-The application interface and executive-dossier export display: `© 2026 David C. Jones. All rights reserved. AI at Human Scale.` The notice identifies the claimed work; it does not expand copyright protection to ideas, methods, facts, or generic interface conventions.
+The application interface and executive-dossier export display: `Â© 2026 David C. Jones. All rights reserved. AI at Human Scale.` The notice identifies the claimed work; it does not expand copyright protection to ideas, methods, facts, or generic interface conventions.
 
 This local, browser-based MVP implements paid-design-partner workflows with supporting decision controls:
 
@@ -20,6 +20,7 @@ This local, browser-based MVP implements paid-design-partner workflows with supp
 12. Executive decision dossier export
 13. Additive FEOA v0.2.3 workbench and domain model: progressive enrichment from opportunity through participant economics, authority/evidence constraints, counterfactual Cases 0/1/2, consolidated and risk-adjusted economics, readiness, gates, Cognitive Resilience, sensitivity, pilot observations, and a structured executive report input.
 14. Controlled North Star Mortgage Reference Demonstrator v0.1: a sanitized synthetic fixture projection, deterministic DTI/LTV/reserve calculations, fictional policy comparison, evidence-gap abstention, BACRM configuration boundary, and read-only ERIR source seed. It does not make or recommend a credit decision.
+15. Additive Continuity Assurance v0.1 specialization/application layer for CIF-S-009 / CIF-AP-002: explicit Reliance Claims, evidence-bounded assurance, Designed/Observed/Assured comparison, dependency-accumulation lenses, validated constraining-dependency findings, targeted reassessment, successor assurance, outcome/residual-exposure analysis, optional human-centered patterns, and noncanonical CIF handoff.
 
 See `AI_AUTHORITY_EVIDENCE_ARCHITECTURE.md` for the current-state mapping, bounded-context ownership, acceptance-query coverage, and explicit non-goals for this vertical slice.
 
@@ -93,7 +94,8 @@ The mortgage surface also supports fail-closed, template-controlled XLSX ingesti
 
 The first BPMN ingestion test fixture is `assets/North-Star-Mortgage-Workflow-v0.1.bpmn`. The deliberately limited `AIHS-BPMN-SUBSET-V0.1` importer and bounded-AI candidate analysis are documented in `docs/NORTH_STAR_MORTGAGE_BPMN_FIXTURE.md`. They do not execute workflows, validate arbitrary BPMN, or confer process validity, compliance, effectiveness, approval, implementation status, or authority.
 
-The active controlled case can then produce a downloadable, nonpersistent ROI-EA → ERIR → FACEM → BACRM execution trace. Live ERIR record return is distinguished from applicability and compliance; FACEM retains authority/accountability boundaries; BACRM preserves abstention, manual fallback, suspension, and controlled recovery. Federation and bounded-AI value increments remain separately labeled and unquantified without measured evidence.
+The active controlled case can then produce a downloadable, nonpersistent ROI-EA â†’ ERIR â†’ FACEM â†’ BACRM execution trace. Live ERIR record return is distinguished from applicability and compliance; FACEM retains authority/accountability boundaries; BACRM preserves abstention, manual fallback, suspension, and controlled recovery. Federation and bounded-AI value increments remain separately labeled and unquantified without measured evidence.
 # BPMN import extension status
 
 G4 adds a browser-local, standards-aware BPMN review workflow with append-only candidate dispositions, separately confirmed bounded canonicalization, and deterministic exports. See [BPMN_IMPORT_G4_READINESS.md](BPMN_IMPORT_G4_READINESS.md). G5 security and regression review binds confirmation to the exact reviewed source/dispositions and applies upload, decompression, and local write-origin limits. Windows/Chrome visual and functional QA passed, including state transitions and both exports. See [BPMN_IMPORT_G5_RELEASE_REVIEW.md](BPMN_IMPORT_G5_RELEASE_REVIEW.md). The optional read-only diagram view is documented in [BPMN_DIAGRAM_VIEW_V0.1.md](BPMN_DIAGRAM_VIEW_V0.1.md); it renders staged normalized source records and does not execute or validate a process.
+
