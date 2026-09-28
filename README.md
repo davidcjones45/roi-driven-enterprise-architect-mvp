@@ -20,6 +20,7 @@ This local, browser-based MVP implements paid-design-partner workflows with supp
 12. Executive decision dossier export
 13. Additive FEOA v0.2.3 workbench and domain model: progressive enrichment from opportunity through participant economics, authority/evidence constraints, counterfactual Cases 0/1/2, consolidated and risk-adjusted economics, readiness, gates, Cognitive Resilience, sensitivity, pilot observations, and a structured executive report input.
 14. Controlled North Star Mortgage Reference Demonstrator v0.1: a sanitized synthetic fixture projection, deterministic DTI/LTV/reserve calculations, fictional policy comparison, evidence-gap abstention, BACRM configuration boundary, and read-only ERIR source seed. It does not make or recommend a credit decision.
+15. Additive Continuity Assurance v0.1 specialization/application layer for CIF-S-009 / CIF-AP-002: explicit Reliance Claims, evidence-bounded assurance, Designed/Observed/Assured comparison, dependency-accumulation lenses, validated constraining-dependency findings, targeted reassessment, successor assurance, outcome/residual-exposure analysis, optional human-centered patterns, and noncanonical CIF handoff.
 
 See `AI_AUTHORITY_EVIDENCE_ARCHITECTURE.md` for the current-state mapping, bounded-context ownership, acceptance-query coverage, and explicit non-goals for this vertical slice.
 

@@ -1,0 +1,420 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:roi-ea:continuity-assurance:v0.1",
+  "title": "ROI-EA Continuity Assurance Application Schema v0.1",
+  "type": "object",
+  "properties": {
+    "continuityAssuranceSchema": {
+      "const": "ROI-EA-CONTINUITY-ASSURANCE-V0.1"
+    },
+    "relianceClaims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relianceClaim"
+      },
+      "default": []
+    },
+    "constraintValidations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constraintValidation"
+      },
+      "default": []
+    },
+    "reassessmentRecords": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/reassessmentRecord"
+      },
+      "default": []
+    },
+    "assuranceViewRecords": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/assuranceViewRecord"
+      },
+      "default": []
+    },
+    "interventionOutcomes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/interventionOutcome"
+      },
+      "default": []
+    },
+    "successorAssuranceRecords": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/successorAssurance"
+      },
+      "default": []
+    },
+    "humanAgencyReviews": {
+      "type": "array",
+      "default": []
+    },
+    "graduationRecords": {
+      "type": "array",
+      "default": []
+    },
+    "interactionDivergenceRecords": {
+      "type": "array",
+      "default": []
+    },
+    "evidenceConflictCases": {
+      "type": "array",
+      "default": []
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "relianceClaim": {
+      "type": "object",
+      "required": [
+        "id",
+        "relyingActorRef",
+        "essentialActionRef",
+        "scope",
+        "boundary",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relyingActorRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "essentialActionRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relianceObjectRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "dependencyRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "conditions": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "effectiveFrom": {
+          "type": "string"
+        },
+        "reviewBy": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "PROPOSED",
+            "SUPPORTED",
+            "QUALIFIED",
+            "UNRESOLVED",
+            "SUPERSEDED",
+            "SUSPENDED",
+            "RETIRED"
+          ]
+        },
+        "qualification": {
+          "type": "string"
+        },
+        "materialUnknowns": {
+          "$ref": "#/$defs/stringArray"
+        }
+      },
+      "additionalProperties": true
+    },
+    "constraintValidation": {
+      "type": "object",
+      "required": [
+        "id",
+        "candidateDependencyRef",
+        "affectedEssentialActionRef",
+        "constraintType",
+        "validationStatus"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidateDependencyRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "affectedEssentialActionRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "constraintType": {
+          "enum": [
+            "OPERATIONAL",
+            "ADAPTATION_CONSTRAINING"
+          ]
+        },
+        "limitingCharacteristic": {
+          "type": "string"
+        },
+        "evidenceRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "counterfactualBasis": {
+          "type": "string"
+        },
+        "alternativeOrSubstituteRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "validationStatus": {
+          "enum": [
+            "CANDIDATE",
+            "VALIDATED",
+            "REJECTED",
+            "UNRESOLVED"
+          ]
+        },
+        "limitations": {
+          "type": "string"
+        },
+        "reviewer": {
+          "type": "string"
+        },
+        "reviewedAt": {
+          "type": "string"
+        },
+        "performanceLimitationObserved": {
+          "type": "boolean"
+        },
+        "changeLimitationObserved": {
+          "type": "boolean"
+        },
+        "structuralSignals": {
+          "$ref": "#/$defs/stringArray"
+        }
+      },
+      "additionalProperties": true
+    },
+    "reassessmentRecord": {
+      "type": "object",
+      "required": [
+        "id",
+        "trigger",
+        "affectedRef",
+        "materialityBasis",
+        "scope",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger": {
+          "enum": [
+            "CONFIGURATION_CHANGE",
+            "INTERACTION_OR_PERFORMANCE_DIVERGENCE",
+            "OUTCOME_DIVERGENCE",
+            "SCHEDULED_ASSURANCE_REFRESH",
+            "EVIDENCE_DEGRADATION"
+          ]
+        },
+        "affectedRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "materialityBasis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "status": {
+          "enum": [
+            "OPEN",
+            "IN_REVIEW",
+            "DISPOSED",
+            "DEFERRED"
+          ]
+        },
+        "disposition": {
+          "enum": [
+            "",
+            "CONFIRM",
+            "MODIFY",
+            "SUPERSEDE",
+            "SUSPEND",
+            "RETIRE"
+          ]
+        },
+        "resultingUpdates": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "reviewer": {
+          "type": "string"
+        },
+        "authorityRef": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "assuranceViewRecord": {
+      "type": "object",
+      "required": [
+        "id",
+        "subjectRef",
+        "perspective",
+        "statement"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "subjectRef": {
+          "type": "string"
+        },
+        "perspective": {
+          "enum": [
+            "DESIGNED",
+            "OBSERVED",
+            "ASSURED"
+          ]
+        },
+        "statement": {
+          "type": "string"
+        },
+        "evidenceRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "sourceRef": {
+          "type": "string"
+        },
+        "qualification": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "interventionOutcome": {
+      "type": "object",
+      "required": [
+        "id",
+        "interventionRef",
+        "affectedEssentialActionRef"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "decisionRef": {
+          "type": "string"
+        },
+        "interventionRef": {
+          "type": "string"
+        },
+        "affectedEssentialActionRef": {
+          "type": "string"
+        },
+        "actionCompleted": {
+          "type": "boolean"
+        },
+        "consequences": {
+          "type": "array"
+        },
+        "outcomeEvidenceRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "outcomeType": {
+          "enum": [
+            "",
+            "RELIEVED",
+            "TRANSFERRED",
+            "RESHAPED",
+            "NEW_EXPOSURE",
+            "WORSENED",
+            "UNCHANGED_EXPOSURE"
+          ]
+        },
+        "residualExposure": {
+          "type": "array"
+        },
+        "evidenceState": {
+          "enum": [
+            "UNKNOWN",
+            "UNRESOLVED",
+            "NOT_ASSESSED",
+            "NOT_APPLICABLE",
+            "INSUFFICIENT_EVIDENCE",
+            "CONFLICTING_EVIDENCE",
+            "SUFFICIENT_EVIDENCE"
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "successorAssurance": {
+      "type": "object",
+      "required": [
+        "id",
+        "predecessorRef",
+        "successorRef",
+        "obligations"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "predecessorRef": {
+          "type": "string"
+        },
+        "successorRef": {
+          "type": "string"
+        },
+        "affectedRelianceClaimRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "obligations": {
+          "type": "object"
+        },
+        "supportingEvidenceRefs": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "unresolvedGaps": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "reassessmentRequired": {
+          "type": "boolean"
+        },
+        "transitionDisposition": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
