@@ -1,4 +1,4 @@
-﻿// ROI-EA Application Modernization M6 â€” Azure and Google Cloud provider adapters.
+﻿// ROI-EA Application Modernization M6 — Azure and Google Cloud provider adapters.
 // Provider outputs remain advisory evidence. Canonical modernization objects stay provider-neutral.
 
 import { stableId } from './authority-model.mjs';
@@ -140,7 +140,7 @@ export function azureDependencyEvidence(importResult={}){
       destinationProcess:first(row['Destination process'],row.destinationProcess),
       destinationPort:first(row['Destination port'],row.destinationPort),
       timeSlot:first(row['Timeslot'],row.timeslot),
-      status:'Dependency evidence only â€” application mapping requires review',
+      status:'Dependency evidence only — application mapping requires review',
       sourceEvidenceId:rec.id
     };
   });
@@ -187,7 +187,7 @@ export function gcpDependencyEvidence(importResult={}){
       port:first(row.port,row['Port']),
       protocol:first(row.protocol,row['Protocol']),
       service:first(row.service,row['Service']),
-      status:'Dependency evidence only â€” asset/application mapping requires review',
+      status:'Dependency evidence only — asset/application mapping requires review',
       sourceEvidenceId:rec.id
     };
   });
