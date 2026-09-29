@@ -46,3 +46,6 @@ main{margin-left:264px;min-width:0}.topbar{padding:24px 36px;align-items:flex-st
     overflow-wrap: anywhere;
     word-break: break-word;
 }
+
+/* Write-permission verification: slightly increase form field label size. */
+.form-grid label{font-size:.9rem}
