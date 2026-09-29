@@ -202,7 +202,11 @@ function organizeModernizationTabs(root){
 
   tabs.querySelectorAll('.modernization-tab-secondary').forEach(details=>{
     details.addEventListener('toggle',()=>{
-      if(!details.open)return;
+      const activeButton=details.querySelector('button[data-mod-tab].active');
+      if(!details.open){
+        if(activeButton) requestAnimationFrame(()=>{ details.open=true; });
+        return;
+      }
       tabs.querySelectorAll('.modernization-tab-secondary').forEach(other=>{
         if(other!==details)other.open=false;
       });
