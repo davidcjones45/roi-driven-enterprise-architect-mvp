@@ -159,8 +159,8 @@ function render(panel){
   const summary=discoveryEvidenceSummary(data.awsDiscoveryImports||[]);
   panel.querySelector('#aws-import-summary').innerHTML=`
     <h3>AWS evidence status</h3>
-    <p><strong>${data.providerAssessments.length}</strong> recommendation records Â·
-       <strong>${summary.files}</strong> recognized discovery files Â·
+    <p><strong>${data.providerAssessments.length}</strong> recommendation records ·
+       <strong>${summary.files}</strong> recognized discovery files ·
        <strong>${summary.records}</strong> discovery rows.</p>
     <p class="quiet-note">No imported AWS record grants implementation authority. Missing confidence remains missing rather than being converted to zero.</p>`;
 
