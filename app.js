@@ -6,7 +6,7 @@ import { erirTraceUrl, resolveErirApiBase, runtimeErirConfig } from './erir-clie
 import { PHASES, assessmentReadiness, feoaReport, normalizeAssessment } from './feoa-model.mjs';
 import { federationEconomics, federationStability, gateReadiness, healthcareFixture, normalizeWorkspace, reportPayload } from './feoa-workspace.mjs';
 import { MORTGAGE_FIXTURE } from './mortgage-fixture.mjs';
-import { communityBankingFixture } from './community-banking-fixture.mjs';
+import { communityBankingFixture } from './community-banking-fixture.mjs?v=utf8-fix-20260928';
 import { buildCommunityBankingExecutiveReport, evaluateCommunityBankingIntegration, runCommunityBankingStressSuite } from './community-banking-integration.mjs';
 import { evaluateMortgageCase } from './mortgage-model.mjs';
 import { importMortgageWorkbook, MAX_MORTGAGE_WORKBOOK_BYTES } from './mortgage-import.mjs';
