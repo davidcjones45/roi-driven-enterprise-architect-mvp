@@ -52,7 +52,7 @@ export function communityBankingFixture() {
   const forms = [
     form('FCB-FORM-00', 'Independent internal operation', 'Each bank operates the selected work internally.', criterionIds),
     form('FCB-FORM-01', 'Commercial provider / managed service', 'A commercial provider or managed service could support selected work.', criterionIds),
-    form('FCB-FORM-02', 'Correspondent or bankersâ€™ bank service', 'A correspondent or bankersâ€™ bank service could support selected work.', criterionIds),
+    form('FCB-FORM-02', 'Correspondent or bankers’ bank service', 'A correspondent or bankers’ bank service could support selected work.', criterionIds),
     form('FCB-FORM-03', 'Association-sponsored shared capability', 'An association-sponsored shared capability could support selected work.', criterionIds),
     form('FCB-FORM-04', 'Bank Service Company / jointly owned service entity', 'A service company or jointly owned entity could support selected work.', criterionIds),
     form('FCB-FORM-05', 'Governed network', 'A governed network could coordinate limited shared support.', criterionIds),
