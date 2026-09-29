@@ -121,7 +121,35 @@ import { createOperatingCycleShellController } from './roi-ea-operating-cycle-ui
   ];
   let guidedDemoIndex = -1;
   function workspaceForView(view){ return $(`.nav-link[data-view="${view}"]`)?.dataset.workspace || 'roi'; }
-  function setWorkspace(workspace, navigate=true){ const definition=workspaceDefinitions[workspace] || workspaceDefinitions.roi; if(navigate){show(definition.defaultView);return;} activeWorkspace=workspace; document.body.dataset.workspace=workspace; $$('.workspace-select').forEach(button=>button.classList.toggle('active',button.dataset.workspaceSelect===workspace)); $$('.nav-link').forEach(link=>link.hidden=link.dataset.workspace!==workspace); $$('[data-nav-workspace]').forEach(group=>group.hidden=group.dataset.navWorkspace!==workspace); const library=$('#workspace-library'); if(['federated','community-banking','mortgage'].includes(workspace)) library.open=true; $$('.workspace-select').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.workspaceSelect===workspace)));  $('#workspace-decision').textContent=definition.decision; $('#workspace-boundary').textContent=definition.boundary; $('#load-demo').textContent=definition.demoLabel; }
+  function setWorkspace(workspace, navigate=true){
+    const definition=workspaceDefinitions[workspace] || workspaceDefinitions.roi;
+    if(navigate){
+      show(definition.defaultView);
+      const library=$('#workspace-library');
+      if(library) library.open=false;
+      return;
+    }
+    activeWorkspace=workspace;
+    document.body.dataset.workspace=workspace;
+    $$('.workspace-select').forEach(button=>button.classList.toggle('active',button.dataset.workspaceSelect===workspace));
+    $$('.nav-link').forEach(link=>link.hidden=link.dataset.workspace!==workspace);
+    $$('[data-nav-workspace]').forEach(group=>group.hidden=group.dataset.navWorkspace!==workspace);
+    const library=$('#workspace-library');
+    const libraryLabel=$('#workspace-library-label');
+    const specialistWorkspaces=['federated','community-banking','mortgage','modernization'];
+    const specialist=specialistWorkspaces.includes(workspace);
+    const selectedSpecialist=$(`.workspace-select[data-workspace-select="${workspace}"]`);
+    if(libraryLabel){
+      libraryLabel.textContent=specialist
+        ? `Specialist: ${selectedSpecialist?.textContent?.trim() || titles[definition.defaultView] || workspace}`
+        : 'Specialist workspaces & examples';
+    }
+    if(library) library.open=false;
+    $$('.workspace-select').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.workspaceSelect===workspace)));
+    $('#workspace-decision').textContent=definition.decision;
+    $('#workspace-boundary').textContent=definition.boundary;
+    $('#load-demo').textContent=definition.demoLabel;
+  }
   function attentionState(view){
     if(view==='overview') return {hidden:true};
     if(activeWorkspace!=='roi'){
