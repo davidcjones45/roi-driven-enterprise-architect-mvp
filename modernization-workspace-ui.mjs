@@ -71,13 +71,30 @@ function workspaceHtml(){
     <button type="button" class="secondary" id="mod-reset">Reset modernization workspace</button>
   </div>
 
-  <div class="modernization-tabs card" role="tablist" aria-label="Modernization workspace views">
-    <button type="button" data-mod-tab="portfolio">Portfolio</button>
-    <button type="button" data-mod-tab="assessment">Assessment</button>
-    <button type="button" data-mod-tab="constraints">Constraints</button>
-    <button type="button" data-mod-tab="alternatives">Alternatives</button>
-    <button type="button" data-mod-tab="decision">Decision view</button>
-  </div>
+  <nav class="modernization-tabs card" aria-label="Modernization workspace views">
+    <section class="modernization-tab-group modernization-tab-core" data-mod-group="core" aria-labelledby="mod-nav-core">
+      <span class="modernization-tab-heading" id="mod-nav-core">Core assessment</span>
+      <div class="modernization-tab-buttons">
+        <button type="button" data-mod-tab="portfolio">Portfolio</button>
+        <button type="button" data-mod-tab="assessment">Assessment</button>
+        <button type="button" data-mod-tab="constraints">Constraints</button>
+        <button type="button" data-mod-tab="alternatives">Alternatives</button>
+        <button type="button" data-mod-tab="decision">Decision view</button>
+      </div>
+    </section>
+    <details class="modernization-tab-group modernization-tab-secondary" data-mod-group="analysis">
+      <summary>Analysis</summary>
+      <div class="modernization-tab-buttons"></div>
+    </details>
+    <details class="modernization-tab-group modernization-tab-secondary" data-mod-group="cloud">
+      <summary>Cloud evidence</summary>
+      <div class="modernization-tab-buttons"></div>
+    </details>
+    <details class="modernization-tab-group modernization-tab-secondary" data-mod-group="planning">
+      <summary>Planning &amp; outcomes</summary>
+      <div class="modernization-tab-buttons"></div>
+    </details>
+  </nav>
 
   <div data-mod-panel="portfolio">
     <form id="mod-app-form" class="form-grid card">
@@ -102,8 +119,8 @@ function workspaceHtml(){
       <label>Assessment date<input required type="date" name="assessmentDate"></label>
       <label>Dimension<select required name="dimension">${dimOptions}</select></label>
       <label>Value<input required name="value" placeholder="High, Medium, Low, Long-life..."></label>
-      <label>Confidence (0â€“100)<input required type="number" min="0" max="100" name="confidence" value="50"></label>
-      <label>Overall confidence (0â€“100)<input type="number" min="0" max="100" name="overallConfidence" value="50"></label>
+      <label>Confidence (0–100)<input required type="number" min="0" max="100" name="confidence" value="50"></label>
+      <label>Overall confidence (0–100)<input type="number" min="0" max="100" name="overallConfidence" value="50"></label>
       <label class="full">Rationale<textarea required name="rationale" rows="2"></textarea></label>
       <label class="full">Evidence references<input name="evidenceRefs" placeholder="EVD-001; EVD-002"></label>
       <label class="full">Explicit assumptions<input name="assumptions" placeholder="Assumption A; Assumption B"></label>
@@ -139,8 +156,8 @@ function workspaceHtml(){
       <label>One-time cost ($)<input type="number" min="0" name="oneTimeCost"></label>
       <label>Annual run cost ($)<input type="number" min="0" name="annualRunCost"></label>
       <label>Estimated duration<input name="estimatedDuration"></label>
-      <label>Confidence (0â€“100)<input type="number" min="0" max="100" name="confidence" value="50"></label>
-      <label>Evidence completeness (0â€“100)<input type="number" min="0" max="100" name="evidenceCompleteness" value="50"></label>
+      <label>Confidence (0–100)<input type="number" min="0" max="100" name="confidence" value="50"></label>
+      <label>Evidence completeness (0–100)<input type="number" min="0" max="100" name="evidenceCompleteness" value="50"></label>
       <label class="full">Evidence references<input name="evidenceRefs"></label>
       <div class="form-actions full"><button type="submit">Add candidate alternative</button></div>
     </form>
@@ -152,7 +169,55 @@ function workspaceHtml(){
   </div>`;
 }
 
+const MODERNIZATION_TAB_GROUPS={
+  portfolio:'core',assessment:'core',constraints:'core',alternatives:'core',decision:'core',
+  dependencies:'analysis',economics:'analysis','dependency-graph':'analysis','continuity-assurance':'analysis',
+  'aws-evidence':'cloud',multicloud:'cloud',
+  'portfolio-plan':'planning','decision-package':'planning',outcomes:'planning'
+};
+
+function organizeModernizationTabs(root){
+  const tabs=root.querySelector('.modernization-tabs');
+  if(!tabs)return;
+  const groups=Object.fromEntries([...tabs.querySelectorAll('[data-mod-group]')].map(group=>[
+    group.dataset.modGroup,
+    group.querySelector('.modernization-tab-buttons')
+  ]));
+  const moveButton=button=>{
+    if(!(button instanceof HTMLButtonElement)||!button.dataset.modTab)return;
+    const groupName=MODERNIZATION_TAB_GROUPS[button.dataset.modTab]||'analysis';
+    const target=groups[groupName];
+    if(target&&button.parentElement!==target)target.append(button);
+  };
+  [...tabs.querySelectorAll(':scope > button[data-mod-tab]')].forEach(moveButton);
+  const observer=new MutationObserver(records=>{
+    observer.disconnect();
+    records.flatMap(record=>[...record.addedNodes]).forEach(node=>{
+      if(node instanceof HTMLButtonElement)moveButton(node);
+      else if(node instanceof Element)node.querySelectorAll('button[data-mod-tab]').forEach(moveButton);
+    });
+    observer.observe(tabs,{childList:true,subtree:false});
+  });
+  observer.observe(tabs,{childList:true,subtree:false});
+
+  tabs.querySelectorAll('.modernization-tab-secondary').forEach(details=>{
+    details.addEventListener('toggle',()=>{
+      if(!details.open)return;
+      tabs.querySelectorAll('.modernization-tab-secondary').forEach(other=>{
+        if(other!==details)other.open=false;
+      });
+    });
+  });
+  tabs.addEventListener('click',event=>{
+    const button=event.target.closest('button[data-mod-tab]');
+    if(!button)return;
+    const details=button.closest('details');
+    if(details)details.open=true;
+  });
+}
+
 function wire(root){
+  organizeModernizationTabs(root);
   root.querySelectorAll('[data-mod-tab]').forEach(btn=>btn.addEventListener('click',()=>{
     root.querySelectorAll('[data-mod-panel]').forEach(p=>p.hidden=p.dataset.modPanel!==btn.dataset.modTab);
     root.querySelectorAll('[data-mod-tab]').forEach(b=>b.classList.toggle('active',b===btn));
@@ -234,8 +299,8 @@ function render(root){
 
   root.querySelector('#mod-constraint-list').innerHTML=(data.constraints||[]).map(c=>{
     const x=normalizeConstraint(c);
-    return `<div class="decision-item"><strong>${esc(x.type)} â€” ${esc(x.name)}</strong>
-      <p>${esc(x.condition)}</p><small>${esc(x.evaluation)} Â· ${esc(x.authority||'Authority not recorded')}</small></div>`;
+    return `<div class="decision-item"><strong>${esc(x.type)} — ${esc(x.name)}</strong>
+      <p>${esc(x.condition)}</p><small>${esc(x.evaluation)} · ${esc(x.authority||'Authority not recorded')}</small></div>`;
   }).join('')||'<p>No constraints recorded.</p>';
 
   root.querySelector('#mod-alt-rows').innerHTML=(data.alternatives||[]).map(raw=>{
@@ -253,17 +318,17 @@ function render(root){
       <td>${esc(a[d].value)}</td><td>${pct(a[d].confidence)}</td>
       <td>${esc(a[d].evidenceRefs.join(', ')||a[d].assumptions.join(', ')||'No evidence/assumption')}</td></tr>`).join('');
     return `<h3>${esc(app?.name||a.applicationId)}</h3>
-      <p><strong>Overall confidence:</strong> ${pct(a.overallConfidence)} Â· <strong>Least-regret next move:</strong> ${esc(a.leastRegretNextMove||'Not recorded')}</p>
+      <p><strong>Overall confidence:</strong> ${pct(a.overallConfidence)} · <strong>Least-regret next move:</strong> ${esc(a.leastRegretNextMove||'Not recorded')}</p>
       <div class="table-scroll"><table class="evidence-table"><thead><tr><th>Dimension</th><th>Value</th><th>Confidence</th><th>Evidence / assumption</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }).join('')||'<p>No assessments recorded.</p>';
 
   root.querySelector('#mod-decision-view').innerHTML=assessments.map(a=>{
     const app=data.applications.find(x=>x.id===a.applicationId);
     const view=modernizationDecisionView(a,data);
-    const viable=view.viableAlternatives.map(x=>`<li><strong>${esc(x.name)}</strong> â€” ${esc(x.strategyClass)} Â· confidence ${pct(x.confidence)}</li>`).join('')||'<li>No viable candidate alternatives recorded.</li>';
-    const eliminated=view.eliminatedAlternatives.map(x=>`<li><strong>${esc(x.name)}</strong> â€” eliminated by ${esc(x.constraintResult.violatedConstraintIds.join(', '))}</li>`).join('');
+    const viable=view.viableAlternatives.map(x=>`<li><strong>${esc(x.name)}</strong> — ${esc(x.strategyClass)} · confidence ${pct(x.confidence)}</li>`).join('')||'<li>No viable candidate alternatives recorded.</li>';
+    const eliminated=view.eliminatedAlternatives.map(x=>`<li><strong>${esc(x.name)}</strong> — eliminated by ${esc(x.constraintResult.violatedConstraintIds.join(', '))}</li>`).join('');
     const providers=(data.providerAssessments||[]).filter(x=>x.applicationId===a.applicationId)
-      .map(x=>`<li>${esc(x.provider)}: ${esc(x.strategy)} Â· ${esc(x.status||'Advisory evidence only')} Â· ${pct(x.confidence)}</li>`).join('')||'<li>No provider assessment evidence recorded.</li>';
+      .map(x=>`<li>${esc(x.provider)}: ${esc(x.strategy)} · ${esc(x.status||'Advisory evidence only')} · ${pct(x.confidence)}</li>`).join('')||'<li>No provider assessment evidence recorded.</li>';
     return `<article class="decision-item">
       <span class="eyebrow">HUMAN REVIEW REQUIRED</span><h3>${esc(app?.name||a.applicationId)}</h3>
       <p><strong>Least-regret next move:</strong> ${esc(a.leastRegretNextMove||'Not recorded')}</p>
