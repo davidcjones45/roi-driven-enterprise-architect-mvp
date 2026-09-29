@@ -111,3 +111,41 @@ button,.workspace-select{min-height:40px}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+
+/* Compact specialist workspace selector: keep advanced examples available without
+   consuming the full navigation column when they are not being selected. */
+.workspace-library{
+  margin-top:6px;
+  border-top:1px solid #244460;
+  padding-top:6px;
+}
+.workspace-library>summary{
+  min-height:38px;
+  padding:7px 8px;
+  color:#c2d3e1;
+  font-size:.8125rem;
+  font-weight:700;
+  line-height:1.35;
+}
+.workspace-library[open]>summary{
+  color:#fff;
+  background:#102c48;
+}
+.workspace-library>div{
+  gap:4px;
+  margin-top:5px;
+}
+.workspace-library .workspace-select{
+  min-height:36px;
+  padding:7px 10px;
+  font-size:.8125rem;
+}
+.workspace-library .workspace-select.active{
+  box-shadow:inset 3px 0 var(--teal);
+}
+
+@media(max-width:900px){
+  .workspace-library>summary{min-height:40px}
+  .workspace-library .workspace-select{min-height:40px}
+}
