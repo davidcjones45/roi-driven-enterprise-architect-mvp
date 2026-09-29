@@ -1,7 +1,73 @@
 .modernization-workspace .modernization-actions{display:flex;gap:.75rem;flex-wrap:wrap}
-.modernization-tabs{display:flex;gap:.5rem;flex-wrap:wrap}
-.modernization-tabs button{width:auto}
-.modernization-tabs button.active{outline:2px solid currentColor;outline-offset:2px}
+.modernization-tabs{
+  display:grid;
+  gap:.8rem;
+  align-items:start;
+}
+.modernization-tab-group{
+  min-width:0;
+}
+.modernization-tab-heading{
+  display:block;
+  margin:0 0 .5rem;
+  color:var(--muted,#5f6f7d);
+  font-size:.75rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.modernization-tab-buttons{
+  display:flex;
+  gap:.5rem;
+  flex-wrap:wrap;
+}
+.modernization-tab-buttons button{width:auto}
+.modernization-tab-core .modernization-tab-buttons button{
+  min-height:42px;
+  padding:.7rem 1rem;
+}
+.modernization-tab-secondary{
+  border-top:1px solid var(--line,#d8e0e8);
+  padding-top:.55rem;
+}
+.modernization-tab-secondary>summary{
+  min-height:36px;
+  display:flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  padding:.35rem .15rem;
+  color:var(--blue,#154b7a);
+  font-size:.875rem;
+  font-weight:800;
+  cursor:pointer;
+}
+.modernization-tab-secondary[open]>summary{margin-bottom:.35rem}
+.modernization-tab-secondary .modernization-tab-buttons button{
+  min-height:38px;
+  padding:.55rem .8rem;
+  background:#fff;
+  color:var(--blue,#154b7a);
+  border-color:#aebfca;
+  font-size:.875rem;
+}
+.modernization-tab-secondary .modernization-tab-buttons button:hover{
+  background:#f4f8fb;
+}
+.modernization-tab-secondary .modernization-tab-buttons button.active{
+  background:var(--teal,#0b7778);
+  border-color:var(--teal,#0b7778);
+  color:#fff;
+}
+.modernization-tabs button.active{
+  outline:2px solid currentColor;
+  outline-offset:2px;
+}
 .modernization-workspace .decision-item{border-top:1px solid var(--line,#d9d9d9);padding:1rem 0}
 .modernization-workspace .decision-item:first-child{border-top:0;padding-top:0}
 .modernization-workspace h4{margin-bottom:.35rem}
+@media(max-width:590px){
+  .modernization-tab-buttons{display:grid;grid-template-columns:1fr}
+  .modernization-tab-buttons button{width:100%;text-align:left}
+  .modernization-tab-secondary>summary{width:100%}
+}
