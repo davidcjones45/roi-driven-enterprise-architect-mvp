@@ -1,0 +1,113 @@
+/* UX refinement pass: reduce cognitive load without changing application semantics. */
+:root{
+  --focus:#245a91;
+  --support-surface:#eef3f7;
+  --attention-surface:#f8fbfc;
+}
+
+/* Primary workflow navigation: the method keeps canonical numbering in content,
+   while navigation emphasizes human-readable tasks. */
+.sidebar .nav-link>span:first-child{display:none}
+.sidebar .nav-caption{letter-spacing:1.05px}
+.sidebar .nav-group{margin-top:8px}
+.sidebar .nav-group>.nav-link{min-height:42px}
+.sidebar .supporting-nav{margin-top:10px;border-top:1px solid #244460;padding-top:8px}
+.sidebar .supporting-nav>summary,
+.workspace-library>summary{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  cursor:pointer;
+  border-radius:6px;
+}
+.sidebar .supporting-nav>summary:focus-visible,
+.workspace-library>summary:focus-visible{outline:3px solid #d1a146;outline-offset:2px}
+
+/* A consistent system-level attention surface answers "what matters now?" */
+.workspace-attention{
+  margin:18px 54px 0;
+  padding:16px 18px;
+  background:var(--attention-surface);
+  border:1px solid var(--line);
+  border-left:4px solid var(--teal);
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:22px;
+}
+.workspace-attention[hidden]{display:none}
+.workspace-attention-copy{min-width:0}
+.workspace-attention h2{font-size:17px;margin:3px 0 3px}
+.workspace-attention p{margin:0;color:var(--muted);max-width:850px}
+.workspace-attention button{flex:0 0 auto;min-height:44px}
+
+/* Stronger surface hierarchy: primary work stays white; reference/support areas recede. */
+.reference-library,
+.working-rules,
+.reference-case,
+.supporting-analysis,
+.card.reference,
+.card.supporting{background:var(--support-surface)}
+.reference-library{border:1px solid var(--line);border-radius:10px;margin-top:20px}
+.reference-library>summary{min-height:52px;padding:0 18px;cursor:pointer;font-weight:800;color:var(--blue)}
+.reference-library-content{padding:0 18px 18px}
+
+/* Make interactive state obvious and consistent across old and new controls. */
+button,
+.nav-link,
+.workspace-select,
+summary,
+input,
+select,
+textarea{transition:box-shadow .12s ease,border-color .12s ease,background-color .12s ease}
+button:focus-visible,
+.nav-link:focus-visible,
+.workspace-select:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline:3px solid var(--focus);
+  outline-offset:2px;
+}
+.sidebar button:focus-visible,.sidebar a:focus-visible{outline-color:#d1a146}
+button,.workspace-select{min-height:40px}
+.form-actions button,.next-action button,.dossier-actions button{min-height:44px}
+
+/* Status must remain readable without relying on color alone. */
+.status-pill::before{content:"○";margin-right:6px}
+.status-pill.complete::before{content:"✓"}
+.status-pill.error::before,.status-pill.danger::before{content:"!"}
+
+/* Reduce visual competition from long supporting tables while preserving access. */
+.evidence-table tbody tr:hover{background:#f8fafc}
+.evidence-table th{position:sticky;top:0;z-index:1}
+.table-scroll{border-radius:6px}
+
+/* Make large forms easier to scan without altering their data model. */
+.form-grid.card{row-gap:20px}
+.form-grid label{align-content:start}
+.form-grid textarea{min-height:88px}
+.divider{margin-top:10px}
+
+/* Mobile/tablet: collapse navigation chrome so content arrives sooner. */
+@media(max-width:900px){
+  .workspace-attention{margin:16px 24px 0}
+  .sidebar nav{grid-template-columns:1fr}
+  .sidebar .nav-group{margin-top:4px}
+  .sidebar .nav-link{min-height:44px}
+  .operating-cycle-strip{grid-template-columns:repeat(5,minmax(140px,1fr));overflow-x:auto;padding-bottom:4px}
+  .operating-cycle-step{min-width:140px}
+}
+@media(max-width:590px){
+  .workspace-attention{margin:12px 16px 0;align-items:stretch;flex-direction:column}
+  .workspace-attention button{width:100%}
+  .operating-cycle-strip{grid-template-columns:repeat(5,minmax(130px,1fr))}
+}
+
+/* Respect motion preferences across the full shell. */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
