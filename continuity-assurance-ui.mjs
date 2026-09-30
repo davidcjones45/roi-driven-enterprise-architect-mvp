@@ -18,9 +18,9 @@ const download=(name,payload)=>{const blob=new Blob([JSON.stringify(payload,null
 function optionRows(values){return values.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');}
 
 function html(){return `
-  <div class="card ca-boundary"><span class="eyebrow">CIF-S-009 / CIF-AP-002</span><h3>Continuity assurance</h3>
+  <div class="card ca-boundary"><span class="eyebrow">ROI-EA APPLICATION-LOCAL / CIF v0.4.1-ALIGNED</span><h3>Continuity assurance</h3>
     <p class="quiet-note">Dependency is not justified Reliance. Designed, Observed, and Assured are nonhierarchical analytical views. Imported structure remains evidence, structural prominence remains a screening signal, and action completion does not prove outcome.</p>
-    <div class="depgraph-actions"><button type="button" id="ca-export">Export CIF-aligned continuity handoff</button><button type="button" class="secondary" id="ca-refresh">Refresh view</button></div>
+    <div class="depgraph-actions"><button type="button" id="ca-export">Export CIF candidate handoff</button><button type="button" class="secondary" id="ca-refresh">Refresh view</button></div>
   </div>
   <div id="ca-summary" class="depgraph-grid"></div>
   <div class="two-column-grid">
@@ -60,7 +60,7 @@ function html(){return `
 function table(headers,rows){if(!rows.length)return '<p class="quiet-note">No records.</p>';return `<table class="depgraph-table"><thead><tr>${headers.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
 
 function render(panel){
-  const data=read(),summary=continuityAssuranceSummary(data);
+  const data=read(),asOf=new Date().toISOString(),summary=continuityAssuranceSummary(data,{asOf});
   panel.querySelector('#ca-summary').innerHTML=[['Reliance Claims',summary.relianceClaims],['Unqualified supported',summary.supported],['Qualified',summary.qualified],['Unresolved / suspended',summary.unresolved],['Validated constraints',summary.validatedConstraints],['Open reassessments',summary.reassessmentOpen],['Unresolved evidence conflicts',summary.unresolvedEvidenceConflicts]].map(([a,b])=>`<div class="depgraph-metric"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join('');
   const actionSelect=panel.querySelector('#ca-action-select');
   const actionHint=panel.querySelector('#ca-action-hint');
@@ -77,13 +77,13 @@ function render(panel){
     actionHint.textContent='Create an Essential Action in the Dependency graph view before recording a Reliance Claim.';
   }
 
-  const claims=(data.relianceClaims||[]).map(c=>evaluateRelianceClaim(c,data));
+  const claims=(data.relianceClaims||[]).map(c=>evaluateRelianceClaim(c,data,{asOf}));
   panel.querySelector('#ca-reliance-table').innerHTML=table(['Essential Action','Reliance','Evidence state','Status','Boundary / qualification'],claims.map(x=>[
     esc(x.claim.essentialActionRef),esc([...x.claim.relianceObjectRefs,...x.claim.dependencyRefs].join(', ')||'None recorded'),esc(x.evidenceState),`<strong>${esc(x.effectiveStatus)}</strong>${x.requestedStatus!==x.effectiveStatus?`<br><small>Requested ${esc(x.requestedStatus)}</small>`:''}`,
     `${esc(x.claim.boundary)}${x.claim.qualification?`<br><small>${esc(x.claim.qualification)}</small>`:''}`
   ]));
 
-  const doa=designedObservedAssuredView(data);
+  const doa=designedObservedAssuredView(data,{asOf});
   panel.querySelector('#ca-doa').innerHTML=table(['Subject','Designed','Observed','Assured','Comparison'],doa.rows.map(r=>[esc(r.subjectRef),esc(r.DESIGNED.length),esc(r.OBSERVED.length),esc(r.ASSURED.length),esc(r.comparison.join(', ')||'No recorded divergence')]));
 
   const a=dependencyAccumulationAnalysis(data);
@@ -119,7 +119,7 @@ function mount(){
     if(dependencyTab)dependencyTab.click();
     else alert('Dependency graph view is not available.');
   });
-  panel.querySelector('#ca-export').addEventListener('click',()=>download('continuity-assurance-cif-handoff-v0.1.json',continuityAssuranceCifHandoff(read())));
+  panel.querySelector('#ca-export').addEventListener('click',()=>{const asOf=new Date().toISOString();download('continuity-assurance-cif-handoff-v0.1.json',continuityAssuranceCifHandoff(read(),{generatedAt:asOf,asOf}));});
   panel.querySelector('#ca-reliance-form').addEventListener('submit',e=>{e.preventDefault();const data=read(),raw=Object.fromEntries(new FormData(e.currentTarget).entries());raw.relianceObjectRefs=list(raw.relianceObjectRefs);raw.dependencyRefs=list(raw.dependencyRefs);raw.evidenceRefs=list(raw.evidenceRefs);raw.conditions=list(raw.conditions);raw.createdAt=new Date().toISOString();raw.updatedAt=raw.createdAt;data.relianceClaims.push(normalizeRelianceClaim(raw));write(data);e.currentTarget.reset();render(panel);});
   panel.querySelector('#ca-reassessment-form').addEventListener('submit',e=>{e.preventDefault();const data=read(),raw=Object.fromEntries(new FormData(e.currentTarget).entries());raw.evidenceRefs=list(raw.evidenceRefs);raw.createdAt=new Date().toISOString();data.reassessmentRecords.push(normalizeReassessmentRecord(raw));write(data);e.currentTarget.reset();render(panel);});
   window.addEventListener('roi-ea-modernization-data-changed',()=>{if(!panel.hidden)render(panel);});

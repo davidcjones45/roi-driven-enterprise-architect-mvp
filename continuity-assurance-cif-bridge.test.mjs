@@ -14,12 +14,22 @@ const workspace={
 
 test('continuity handoff extends dependency CIF projection without canonicalizing specialization records',()=>{
   const handoff=continuityAssuranceCifHandoff(workspace,{generatedAt:'2026-09-28T21:00:00.000Z'});
-  assert.equal(handoff.specialization,'CIF-S-009');
-  assert.equal(handoff.applicationPattern,'CIF-AP-002');
+  assert.equal(handoff.specialization,'ROI-EA-CONTINUITY-ASSURANCE-PROFILE-V0.1');
+  assert.equal(handoff.applicationPattern,'ROI-EA-CONTINUITY-ASSURANCE-PATTERN-V0.1');
   assert.equal(handoff.canonicalization,false);
   assert.equal(handoff.relianceClaims.length,1);
   assert.equal(handoff.relianceClaims[0].classificationState,'SPECIALIZATION_METADATA_ONLY');
   assert.match(handoff.localAuthorityBoundary,/does not create canonical Authority/i);
+});
+
+test('constraining dependency handoff remains an epistemic claim rather than an OF-14 rule',()=>{
+  const handoff=continuityAssuranceCifHandoff({...workspace,constraintValidations:[{
+    id:'C1',candidateDependencyRef:'DEP-1',affectedEssentialActionRef:'EA-1',constraintType:'OPERATIONAL',
+    limitingCharacteristic:'Authentication depends on IDP availability',validationStatus:'VALIDATED',evidenceRefs:['E1'],
+    reviewer:'Architect',reviewedAt:'2026-09-30',performanceLimitationObserved:true
+  }]},{generatedAt:'2026-09-30T12:00:00.000Z'});
+  assert.deepEqual(handoff.validatedConstraints[0].cifCandidate,{family:'OF-12',subtype:'CLAIM'});
+  assert.match(handoff.validatedConstraints[0].note,/not a normative OF-14/i);
 });
 
 test('continuity handoff preserves dependency projection and evidence state separately',()=>{

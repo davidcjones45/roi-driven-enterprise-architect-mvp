@@ -22,7 +22,10 @@ export function cifApplicationSchema() {
       allOf:CIF_REGISTRY.relationships.map(row=>({if:{properties:{relationshipType:{const:row.relationship_type}},required:['relationshipType']},then:{
         properties:{representationMode:{const:row.authoritative_representation},
           ...Object.fromEntries(['source','target'].map(side=>[`${side}Family`,{enum:row[`allowed_${side}`].includes('ANY_GOVERNED_OBJECT')?CIF_BINDING.family_names.map((_,i)=>`OF-${String(i+1).padStart(2,'0')}`):row[`allowed_${side}`]}]))},
-        ...(row.basis_requirement==='MUST'?{required:['basisRef']}:{})
+        allOf:[
+          ...(row.basis_requirement==='MUST'?[{required:['basisRef']}]:[]),
+          ...(row.scope_requirement==='MUST'?[{anyOf:[{required:['scope']},{required:['scopeRef']}]}]:[])
+        ]
       }}))}}
   };
 }

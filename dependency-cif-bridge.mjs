@@ -6,6 +6,9 @@ import {
 
 const text=v=>String(v??'').trim();
 const isoDate=v=>text(v).slice(0,10);
+const evidenceCollections=workspace=>[workspace.evidence,workspace.evidence_register,workspace.evidenceRegister,workspace.engagementEvidence,workspace.evidenceInventory].filter(Array.isArray).flat();
+const evidenceId=record=>text(record?.id||record?.evidence_id||record?.evidenceId||record?.sourceId);
+const evidenceIndex=workspace=>new Map(evidenceCollections(workspace).map(record=>[evidenceId(record),record]).filter(([id])=>id));
 
 function nodeFamily(node={}) {
   switch(node.nodeType){
@@ -37,10 +40,13 @@ export function dependencyGraphCifProjection(workspace={}, options={}) {
   }));
 
   const nodeMap=new Map(nodes.map(x=>[x.localId,x]));
+  const evidenceById=evidenceIndex(workspace);
   const dependencies=[];
   for(const edge of graph.edges.filter(e=>e.edgeType==='depends-on')){
     const source=nodeMap.get(edge.sourceId), target=nodeMap.get(edge.targetId);
     const objectId=`CIF-DEP-CAND-${edge.id}`;
+    const basisRef=edge.evidenceRefs?.[0]||'';
+    const basisRecord=basisRef?evidenceById.get(basisRef):null;
     const relation={
       relationshipType:'DEPENDS_ON',
       sourceId:edge.sourceId,
@@ -50,17 +56,20 @@ export function dependencyGraphCifProjection(workspace={}, options={}) {
       targetFamily:target?.cifCandidate.family||'',
       targetSubtype:target?.cifCandidate.subtype||'',
       representationMode:'OBJECT_REIFIED',
-      basisRef:edge.evidenceRefs?.[0]||edge.sourceReference||'',
+      basisRef,
       scopeRef:edge.id,
       authoritativeRecordRef:objectId,
       authoritativeRecord:{id:objectId,family:'OF-09',sourceId:edge.sourceId,targetId:edge.targetId},
     };
     const findings=relationshipFindings(relation);
+    if(basisRef&&!basisRecord)findings.push({code:'UNRESOLVED_BASIS',message:`Dependency basis ${basisRef} does not resolve to a supplied evidence record.`,status:'INSUFFICIENT_EVIDENCE'});
+    if(!basisRef&&edge.sourceReference)findings.push({code:'UNGOVERNED_SOURCE_REFERENCE',message:'A sourceReference is provenance context but does not satisfy the governed basis requirement without a resolvable evidence record.',status:'INSUFFICIENT_EVIDENCE'});
     dependencies.push({
       localEdgeId:edge.id,
       cifDependencyCandidate:{id:objectId,family:'OF-09',subtype:'DEPENDENCY',sourceId:edge.sourceId,targetId:edge.targetId,
         dimension:edge.dimension,criticality:edge.criticality,evidenceRefs:edge.evidenceRefs||[],sourceReference:edge.sourceReference||''},
       relationshipCandidate:relation,
+      basisResolution:{basisRef,resolved:Boolean(basisRecord),sourceReference:edge.sourceReference||''},
       conformanceFindings:findings,
       conformanceState:findings.some(x=>x.status==='FAIL')?'FAIL':findings.some(x=>x.status==='INSUFFICIENT_EVIDENCE')?'INSUFFICIENT_EVIDENCE':'PASS',
     });

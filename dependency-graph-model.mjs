@@ -72,7 +72,7 @@ export function normalizeGraphNode(raw={}) {
 }
 
 export function normalizeGraphEdge(raw={}) {
-  const edgeType = GRAPH_EDGE_TYPES.includes(raw.edgeType) ? raw.edgeType : 'depends-on';
+  const edgeType = GRAPH_EDGE_TYPES.includes(raw.edgeType) ? raw.edgeType : 'unknown';
   const dimension = DEPENDENCY_DIMENSIONS.includes(raw.dimension) ? raw.dimension : 'unknown';
   const sourceId = String(raw.sourceId || '').trim();
   const targetId = String(raw.targetId || '').trim();
@@ -132,6 +132,17 @@ export function normalizeEssentialAction(raw={}) {
     fallbackNodeIds: unique(list(raw.fallbackNodeIds)),
     bufferDescription: raw.bufferDescription || '',
     recoveryDescription: raw.recoveryDescription || '',
+    mitigationAppliesToAllDependencies: raw.mitigationAppliesToAllDependencies === true,
+    dependencyMitigations: (Array.isArray(raw.dependencyMitigations)?raw.dependencyMitigations:[]).map(item=>({
+      dependencyNodeId:String(item?.dependencyNodeId||'').trim(),
+      type:String(item?.type||'').trim(),
+      replacementNodeId:String(item?.replacementNodeId||'').trim(),
+      description:String(item?.description||'').trim(),
+      status:String(item?.status||'').trim(),
+      validatedBy:String(item?.validatedBy||'').trim(),
+      validatedAt:String(item?.validatedAt||'').trim(),
+      evidenceRefs:unique(list(item?.evidenceRefs)),
+    })).filter(item=>item.dependencyNodeId),
     evidenceRefs: unique(list(raw.evidenceRefs)),
   };
 }
@@ -244,6 +255,7 @@ export function dependencyDegree(graph={}) {
   const stats = new Map((graph.nodes || []).map(n=>[n.id,{nodeId:n.id,inbound:0,outbound:0,total:0,dimensions:new Set(),sharedFailureDomains:new Set()}]));
   for(const raw of graph.edges || []){
     const edge=normalizeGraphEdge(raw);
+    if(edge.edgeType!=='depends-on')continue;
     if(stats.has(edge.sourceId)){
       const s=stats.get(edge.sourceId); s.outbound+=1; s.total+=1; s.dimensions.add(edge.dimension); if(edge.sharedFailureDomain)s.sharedFailureDomains.add(edge.sharedFailureDomain);
     }
@@ -263,22 +275,30 @@ export function concentrationCandidates(graph={}, options={}) {
     .map(x=>({...x,node:nodes.get(x.nodeId)}));
 }
 
+function dependencyMitigationState(action,nodeId){
+  const records=(action.dependencyMitigations||[]).filter(item=>item.dependencyNodeId===nodeId&&['Validated','Implemented'].includes(item.status));
+  const global=action.mitigationAppliesToAllDependencies===true;
+  return {
+    records,
+    hasFallback:records.some(item=>['Fallback','Redundancy','Substitution'].includes(item.type)&&item.replacementNodeId) || (global&&action.fallbackNodeIds.length>0),
+    hasBuffer:records.some(item=>item.type==='Buffer') || (global&&Boolean(action.bufferDescription)),
+    hasRecovery:records.some(item=>item.type==='Recovery') || (global&&Boolean(action.recoveryDescription)),
+    hasCoordination:records.some(item=>item.type==='Coordination'),
+  };
+}
+
 export function essentialActionExposure(actionRaw, graph={}) {
   const action=normalizeEssentialAction(actionRaw);
   const nodes=new Map((graph.nodes||[]).map(n=>[n.id,n]));
-  const fallbackSet=new Set(action.fallbackNodeIds);
   const missing=[]; const resolved=[];
   for(const id of action.dependencyNodeIds){
     const node=nodes.get(id);
     if(!node){ missing.push({nodeId:id,reason:'DEPENDENCY_NODE_MISSING'}); continue; }
-    const hasFallback=fallbackSet.size>0;
-    resolved.push({nodeId:id,node,hasFallback});
+    const mitigation=dependencyMitigationState(action,id);
+    resolved.push({nodeId:id,node,...mitigation,mitigated:mitigation.hasFallback||mitigation.hasBuffer||mitigation.hasRecovery});
   }
-  const exposed=resolved.filter(x=>!x.hasFallback);
-  const status = missing.length ? 'REVIEW_REQUIRED'
-    : exposed.length && !action.bufferDescription && !action.recoveryDescription ? 'EXPOSED'
-    : exposed.length ? 'MITIGATED_OR_BUFFERED'
-    : 'FALLBACK_RECORDED';
+  const exposed=resolved.filter(x=>!x.mitigated);
+  const status = missing.length ? 'REVIEW_REQUIRED' : exposed.length ? 'EXPOSED' : 'MITIGATED_OR_FALLBACK_RECORDED';
   return {action,status,dependencies:resolved,missing,exposedCount:exposed.length};
 }
 
@@ -303,7 +323,10 @@ export function constrainingDependencyCandidates(graph={}) {
   for(const [nodeId,linkedActions] of actionByDependency){
     const essential=linkedActions.filter(a=>a.essentiality==='Essential');
     if(!essential.length) continue;
-    const unmitigated=essential.filter(a=>!a.fallbackNodeIds.length && !a.bufferDescription && !a.recoveryDescription);
+    const unmitigated=essential.filter(a=>{
+      const mitigation=dependencyMitigationState(a,nodeId);
+      return !(mitigation.hasFallback||mitigation.hasBuffer||mitigation.hasRecovery);
+    });
     if(!unmitigated.length) continue;
     results.push({
       nodeId,
@@ -400,8 +423,8 @@ export function essentialDependencyCoverage(graph={}) {
         anchorId:action.anchorId,
         anchorLabel:anchor?.label||action.anchorId||'Unlinked',
         toleranceMinutes:action.toleranceMinutes,
-        mitigated:Boolean(action.fallbackNodeIds.length || action.bufferDescription || action.recoveryDescription),
-        fallbackNodeIds:[...action.fallbackNodeIds],
+        mitigated:(()=>{const m=dependencyMitigationState(action,nodeId);return m.hasFallback||m.hasBuffer||m.hasRecovery;})(),
+        fallbackNodeIds:dependencyMitigationState(action,nodeId).records.filter(item=>['Fallback','Redundancy','Substitution'].includes(item.type)).map(item=>item.replacementNodeId).filter(Boolean),
       });
     }
   }
@@ -411,7 +434,7 @@ export function essentialDependencyCoverage(graph={}) {
 export function sharedFailureDomainCandidates(graph={}) {
   const groups=new Map();
   for(const raw of graph.edges||[]){
-    const edge=normalizeGraphEdge(raw); const domain=String(edge.sharedFailureDomain||'').trim();
+    const edge=normalizeGraphEdge(raw); if(edge.edgeType!=='depends-on')continue; const domain=String(edge.sharedFailureDomain||'').trim();
     if(!domain)continue;
     if(!groups.has(domain))groups.set(domain,{domain,edgeIds:[],nodeIds:new Set(),dimensions:new Set()});
     const g=groups.get(domain); g.edgeIds.push(edge.id); g.nodeIds.add(edge.sourceId); g.nodeIds.add(edge.targetId); g.dimensions.add(edge.dimension);
@@ -499,10 +522,11 @@ function applyMitigationToWorkspace(workspace={}, mitigationRaw={}) {
   if(m.targetType==='Essential Action'){
     const action=next.essentialActions.find(a=>a.id===m.targetId);
     if(action){
-      if(m.type==='Buffer') action.bufferDescription=m.description;
-      if(m.type==='Recovery') action.recoveryDescription=m.description;
+      if(m.type==='Buffer'){ action.bufferDescription=m.description; action.mitigationAppliesToAllDependencies=true; }
+      if(m.type==='Recovery'){ action.recoveryDescription=m.description; action.mitigationAppliesToAllDependencies=true; }
       if(['Fallback','Redundancy','Substitution'].includes(m.type) && m.replacementNodeId){
         action.fallbackNodeIds=unique([...(action.fallbackNodeIds||[]),m.replacementNodeId]);
+        action.mitigationAppliesToAllDependencies=true;
       }
       if(m.type==='Coordination'){
         action.coordinationMitigation=m.description;
@@ -511,12 +535,8 @@ function applyMitigationToWorkspace(workspace={}, mitigationRaw={}) {
   } else if(m.targetType==='Dependency Node'){
     for(const action of next.essentialActions){
       if(!(action.dependencyNodeIds||[]).includes(m.targetId))continue;
-      if(['Fallback','Redundancy','Substitution'].includes(m.type) && m.replacementNodeId){
-        action.fallbackNodeIds=unique([...(action.fallbackNodeIds||[]),m.replacementNodeId]);
-      }
-      if(m.type==='Buffer') action.bufferDescription=action.bufferDescription||m.description;
-      if(m.type==='Recovery') action.recoveryDescription=action.recoveryDescription||m.description;
-      if(m.type==='Coordination') action.coordinationMitigation=m.description;
+      const specific={dependencyNodeId:m.targetId,type:m.type,replacementNodeId:m.replacementNodeId,description:m.description,status:m.status,validatedBy:m.validatedBy,validatedAt:m.validatedAt,evidenceRefs:[...m.evidenceRefs]};
+      action.dependencyMitigations=[...(action.dependencyMitigations||[]).filter(item=>!(item.dependencyNodeId===m.targetId&&item.type===m.type)),specific];
     }
   }
   return next;
@@ -526,7 +546,8 @@ export function previewDependencyMitigation(workspace={}, mitigationRaw={}, opti
   const baseline=analyzeDependencyGraph(workspace,options);
   const checked=mitigationIssues(mitigationRaw,baseline.graph);
   if(!checked.valid) return {valid:false,mitigation:checked.mitigation,issues:checked.issues,baseline,nullScenario:null};
-  const scenarioWorkspace=applyMitigationToWorkspace(workspace,checked.mitigation);
+  // Scenario preview models the proposed mitigation as effective without mutating the source workspace or its recorded validation state.
+  const scenarioWorkspace=applyMitigationToWorkspace(workspace,{...checked.mitigation,status:'Validated'});
   const scenario=analyzeDependencyGraph(scenarioWorkspace,options);
   const baseConstraint=new Set(baseline.constrainingDependencyCandidates.map(x=>x.nodeId));
   const scenarioConstraint=new Set(scenario.constrainingDependencyCandidates.map(x=>x.nodeId));

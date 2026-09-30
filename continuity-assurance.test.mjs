@@ -22,6 +22,32 @@ test('CA-01 observed dependency does not create justified Reliance',()=>{
   assert.equal(continuityAssuranceSummary(ws).relianceClaims,0);
 });
 
+test('bare evidence never defaults to sufficient assurance',()=>{
+  const ws=baseWorkspace();ws.evidence=[{evidence_id:'E1'}];
+  const result=evaluateRelianceClaim({id:'R-BARE',relyingActorRef:'ROLE-OPS',essentialActionRef:'EA-AUTH',dependencyRefs:['DEP-IDP'],evidenceRefs:['E1'],scope:'Production',boundary:'Current configuration',status:'SUPPORTED'},ws,{asOf:'2026-09-30T12:00:00.000Z'});
+  assert.equal(result.evidenceState,'NOT_ASSESSED');
+  assert.equal(result.effectiveStatus,'UNRESOLVED');
+  assert.equal(result.unqualifiedSupported,false);
+});
+
+test('invalid Reliance Claim structure cannot evaluate as supported',()=>{
+  const ws=baseWorkspace();
+  const result=evaluateRelianceClaim({id:'R-INVALID',relyingActorRef:'ROLE-OPS',essentialActionRef:'EA-AUTH',dependencyRefs:['DEP-IDP'],evidenceRefs:['E1'],status:'SUPPORTED'},ws,{asOf:'2026-09-30T12:00:00.000Z'});
+  assert.equal(result.evidenceState,'INSUFFICIENT_EVIDENCE');
+  assert.equal(result.effectiveStatus,'UNRESOLVED');
+  assert.ok(result.limitations.some(x=>/scope is required|boundary is required/i.test(x.reason)));
+});
+
+test('future-effective or expired Reliance Claims cannot be counted as currently supported',()=>{
+  const ws=baseWorkspace();
+  const future=evaluateRelianceClaim({id:'R-FUTURE',relyingActorRef:'ROLE-OPS',essentialActionRef:'EA-AUTH',dependencyRefs:['DEP-IDP'],evidenceRefs:['E1'],scope:'Production',boundary:'Current',effectiveFrom:'2099-01-01',status:'SUPPORTED'},ws,{asOf:'2026-09-30T12:00:00.000Z'});
+  assert.equal(future.evidenceState,'NOT_ASSESSED');
+  assert.equal(future.effectiveStatus,'UNRESOLVED');
+  const expired=evaluateRelianceClaim({id:'R-EXPIRED',relyingActorRef:'ROLE-OPS',essentialActionRef:'EA-AUTH',dependencyRefs:['DEP-IDP'],evidenceRefs:['E1'],scope:'Production',boundary:'Current',reviewBy:'2026-09-01',status:'SUPPORTED'},ws,{asOf:'2026-09-30T12:00:00.000Z'});
+  assert.equal(expired.evidenceState,'INSUFFICIENT_EVIDENCE');
+  assert.equal(expired.effectiveStatus,'UNRESOLVED');
+});
+
 test('CA-02 material unknown dependency prevents unqualified SUPPORTED',()=>{
   const ws=baseWorkspace();ws.graphEdges[0].materialUnknown=true;
   const result=evaluateRelianceClaim({id:'R1',relyingActorRef:'ROLE-OPS',essentialActionRef:'EA-AUTH',dependencyRefs:['DEP-IDP'],evidenceRefs:['E1'],scope:'Production',boundary:'Current configuration',status:'SUPPORTED'},ws);
@@ -154,6 +180,14 @@ test('Interaction Divergence creates a bounded reassessment trigger only when ma
   assert.equal(x.material,true);
   assert.equal(x.reassessmentTrigger,'INTERACTION_OR_PERFORMANCE_DIVERGENCE');
   assert.equal(x.harcRequiredForNonAi,false);
+});
+
+test('continuity summary propagates evaluation time into supported counts',()=>{
+  const ws=baseWorkspace();
+  ws.relianceClaims=[{id:'R-FUTURE',relyingActorRef:'ROLE-OPS',essentialActionRef:'EA-AUTH',dependencyRefs:['DEP-IDP'],evidenceRefs:['E1'],scope:'Production',boundary:'Current',effectiveFrom:'2099-01-01',status:'SUPPORTED'}];
+  const summary=continuityAssuranceSummary(ws,{asOf:'2026-09-30T12:00:00.000Z'});
+  assert.equal(summary.supported,0);
+  assert.equal(summary.unresolved,1);
 });
 
 test('migration is additive and defaults absent new semantics to NOT_ASSESSED rather than UNKNOWN',()=>{

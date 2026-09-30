@@ -50,6 +50,14 @@ test('registry object-reified relationship requires owning object evidence',()=>
   assert.ok(relationshipFindings(r).some(f=>f.code==='AUTHORITATIVE_FAMILY'));
   r.authoritativeRecord.family='OF-09';assert.equal(relationshipFindings(r).length,0);
 });
+test('derived views use derivation evidence without requiring object-style endpoint ownership',()=>{
+  const authority={id:'RA',relationshipType:'POSSESSES_AUTHORITY',representationMode:'DERIVED_VIEW',sourceId:'A',sourceFamily:'OF-01',sourceSubtype:'HUMAN_PERSON',targetId:'AUTH',targetFamily:'OF-15',basisRef:'AUTH',scope:'pilot',authoritativeRecordRef:'AUTH',authoritativeRecord:{id:'AUTH',family:'OF-15'}};
+  assert.deepEqual(relationshipFindings(authority),[]);
+  const permission={id:'RP',relationshipType:'IS_PERMITTED_TO',representationMode:'DERIVED_VIEW',sourceId:'A',sourceFamily:'OF-01',sourceSubtype:'HUMAN_PERSON',targetId:'ACT',targetFamily:'OF-18',basisRef:'RULE',scope:'pilot',authoritativeRecordRef:'RULE',authoritativeRecord:{id:'RULE',family:'OF-14'}};
+  assert.deepEqual(relationshipFindings(permission),[]);
+  const missing={...authority,authoritativeRecordRef:'',authoritativeRecord:null};
+  assert.ok(relationshipFindings(missing).some(f=>f.code==='DERIVATION_BASIS_REQUIRED'));
+});
 test('all Actor subtypes and legacy principal aliases remain interpretable',()=>{
   for(const subtype of CIF_ACTOR_SUBTYPES) assert.equal(normalizeCIFActor({id:'A',subtype}).findings.length,0);
   assert.equal(normalizeCIFActor({id:'A',type:'HUMAN'}).actor.subtype,'HUMAN_PERSON');
@@ -181,6 +189,11 @@ test('schema is generated from same registry and leaves historical versions unco
   const s=cifApplicationSchema();assert.equal(s.$defs.relationship.properties.relationshipType.enum.length,60);
   assert.equal(s.$defs.relationship.allOf.length,60);assert.deepEqual(s.properties.frameworkVersion.type,['string','null']);
   assert.ok(s.properties.absenceStates.additionalProperties.enum.includes('UNRESOLVED'));
+  for(const type of ['DEPENDS_ON','RELIES_ON']){
+    const rule=s.$defs.relationship.allOf.find(x=>x.if.properties.relationshipType.const===type).then;
+    assert.ok(rule.allOf.some(x=>x.required?.includes('basisRef')),type+' basis requirement');
+    assert.ok(rule.allOf.some(x=>x.anyOf?.some(y=>y.required?.includes('scope'))&&x.anyOf?.some(y=>y.required?.includes('scopeRef'))),type+' scope requirement');
+  }
 });
 test('default non-entailment also blocks unlisted materially different inferences',()=>{
   assert.equal(validateDerivedRelationship({sourceRelationship:'REPRESENTS',proposedRelationship:'IS_PERMITTED_TO'}).valid,false);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  buildDependencyGraph, analyzeDependencyGraph, dependencyAccumulationDelta,
+  buildDependencyGraph, analyzeDependencyGraph, dependencyAccumulationDelta, normalizeGraphEdge,
   normalizeContinuityAnchor, normalizeEssentialAction, graphSourceSummary,
   crossSourceConnections, reviewedCrossSourceConnections, essentialDependencyCoverage,
   sharedFailureDomainCandidates, multiSourceNodes, dependencyFindingsSummary, upsertDependencyFindingReview, dependencyFindingToConsultingRecord, normalizeDependencyMitigation, previewDependencyMitigation, applyValidatedDependencyMitigation, classifyMitigationTransition, applyValidatedMitigationWithSnapshots
@@ -19,6 +19,23 @@ test('builds a provider-neutral dependency graph from existing modernization dat
   assert.equal(graph.edges[0].dimension,'technical');
 });
 
+test('preserves invalid or missing graph relationship types as unknown rather than manufacturing dependencies',()=>{
+  assert.equal(normalizeGraphEdge({id:'E1',sourceId:'A',targetId:'B',edgeType:'NOT_A_RELATION'}).edgeType,'unknown');
+  assert.equal(normalizeGraphEdge({id:'E2',sourceId:'A',targetId:'B'}).edgeType,'unknown');
+  assert.equal(normalizeGraphEdge({id:'E3',sourceId:'A',targetId:'B',edgeType:'unknown'}).edgeType,'unknown');
+});
+
+test('unknown graph relationships do not enter dependency concentration analysis',()=>{
+  const result=analyzeDependencyGraph({
+    graphNodes:[{id:'A',nodeType:'application'},{id:'B',nodeType:'application'},{id:'C',nodeType:'application'},{id:'X',nodeType:'external-service'}],
+    graphEdges:[
+      {id:'E1',sourceId:'A',targetId:'X',edgeType:'BAD'},
+      {id:'E2',sourceId:'B',targetId:'X'},
+      {id:'E3',sourceId:'C',targetId:'X',edgeType:'unknown'},
+    ]
+  },{minimumInbound:3});
+  assert.equal(result.concentrationCandidates.length,0);
+});
 test('identifies concentration and candidate constraining dependencies without treating dependency as inherently bad',()=>{
   const workspace={
     graphNodes:[
@@ -299,6 +316,40 @@ test('applies only validated mitigation to working graph',()=>{
   assert.equal(next.dependencyMitigations.length,1);
 });
 
+
+test('dependency-targeted candidate preview models only the targeted relief',()=>{
+  const workspace={
+    graphNodes:[{id:'IDP',nodeType:'external-service'},{id:'DB',nodeType:'infrastructure'},{id:'ALT',nodeType:'external-service'}],
+    essentialActions:[{id:'EA',label:'Serve',dependencyNodeIds:['IDP','DB']}],
+  };
+  const preview=previewDependencyMitigation(workspace,{targetType:'Dependency Node',targetId:'IDP',type:'Fallback',status:'Candidate',owner:'Ops',description:'Alternate identity',replacementNodeId:'ALT',evidenceRefs:['E1']});
+  assert.equal(preview.valid,true);
+  assert.deepEqual(preview.structuralEffect.relievedCandidateNodeIds,['IDP']);
+  assert.deepEqual(preview.scenario.constrainingDependencyCandidates.map(x=>x.nodeId),['DB']);
+  assert.equal(workspace.essentialActions[0].dependencyMitigations,undefined);
+});
+test('dependency-targeted mitigation relieves only the targeted dependency',()=>{
+  const workspace={
+    graphNodes:[
+      {id:'IDP',label:'Identity provider',nodeType:'external-service'},
+      {id:'DB',label:'Database',nodeType:'infrastructure'},
+      {id:'ALT',label:'Alternate identity provider',nodeType:'external-service'},
+    ],
+    continuityAnchors:[{id:'CA',label:'Customer access'}],
+    essentialActions:[{id:'EA',label:'Serve customer',anchorId:'CA',dependencyNodeIds:['IDP','DB']}],
+  };
+  const before=analyzeDependencyGraph(workspace);
+  assert.deepEqual(before.constrainingDependencyCandidates.map(x=>x.nodeId).sort(),['DB','IDP']);
+  const next=applyValidatedDependencyMitigation(workspace,{
+    id:'MIT-IDP',targetType:'Dependency Node',targetId:'IDP',type:'Fallback',status:'Validated',
+    owner:'CIO',description:'Use alternate identity provider',replacementNodeId:'ALT',evidenceRefs:['EVD-1'],
+    validatedBy:'Architect',validatedAt:'2026-09-30T12:00:00.000Z'
+  });
+  const after=analyzeDependencyGraph(next);
+  assert.deepEqual(after.constrainingDependencyCandidates.map(x=>x.nodeId),['DB']);
+  assert.equal(next.essentialActions[0].fallbackNodeIds.length,0);
+  assert.equal(next.essentialActions[0].dependencyMitigations[0].dependencyNodeId,'IDP');
+});
 
 test('captures automatic before and after snapshots when applying a validated mitigation',()=>{
   const workspace={
