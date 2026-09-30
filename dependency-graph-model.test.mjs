@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  buildDependencyGraph, analyzeDependencyGraph, dependencyAccumulationDelta,
+  buildDependencyGraph, analyzeDependencyGraph, dependencyAccumulationDelta, normalizeGraphEdge,
   normalizeContinuityAnchor, normalizeEssentialAction, graphSourceSummary,
   crossSourceConnections, reviewedCrossSourceConnections, essentialDependencyCoverage,
   sharedFailureDomainCandidates, multiSourceNodes, dependencyFindingsSummary, upsertDependencyFindingReview, dependencyFindingToConsultingRecord, normalizeDependencyMitigation, previewDependencyMitigation, applyValidatedDependencyMitigation, classifyMitigationTransition, applyValidatedMitigationWithSnapshots
@@ -17,6 +17,12 @@ test('builds a provider-neutral dependency graph from existing modernization dat
   assert.equal(graph.nodes.length,2);
   assert.equal(graph.edges.length,1);
   assert.equal(graph.edges[0].dimension,'technical');
+});
+
+test('preserves invalid or missing graph relationship types as unknown rather than manufacturing dependencies',()=>{
+  assert.equal(normalizeGraphEdge({id:'E1',sourceId:'A',targetId:'B',edgeType:'NOT_A_RELATION'}).edgeType,'unknown');
+  assert.equal(normalizeGraphEdge({id:'E2',sourceId:'A',targetId:'B'}).edgeType,'unknown');
+  assert.equal(normalizeGraphEdge({id:'E3',sourceId:'A',targetId:'B',edgeType:'unknown'}).edgeType,'unknown');
 });
 
 test('identifies concentration and candidate constraining dependencies without treating dependency as inherently bad',()=>{
@@ -299,6 +305,29 @@ test('applies only validated mitigation to working graph',()=>{
   assert.equal(next.dependencyMitigations.length,1);
 });
 
+
+test('dependency-targeted mitigation relieves only the targeted dependency',()=>{
+  const workspace={
+    graphNodes:[
+      {id:'IDP',label:'Identity provider',nodeType:'external-service'},
+      {id:'DB',label:'Database',nodeType:'infrastructure'},
+      {id:'ALT',label:'Alternate identity provider',nodeType:'external-service'},
+    ],
+    continuityAnchors:[{id:'CA',label:'Customer access'}],
+    essentialActions:[{id:'EA',label:'Serve customer',anchorId:'CA',dependencyNodeIds:['IDP','DB']}],
+  };
+  const before=analyzeDependencyGraph(workspace);
+  assert.deepEqual(before.constrainingDependencyCandidates.map(x=>x.nodeId).sort(),['DB','IDP']);
+  const next=applyValidatedDependencyMitigation(workspace,{
+    id:'MIT-IDP',targetType:'Dependency Node',targetId:'IDP',type:'Fallback',status:'Validated',
+    owner:'CIO',description:'Use alternate identity provider',replacementNodeId:'ALT',evidenceRefs:['EVD-1'],
+    validatedBy:'Architect',validatedAt:'2026-09-30T12:00:00.000Z'
+  });
+  const after=analyzeDependencyGraph(next);
+  assert.deepEqual(after.constrainingDependencyCandidates.map(x=>x.nodeId),['DB']);
+  assert.equal(next.essentialActions[0].fallbackNodeIds.length,0);
+  assert.equal(next.essentialActions[0].dependencyMitigations[0].dependencyNodeId,'IDP');
+});
 
 test('captures automatic before and after snapshots when applying a validated mitigation',()=>{
   const workspace={
