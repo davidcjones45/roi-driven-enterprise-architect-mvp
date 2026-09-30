@@ -546,7 +546,8 @@ export function previewDependencyMitigation(workspace={}, mitigationRaw={}, opti
   const baseline=analyzeDependencyGraph(workspace,options);
   const checked=mitigationIssues(mitigationRaw,baseline.graph);
   if(!checked.valid) return {valid:false,mitigation:checked.mitigation,issues:checked.issues,baseline,nullScenario:null};
-  const scenarioWorkspace=applyMitigationToWorkspace(workspace,checked.mitigation);
+  // Scenario preview models the proposed mitigation as effective without mutating the source workspace or its recorded validation state.
+  const scenarioWorkspace=applyMitigationToWorkspace(workspace,{...checked.mitigation,status:'Validated'});
   const scenario=analyzeDependencyGraph(scenarioWorkspace,options);
   const baseConstraint=new Set(baseline.constrainingDependencyCandidates.map(x=>x.nodeId));
   const scenarioConstraint=new Set(scenario.constrainingDependencyCandidates.map(x=>x.nodeId));
