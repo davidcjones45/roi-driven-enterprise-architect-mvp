@@ -4,6 +4,7 @@ const unique=v=>[...new Set(list(v).map(text).filter(Boolean))];
 const clone=v=>v==null?v:structuredClone(v);
 const bool=v=>v===true;
 const upper=v=>text(v).toUpperCase();
+const isoTime=v=>{const raw=text(v);if(!raw||Number.isNaN(Date.parse(raw)))return '';return new Date(raw).toISOString();};
 const enumValue=(value,allowed,fallback)=>allowed.includes(value)?value:fallback;
 
 function stableId(seed,prefix='CA'){
@@ -12,8 +13,10 @@ function stableId(seed,prefix='CA'){
   return `${prefix}-${(h>>>0).toString(36).toUpperCase()}`;
 }
 
-export const CONTINUITY_ASSURANCE_PROFILE='CIF-S-009';
-export const CONTINUITY_APPLICATION_PATTERN='CIF-AP-002';
+export const CONTINUITY_ASSURANCE_PROFILE='ROI-EA-CONTINUITY-ASSURANCE-PROFILE-V0.1';
+export const CONTINUITY_APPLICATION_PATTERN='ROI-EA-CONTINUITY-ASSURANCE-PATTERN-V0.1';
+export const LEGACY_CONTINUITY_PROFILE_LABEL='CIF-S-009';
+export const LEGACY_CONTINUITY_PATTERN_LABEL='CIF-AP-002';
 export const CONTINUITY_SCHEMA_VERSION='ROI-EA-CONTINUITY-ASSURANCE-V0.1';
 
 export const RELIANCE_STATUSES=Object.freeze(['PROPOSED','SUPPORTED','QUALIFIED','UNRESOLVED','SUPERSEDED','SUSPENDED','RETIRED']);
@@ -44,16 +47,18 @@ function evidenceIndex(workspace={}){
 function recordEvidenceState(record={}){
   const explicit=upper(record.epistemicState||record.evidenceState||record.semanticState);
   if(EPISTEMIC_STATES.includes(explicit))return explicit;
+  const reviewState=upper(record.review_state||record.reviewState),classification=upper(record.classification);
   if(record.conflicting===true||record.materialConflict===true)return 'CONFLICTING_EVIDENCE';
   if(record.unresolved===true)return 'UNRESOLVED';
   if(record.notApplicable===true)return 'NOT_APPLICABLE';
-  if(record.stale===true||upper(record.review_state||record.reviewState)==='SUPERSEDED')return 'INSUFFICIENT_EVIDENCE';
-  if(upper(record.classification)==='UNKNOWN')return 'UNKNOWN';
-  if(record.review_state==='Qualified review required')return 'INSUFFICIENT_EVIDENCE';
-  if(record.review_state==='Not reviewed')return 'NOT_ASSESSED';
+  if(record.stale===true||reviewState==='SUPERSEDED')return 'INSUFFICIENT_EVIDENCE';
+  if(classification==='UNKNOWN')return 'UNKNOWN';
+  if(reviewState==='QUALIFIED REVIEW REQUIRED')return 'INSUFFICIENT_EVIDENCE';
+  if(reviewState==='NOT REVIEWED')return 'NOT_ASSESSED';
   if(record.materialLimitation===true)return 'INSUFFICIENT_EVIDENCE';
-  if(['CLIENT ASSERTION','CONSULTANT INFERENCE','ASSUMPTION','ESTIMATE'].includes(upper(record.classification)))return 'INSUFFICIENT_EVIDENCE';
-  return 'SUFFICIENT_EVIDENCE';
+  if(['CLIENT ASSERTION','CONSULTANT INFERENCE','ASSUMPTION','ESTIMATE'].includes(classification))return 'INSUFFICIENT_EVIDENCE';
+  if(['REVIEWED','REVIEWED WITH LIMITATION','VALIDATED','VERIFIED'].includes(reviewState))return 'SUFFICIENT_EVIDENCE';
+  return 'NOT_ASSESSED';
 }
 
 function allDependencyRecords(workspace={}){
@@ -97,6 +102,7 @@ export function normalizeRelianceClaim(raw={}){
     boundary:text(raw.boundary),
     evidenceRefs:ev,
     effectiveFrom:text(raw.effectiveFrom),
+    effectiveTo:text(raw.effectiveTo),
     reviewBy:text(raw.reviewBy),
     status:enumValue(upper(raw.status),RELIANCE_STATUSES,'PROPOSED'),
     qualification:text(raw.qualification),
@@ -116,6 +122,10 @@ export function relianceClaimIssues(raw={},workspace={}){
   if(!claim.relianceObjectRefs.length&&!claim.dependencyRefs.length)issues.push('At least one reliance object or dependency reference is required.');
   if(!claim.scope)issues.push('scope is required.');
   if(!claim.boundary)issues.push('boundary is required.');
+  if(claim.effectiveFrom&&!isoTime(claim.effectiveFrom))issues.push('effectiveFrom must be a valid time when supplied.');
+  if(claim.effectiveTo&&!isoTime(claim.effectiveTo))issues.push('effectiveTo must be a valid time when supplied.');
+  if(claim.reviewBy&&!isoTime(claim.reviewBy))issues.push('reviewBy must be a valid time when supplied.');
+  if(isoTime(claim.effectiveFrom)&&isoTime(claim.effectiveTo)&&isoTime(claim.effectiveFrom)>=isoTime(claim.effectiveTo))issues.push('effectiveTo must be later than effectiveFrom.');
   const deps=dependencyIndex(workspace),ev=evidenceIndex(workspace);
   for(const id of claim.dependencyRefs)if(!deps.has(id))issues.push(`Referenced dependency ${id} is not recorded.`);
   for(const id of claim.evidenceRefs)if(!ev.has(id))issues.push(`Referenced evidence ${id} is not recorded.`);
@@ -123,8 +133,9 @@ export function relianceClaimIssues(raw={},workspace={}){
 }
 
 export function evaluateRelianceClaim(raw={},workspace={},options={}){
-  const claim=normalizeRelianceClaim(raw),deps=dependencyIndex(workspace),ev=evidenceIndex(workspace);
+  const structural=relianceClaimIssues(raw,workspace),claim=structural.claim,deps=dependencyIndex(workspace),ev=evidenceIndex(workspace);
   const dependencyConditions=[],evidenceConditions=[];
+  for(const issue of structural.issues)dependencyConditions.push({ref:claim.id,state:'INSUFFICIENT_EVIDENCE',reason:issue});
   for(const id of claim.dependencyRefs){
     const dep=deps.get(id);
     if(!dep){dependencyConditions.push({ref:id,state:'INSUFFICIENT_EVIDENCE',reason:'Referenced dependency is missing.'});continue;}
@@ -138,6 +149,10 @@ export function evaluateRelianceClaim(raw={},workspace={},options={}){
   }
   for(const unknown of claim.materialUnknowns)dependencyConditions.push({ref:unknown,state:'UNKNOWN',reason:'Material unknown explicitly recorded on Reliance Claim.'});
   if(!claim.evidenceRefs.length)evidenceConditions.push({ref:'',state:'INSUFFICIENT_EVIDENCE',reason:'No evidence is linked to this Reliance Claim.'});
+  const asOf=isoTime(options.asOf);
+  if(asOf&&isoTime(claim.effectiveFrom)&&asOf<isoTime(claim.effectiveFrom))evidenceConditions.push({ref:claim.effectiveFrom,state:'NOT_ASSESSED',reason:'Reliance Claim is not yet effective at the evaluation time.'});
+  if(asOf&&isoTime(claim.effectiveTo)&&asOf>=isoTime(claim.effectiveTo))evidenceConditions.push({ref:claim.effectiveTo,state:'INSUFFICIENT_EVIDENCE',reason:'Reliance Claim effective period has ended.'});
+  if(asOf&&isoTime(claim.reviewBy)&&asOf>=isoTime(claim.reviewBy))evidenceConditions.push({ref:claim.reviewBy,state:'INSUFFICIENT_EVIDENCE',reason:'Reliance review date has passed.'});
   const all=[...dependencyConditions,...evidenceConditions];
   const states=new Set(all.map(x=>x.state));
   let evidenceState='SUFFICIENT_EVIDENCE';
@@ -154,19 +169,13 @@ export function evaluateRelianceClaim(raw={},workspace={},options={}){
     else if(evidenceState==='INSUFFICIENT_EVIDENCE'&&claim.qualification)effectiveStatus='QUALIFIED';
     else effectiveStatus='UNRESOLVED';
   }
-  if(claim.status==='QUALIFIED'&&!claim.qualification)effectiveStatus='UNRESOLVED';
-  const now=text(options.asOf);
-  if(now&&claim.reviewBy&&claim.reviewBy<now&&['SUPPORTED','QUALIFIED'].includes(effectiveStatus)){
-    evidenceState='INSUFFICIENT_EVIDENCE';
-    effectiveStatus=claim.qualification?'QUALIFIED':'UNRESOLVED';
-    evidenceConditions.push({ref:claim.reviewBy,state:'INSUFFICIENT_EVIDENCE',reason:'Reliance review date has passed.'});
-  }
+  if(claim.status==='QUALIFIED'&&(!claim.qualification||materialLimit&&evidenceState!=='INSUFFICIENT_EVIDENCE'))effectiveStatus='UNRESOLVED';
   return {
     claim,
     requestedStatus:claim.status,
     effectiveStatus,
     evidenceState,
-    unqualifiedSupported:effectiveStatus==='SUPPORTED'&&evidenceState==='SUFFICIENT_EVIDENCE',
+    unqualifiedSupported:structural.valid&&effectiveStatus==='SUPPORTED'&&evidenceState==='SUFFICIENT_EVIDENCE',
     dependencyConditions,
     evidenceConditions,
     limitations:all.filter(x=>!['SUFFICIENT_EVIDENCE','NOT_APPLICABLE'].includes(x.state)),
@@ -460,9 +469,9 @@ export function migrateContinuityAssuranceWorkspace(input={}){
   return next;
 }
 
-export function continuityAssuranceSummary(workspace={}){
+export function continuityAssuranceSummary(workspace={},options={}){
   const migrated=migrateContinuityAssuranceWorkspace(workspace);
-  const claims=migrated.relianceClaims.map(c=>evaluateRelianceClaim(c,migrated));
+  const claims=migrated.relianceClaims.map(c=>evaluateRelianceClaim(c,migrated,options));
   const constraints=migrated.constraintValidations.map(c=>validateConstrainingDependency(c,migrated));
   return {
     profile:CONTINUITY_ASSURANCE_PROFILE,applicationPattern:CONTINUITY_APPLICATION_PATTERN,
