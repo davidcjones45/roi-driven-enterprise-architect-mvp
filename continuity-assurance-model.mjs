@@ -280,13 +280,13 @@ export function normalizeAssuranceViewRecord(raw={}){
   };
 }
 
-export function designedObservedAssuredView(workspace={}){
+export function designedObservedAssuredView(workspace={},options={}){
   const records=(workspace.assuranceViewRecords||[]).map(normalizeAssuranceViewRecord);
   const rows=new Map();
   const row=ref=>{if(!rows.has(ref))rows.set(ref,{subjectRef:ref,DESIGNED:[],OBSERVED:[],ASSURED:[]});return rows.get(ref);};
   for(const r of records)row(r.subjectRef)[r.perspective].push(r);
   for(const cRaw of workspace.relianceClaims||[]){
-    const a=evaluateRelianceClaim(cRaw,workspace);
+    const a=evaluateRelianceClaim(cRaw,workspace,options);
     if(['SUPPORTED','QUALIFIED'].includes(a.effectiveStatus))row(a.claim.essentialActionRef).ASSURED.push({id:a.claim.id,subjectRef:a.claim.essentialActionRef,perspective:'ASSURED',statement:`Reliance ${a.effectiveStatus.toLowerCase()} within recorded scope and boundary.`,evidenceRefs:a.claim.evidenceRefs,qualification:a.claim.qualification,status:a.effectiveStatus});
   }
   const result=[...rows.values()].map(r=>{
