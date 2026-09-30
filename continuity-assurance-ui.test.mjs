@@ -33,7 +33,11 @@ test('continuity assurance UI exposes outcome, reassessment, successor, and opti
   assert.match(src,/Human\+AI Interaction Divergence/);
 });
 
-test('continuity UI exports CIF-aligned specialization handoff without canonicalization',()=>{
+test('continuity UI exports an application-local CIF candidate handoff without canonicalization',()=>{
+  assert.match(src,/ROI-EA APPLICATION-LOCAL \/ CIF v0\.4\.1-ALIGNED/);
+  assert.doesNotMatch(src,/CIF-S-009 \/ CIF-AP-002/);
   assert.match(src,/continuityAssuranceCifHandoff/);
   assert.match(src,/continuity-assurance-cif-handoff-v0\.1\.json/);
+  assert.match(src,/continuityAssuranceSummary\(data,\{asOf\}\)/);
+  assert.match(src,/evaluateRelianceClaim\(c,data,\{asOf\}\)/);
 });
