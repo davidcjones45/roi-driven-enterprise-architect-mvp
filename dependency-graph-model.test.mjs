@@ -25,6 +25,17 @@ test('preserves invalid or missing graph relationship types as unknown rather th
   assert.equal(normalizeGraphEdge({id:'E3',sourceId:'A',targetId:'B',edgeType:'unknown'}).edgeType,'unknown');
 });
 
+test('unknown graph relationships do not enter dependency concentration analysis',()=>{
+  const result=analyzeDependencyGraph({
+    graphNodes:[{id:'A',nodeType:'application'},{id:'B',nodeType:'application'},{id:'C',nodeType:'application'},{id:'X',nodeType:'external-service'}],
+    graphEdges:[
+      {id:'E1',sourceId:'A',targetId:'X',edgeType:'BAD'},
+      {id:'E2',sourceId:'B',targetId:'X'},
+      {id:'E3',sourceId:'C',targetId:'X',edgeType:'unknown'},
+    ]
+  },{minimumInbound:3});
+  assert.equal(result.concentrationCandidates.length,0);
+});
 test('identifies concentration and candidate constraining dependencies without treating dependency as inherently bad',()=>{
   const workspace={
     graphNodes:[
