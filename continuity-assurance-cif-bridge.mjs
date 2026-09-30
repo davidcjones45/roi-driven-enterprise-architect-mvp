@@ -10,9 +10,10 @@ const clone=v=>v==null?v:structuredClone(v);
 
 export function continuityAssuranceCifHandoff(workspace={},options={}){
   const migrated=migrateContinuityAssuranceWorkspace(workspace);
+  const evalOptions={...options,asOf:options.asOf||options.generatedAt||new Date().toISOString()};
   const dependencyProjection=dependencyGraphCifProjection(migrated,options);
   const relianceClaims=migrated.relianceClaims.map(raw=>{
-    const evaluation=evaluateRelianceClaim(raw,migrated,options);
+    const evaluation=evaluateRelianceClaim(raw,migrated,evalOptions);
     return {
       localId:evaluation.claim.id,
       specialization:CONTINUITY_ASSURANCE_PROFILE,
@@ -35,8 +36,8 @@ export function continuityAssuranceCifHandoff(workspace={},options={}){
   const validatedConstraints=migrated.constraintValidations.map(normalizeConstraintValidation).map(record=>({
     localId:record.id,candidateDependencyRef:record.candidateDependencyRef,affectedEssentialActionRef:record.affectedEssentialActionRef,
     constraintType:record.constraintType,validationStatus:record.validationStatus,evidenceRefs:[...record.evidenceRefs],counterfactualBasis:record.counterfactualBasis,
-    cifCandidate:{family:'OF-14',subtype:'CONSTRAINT'},classificationState:record.validationStatus==='VALIDATED'?'HUMAN_VALIDATED_LOCAL_FINDING':'LOCAL_CANDIDATE_ONLY',
-    note:'Constraint classification is a candidate CIF projection only; structural prominence never establishes a canonical Constraint.'
+    cifCandidate:{family:'OF-12',subtype:'CLAIM'},classificationState:record.validationStatus==='VALIDATED'?'HUMAN_VALIDATED_LOCAL_FINDING':'LOCAL_CANDIDATE_ONLY',
+    note:'Constraining-dependency classification is an evidence-bounded analytical claim about a Dependency and Essential Action. It is not a normative OF-14 Rule/Obligation and structural prominence never establishes it as fact.'
   }));
 
   const reassessments=migrated.reassessmentRecords.map(normalizeReassessmentRecord).map(record=>({
@@ -74,10 +75,10 @@ export function continuityAssuranceCifHandoff(workspace={},options={}){
     cifFrameworkVersion:dependencyProjection.cifFrameworkVersion,
     cifExternalValidationStatus:dependencyProjection.cifExternalValidationStatus,
     canonicalization:false,
-    localAuthorityBoundary:'Continuity-assurance export is specialization/application metadata plus candidate CIF mappings. It does not create canonical Authority, Decision, Acceptance, legal applicability, clinical correctness, Control effectiveness, causal improvement, or realized Outcome.',
+    localAuthorityBoundary:'Continuity-assurance export is ROI-EA application-local metadata plus candidate CIF mappings under CIF v0.4.1. It does not create a canonical CIF specialization, Authority, Decision, Acceptance, legal applicability, clinical correctness, Control effectiveness, causal improvement, or realized Outcome.',
     dependencyProjection,
     relianceClaims,validatedConstraints,reassessments,evidenceConflicts,successors,interventionOutcomes,
-    evidenceStates:migrated.relianceClaims.map(c=>evaluateRelianceClaim(c,migrated,options)).map(x=>({relianceClaimRef:x.claim.id,state:x.evidenceState,effectiveStatus:x.effectiveStatus})),
+    evidenceStates:migrated.relianceClaims.map(c=>evaluateRelianceClaim(c,migrated,evalOptions)).map(x=>({relianceClaimRef:x.claim.id,state:x.evidenceState,effectiveStatus:x.effectiveStatus})),
     summary:{
       relianceClaims:relianceClaims.length,
       unqualifiedSupported:relianceClaims.filter(x=>x.effectiveStatus==='SUPPORTED'&&x.evidenceState==='SUFFICIENT_EVIDENCE').length,
