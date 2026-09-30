@@ -422,8 +422,8 @@ export function essentialDependencyCoverage(graph={}) {
         anchorId:action.anchorId,
         anchorLabel:anchor?.label||action.anchorId||'Unlinked',
         toleranceMinutes:action.toleranceMinutes,
-        mitigated:Boolean(action.fallbackNodeIds.length || action.bufferDescription || action.recoveryDescription),
-        fallbackNodeIds:[...action.fallbackNodeIds],
+        mitigated:(()=>{const m=dependencyMitigationState(action,nodeId);return m.hasFallback||m.hasBuffer||m.hasRecovery;})(),
+        fallbackNodeIds:dependencyMitigationState(action,nodeId).records.filter(item=>['Fallback','Redundancy','Substitution'].includes(item.type)).map(item=>item.replacementNodeId).filter(Boolean),
       });
     }
   }
