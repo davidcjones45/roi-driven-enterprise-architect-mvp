@@ -521,10 +521,11 @@ function applyMitigationToWorkspace(workspace={}, mitigationRaw={}) {
   if(m.targetType==='Essential Action'){
     const action=next.essentialActions.find(a=>a.id===m.targetId);
     if(action){
-      if(m.type==='Buffer') action.bufferDescription=m.description;
-      if(m.type==='Recovery') action.recoveryDescription=m.description;
+      if(m.type==='Buffer'){ action.bufferDescription=m.description; action.mitigationAppliesToAllDependencies=true; }
+      if(m.type==='Recovery'){ action.recoveryDescription=m.description; action.mitigationAppliesToAllDependencies=true; }
       if(['Fallback','Redundancy','Substitution'].includes(m.type) && m.replacementNodeId){
         action.fallbackNodeIds=unique([...(action.fallbackNodeIds||[]),m.replacementNodeId]);
+        action.mitigationAppliesToAllDependencies=true;
       }
       if(m.type==='Coordination'){
         action.coordinationMitigation=m.description;
