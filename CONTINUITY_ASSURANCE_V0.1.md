@@ -1,6 +1,8 @@
 # Continuity Assurance v0.1
 
-This increment implements the ROI-EA application layer for **CIF-S-009 — Continuity Assurance Profile** and **CIF-AP-002 — Continuity Assurance Application Pattern**. It does not modify CIF Core.
+This increment implements an **ROI-EA application-local Continuity Assurance profile/pattern aligned to CIF v0.4.1 semantics**. It does not modify CIF Core and it does not claim a new canonical CIF specialization or Application Protocol identifier.
+
+Earlier internal labels `CIF-S-009` and `CIF-AP-002` are retained only as historical design provenance; they are not canonical under the frozen CIF v0.4.1 baseline, which defines specializations S-003 through S-008 and Application Protocol CIF-AP-001.
 
 ## Added application records
 
@@ -54,7 +56,7 @@ Human Agency and Graduation are displayed only when activated or when matching r
 Interaction Divergence compares the active Human+AI interaction against an assured/reconstructed baseline across function allocation, authority allocation, information relationship, verification/challenge, coordination/escalation, and continuity/fallback. A material difference creates the `INTERACTION_OR_PERFORMANCE_DIVERGENCE` reassessment trigger.
 
 ## CIF handoff
-`continuityAssuranceCifHandoff()` wraps the existing dependency CIF projection and adds specialization metadata for Reliance Claims, local constraint validations, reassessment records, successor analyses, evidence states, and intervention/outcome records. It explicitly sets `canonicalization: false`.
+`continuityAssuranceCifHandoff()` wraps the existing dependency CIF projection and adds **application-local** continuity metadata for Reliance Claims, local constraint validations, reassessment records, successor analyses, evidence states, and intervention/outcome records. It explicitly sets `canonicalization: false` and uses ROI-EA-local profile/pattern identifiers.
 
 The handoff does not create canonical Authority, Decision, Acceptance, legal applicability, clinical correctness, Control effectiveness, causal improvement, or realized Outcome.
 
