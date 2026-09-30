@@ -317,6 +317,17 @@ test('applies only validated mitigation to working graph',()=>{
 });
 
 
+test('dependency-targeted candidate preview models only the targeted relief',()=>{
+  const workspace={
+    graphNodes:[{id:'IDP',nodeType:'external-service'},{id:'DB',nodeType:'infrastructure'},{id:'ALT',nodeType:'external-service'}],
+    essentialActions:[{id:'EA',label:'Serve',dependencyNodeIds:['IDP','DB']}],
+  };
+  const preview=previewDependencyMitigation(workspace,{targetType:'Dependency Node',targetId:'IDP',type:'Fallback',status:'Candidate',owner:'Ops',description:'Alternate identity',replacementNodeId:'ALT',evidenceRefs:['E1']});
+  assert.equal(preview.valid,true);
+  assert.deepEqual(preview.structuralEffect.relievedCandidateNodeIds,['IDP']);
+  assert.deepEqual(preview.scenario.constrainingDependencyCandidates.map(x=>x.nodeId),['DB']);
+  assert.equal(workspace.essentialActions[0].dependencyMitigations,undefined);
+});
 test('dependency-targeted mitigation relieves only the targeted dependency',()=>{
   const workspace={
     graphNodes:[
