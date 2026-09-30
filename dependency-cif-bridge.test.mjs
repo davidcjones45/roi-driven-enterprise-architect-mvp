@@ -13,6 +13,7 @@ const workspace={
   ],
   continuityAnchors:[{id:'CA-1',label:'Customer access'}],
   essentialActions:[{id:'EA-1',label:'Authenticate',anchorId:'CA-1',dependencyNodeIds:['IDP']}],
+  evidence:[{evidence_id:'EVD-1',classification:'Verified fact',review_state:'Reviewed'}],
   dependencyMitigations:[],
   dependencyMitigationLifecycle:[]
 };
@@ -25,6 +26,14 @@ test('projects graph dependencies into CIF OF-09 candidates without canonicalizi
   assert.equal(p.dependencies[0].relationshipCandidate.relationshipType,'DEPENDS_ON');
   assert.equal(p.dependencies[0].conformanceState,'PASS');
   assert.match(p.localAuthorityBoundary,/Projection only/i);
+});
+
+test('does not PASS a dependency handoff when the required evidence basis is unresolved',()=>{
+  const withoutEvidence={...workspace,evidence:[]};
+  const p=dependencyGraphCifProjection(withoutEvidence,{generatedAt:'2026-09-30T12:00:00.000Z'});
+  assert.equal(p.dependencies[0].conformanceState,'INSUFFICIENT_EVIDENCE');
+  assert.equal(p.dependencies[0].basisResolution.resolved,false);
+  assert.ok(p.dependencies[0].conformanceFindings.some(x=>x.code==='UNRESOLVED_BASIS'));
 });
 
 test('keeps continuity anchor binding unresolved between Purpose and Outcome',()=>{
