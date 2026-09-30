@@ -255,6 +255,7 @@ export function dependencyDegree(graph={}) {
   const stats = new Map((graph.nodes || []).map(n=>[n.id,{nodeId:n.id,inbound:0,outbound:0,total:0,dimensions:new Set(),sharedFailureDomains:new Set()}]));
   for(const raw of graph.edges || []){
     const edge=normalizeGraphEdge(raw);
+    if(edge.edgeType!=='depends-on')continue;
     if(stats.has(edge.sourceId)){
       const s=stats.get(edge.sourceId); s.outbound+=1; s.total+=1; s.dimensions.add(edge.dimension); if(edge.sharedFailureDomain)s.sharedFailureDomains.add(edge.sharedFailureDomain);
     }
@@ -433,7 +434,7 @@ export function essentialDependencyCoverage(graph={}) {
 export function sharedFailureDomainCandidates(graph={}) {
   const groups=new Map();
   for(const raw of graph.edges||[]){
-    const edge=normalizeGraphEdge(raw); const domain=String(edge.sharedFailureDomain||'').trim();
+    const edge=normalizeGraphEdge(raw); if(edge.edgeType!=='depends-on')continue; const domain=String(edge.sharedFailureDomain||'').trim();
     if(!domain)continue;
     if(!groups.has(domain))groups.set(domain,{domain,edgeIds:[],nodeIds:new Set(),dimensions:new Set()});
     const g=groups.get(domain); g.edgeIds.push(edge.id); g.nodeIds.add(edge.sourceId); g.nodeIds.add(edge.targetId); g.dimensions.add(edge.dimension);
