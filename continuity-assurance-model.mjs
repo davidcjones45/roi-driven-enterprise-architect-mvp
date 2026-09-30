@@ -170,6 +170,7 @@ export function evaluateRelianceClaim(raw={},workspace={},options={}){
     else effectiveStatus='UNRESOLVED';
   }
   if(claim.status==='QUALIFIED'&&(!claim.qualification||materialLimit&&evidenceState!=='INSUFFICIENT_EVIDENCE'))effectiveStatus='UNRESOLVED';
+  if(!structural.valid&&['SUPPORTED','QUALIFIED'].includes(effectiveStatus))effectiveStatus=claim.interimDisposition==='SUSPEND'?'SUSPENDED':'UNRESOLVED';
   return {
     claim,
     requestedStatus:claim.status,
