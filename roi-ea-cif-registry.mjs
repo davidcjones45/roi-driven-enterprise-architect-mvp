@@ -101,8 +101,15 @@ export function relationshipFindings(record) {
       add('ASSUMPTION_ADOPTION_REQUIRED', 'ASSUMES must project a matching governed OF-16 Assumption Adoption.', 'INSUFFICIENT_EVIDENCE');
     }
   }
-  if (['OBJECT_REIFIED','EVENT_DERIVED','DERIVED_VIEW'].includes(def.authoritativeRepresentation) && type !== 'ASSUMES') {
-    if (!present(record.authoritativeRecordRef) || !record.authoritativeRecord) add('AUTHORITATIVE_RECORD_REQUIRED', `${type} requires its authoritative object/event/derivation record.`, 'INSUFFICIENT_EVIDENCE');
+  if (def.authoritativeRepresentation === 'DERIVED_VIEW' && type !== 'ASSUMES') {
+    const derivations=Array.isArray(record.derivationRecords)&&record.derivationRecords.length?record.derivationRecords:(record.authoritativeRecord?[record.authoritativeRecord]:[]);
+    if(!derivations.length) add('DERIVATION_BASIS_REQUIRED', `${type} requires explicit derivation evidence; a derived view is not an independent truth source.`, 'INSUFFICIENT_EVIDENCE');
+    if(derivations.some(item=>!present(item?.id))) add('DERIVATION_RECORD_ID', 'Derived-view basis records require stable identifiers.', 'INSUFFICIENT_EVIDENCE');
+    if(record.authoritativeRecord&&present(record.authoritativeRecordRef)&&record.authoritativeRecord.id!==record.authoritativeRecordRef) add('AUTHORITATIVE_RECORD_MISMATCH', 'Derivation record reference does not match its record.');
+    if(type==='POSSESSES_AUTHORITY'&&derivations.length&&!derivations.some(item=>item?.family==='OF-15')) add('AUTHORITY_DERIVATION_BASIS', 'POSSESSES_AUTHORITY requires an effective OF-15 Authority/Delegation basis among its derivation records.', 'INSUFFICIENT_EVIDENCE');
+  }
+  if (['OBJECT_REIFIED','EVENT_DERIVED'].includes(def.authoritativeRepresentation)) {
+    if (!present(record.authoritativeRecordRef) || !record.authoritativeRecord) add('AUTHORITATIVE_RECORD_REQUIRED', `${type} requires its authoritative object/event record.`, 'INSUFFICIENT_EVIDENCE');
     else if (record.authoritativeRecord.id !== record.authoritativeRecordRef) add('AUTHORITATIVE_RECORD_MISMATCH', 'Authoritative record reference does not match its record.');
     // Object-reified notes identify the owning family; parse rather than duplicate the registry.
     const familyNames={Authority:'OF-15',Commitment:'OF-17',Decision:'OF-16'};
