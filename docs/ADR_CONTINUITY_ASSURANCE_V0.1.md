@@ -1,4 +1,4 @@
-# ADR — Continuity Assurance specialization/application layer v0.1
+# ADR — Continuity Assurance application-local layer v0.1
 
 ## Status
 Accepted for implementation against ROI-EA `main` baseline `ceae144a217728a9dfba4362844aefd9d3116b5c`.
@@ -6,7 +6,9 @@ Accepted for implementation against ROI-EA `main` baseline `ceae144a217728a9dfba
 ## Context
 ROI-EA already represents Continuity Anchors, Essential Actions, dependency graphs, evidence provenance, candidate dependency findings, validated mitigation lifecycle, BPMN projection, Microsoft Graph reporting structure, and CIF v0.4.1 candidate handoff. Existing code deliberately prevents graph structure or imports from manufacturing operating truth, Authority, Acceptance, Control effectiveness, causal improvement, or realized Outcome.
 
-CIF-S-009 and CIF-AP-002 require the application to make justified Reliance, evidence-bounded assurance, reassessment, successor transition, outcome/residual exposure, and optional human-centered assurance explicit without changing CIF Core.
+The ROI-EA Continuity Assurance layer makes justified Reliance, evidence-bounded assurance, reassessment, successor transition, outcome/residual exposure, and optional human-centered assurance explicit without changing CIF Core.
+
+Under the frozen CIF v0.4.1 baseline, this layer is **application-local**, not a canonical `CIF-S-009` specialization or `CIF-AP-002` protocol. Those earlier labels are historical design identifiers only unless a future controlled CIF amendment explicitly adopts them.
 
 ## Decision
 Add an application-level continuity-assurance layer composed of:
@@ -21,7 +23,7 @@ Add an application-level continuity-assurance layer composed of:
 - Successor Assurance across Role Adequacy, Semantic Continuity, Behavioral-Boundary Continuity, and Architectural Continuity;
 - optional Human Agency Gate and Graduation patterns;
 - Human+AI Interaction Divergence as a specialized reassessment trigger;
-- an additive CIF handoff wrapper that exports specialization metadata and candidate mappings without canonicalization.
+- an additive CIF handoff wrapper that exports application-local continuity metadata and candidate mappings without canonicalization.
 
 The browser-local modernization workspace remains the persistence boundary. New fields are additive JSON arrays; old records remain valid. `migrateContinuityAssuranceWorkspace()` supplies empty arrays and `NOT_ASSESSED` as the semantic default for absent new fields. Missing values are not silently converted to `UNKNOWN`.
 
