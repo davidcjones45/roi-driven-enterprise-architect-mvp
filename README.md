@@ -98,3 +98,10 @@ The active controlled case can then produce a downloadable, nonpersistent ROI-EA
 # BPMN import extension status
 
 G4 adds a browser-local, standards-aware BPMN review workflow with append-only candidate dispositions, separately confirmed bounded canonicalization, and deterministic exports. See [BPMN_IMPORT_G4_READINESS.md](BPMN_IMPORT_G4_READINESS.md). G5 security and regression review binds confirmation to the exact reviewed source/dispositions and applies upload, decompression, and local write-origin limits. Windows/Chrome visual and functional QA passed, including state transitions and both exports. See [BPMN_IMPORT_G5_RELEASE_REVIEW.md](BPMN_IMPORT_G5_RELEASE_REVIEW.md). The optional read-only diagram view is documented in [BPMN_DIAGRAM_VIEW_V0.1.md](BPMN_DIAGRAM_VIEW_V0.1.md); it renders staged normalized source records and does not execute or validate a process.
+
+
+## Forms Analysis
+
+Select **Forms** to import manual/pasted structure, verify fields, analyze seven lenses, propose modernization treatments and record separate human decisions. Approved decisions produce a future-state specification and structured JSON/printable HTML exports. Existing architecture graph objects can be linked through an explicit, unreviewed projection. The workflow remains browser-local and adds no AI execution or operational authority.
+
+See [Forms Analysis workflow, architecture and validation](FORMS_ANALYSIS.md). Run the focused suite with `node --test forms-analysis.test.mjs`.
