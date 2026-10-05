@@ -1,3 +1,6 @@
 # BPMN fixture manifests hash exact source bytes; preserve them across Windows checkouts.
 bpmn-fixtures/*.bpmn -text
 bpmn-fixtures/*.xml -text
+
+# The CIF registry integrity test hashes the canonical source bytes exactly.
+schemas/cif-roi-ea-v0.4.1/CIF_Relationships.json -text

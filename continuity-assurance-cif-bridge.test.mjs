@@ -19,7 +19,7 @@ test('continuity handoff extends dependency CIF projection without canonicalizin
   assert.equal(handoff.canonicalization,false);
   assert.equal(handoff.relianceClaims.length,1);
   assert.equal(handoff.relianceClaims[0].classificationState,'SPECIALIZATION_METADATA_ONLY');
-  assert.match(handoff.localAuthorityBoundary,/does not create canonical Authority/i);
+  assert.match(handoff.localAuthorityBoundary,/does not create a canonical CIF specialization, Authority, Decision, Acceptance/i);
 });
 
 test('constraining dependency handoff remains an epistemic claim rather than an OF-14 rule',()=>{
