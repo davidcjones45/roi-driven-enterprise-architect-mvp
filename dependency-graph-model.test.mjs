@@ -235,9 +235,9 @@ test('derives qualified consulting review candidates rather than final findings'
       {id:'C',label:'C',nodeType:'application'},
     ],
     graphEdges:[
-      {id:'1',sourceId:'A',targetId:'IDP',sharedFailureDomain:'CLOUD'},
-      {id:'2',sourceId:'B',targetId:'IDP',sharedFailureDomain:'CLOUD'},
-      {id:'3',sourceId:'C',targetId:'IDP',sharedFailureDomain:'CLOUD'},
+      {id:'1',sourceId:'A',targetId:'IDP',edgeType:'depends-on',sharedFailureDomain:'CLOUD'},
+      {id:'2',sourceId:'B',targetId:'IDP',edgeType:'depends-on',sharedFailureDomain:'CLOUD'},
+      {id:'3',sourceId:'C',targetId:'IDP',edgeType:'depends-on',sharedFailureDomain:'CLOUD'},
     ],
     continuityAnchors:[{id:'CA',label:'Customer access'}],
     essentialActions:[{id:'EA',label:'Authenticate',anchorId:'CA',dependencyNodeIds:['IDP']}],

@@ -18,12 +18,11 @@ test('Release 1 clarifies authority, reference-case scope, public ERIR retrieval
     'Displayed calculation values are rounded to two decimals; the frozen source retains the underlying precision.',
     'Preloaded ERIR source IDs remain unverified in this browser session until a bounded read-only retrieval returns them',
     'Load the configured ERIR read-only service to display traceability.',
-    '<span>09</span> Pilot charter',
+    'data-view="pilot"><span>09</span> Pilot</button>',
     '<span>13</span> Executive dossier',
     '<td>3.09</td>',
     '$770,525.48 / 71.14% / 1.71'
   ]) assert.ok(html.includes(expected), expected);
-  assert.ok(!html.includes('<span>08</span> Pilot charter'));
   assert.ok(!html.includes('3.0855'));
   assert.ok(!html.includes('71.1439% / 1.7114'));
 });

@@ -18,7 +18,7 @@ test('consulting workspace is opt-in and hidden from public browser-local operat
   assert.match(html, /data-workspace="consulting" data-view="snapshots" hidden/);
   assert.match(html, /id="engagement-form"/);
   assert.match(html, /id="discovery-form"/);
-  assert.match(html, /src="app\.js\?v=fedarm-snapshots-v0\.1"/);
+  assert.match(html, /<script\b[^>]*type="module"[^>]*src="app\.js\?v=[^"\s]+"/);
   assert.match(app, /new URLSearchParams\(window\.location\.search\)\.get\('mode'\) === 'consulting'/);
   assert.match(app, /\['localhost','127\.0\.0\.1'\]\.includes\(window\.location\.hostname\)/);
   assert.match(app, /switcher\.hidden=!consultingMode;navigation\.forEach\(link=>link\.hidden=!consultingMode\)/);
