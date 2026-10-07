@@ -72,7 +72,9 @@ node scripts/forms-browser-smoke.mjs
 
 The browser test uses isolated contexts, never the user's browser profile. It checks empty state, import, edit, verification, scan, human acceptance, future-state derivation, JSON download, reload, stale-decision protection, fictional example, graph projection, mobile overflow, unsaved-navigation cancellation, malformed storage and navigation back to ROI-EA. It fails on browser runtime exceptions.
 
-Five failures were reproduced in the untouched base `4d863a085663cf6b884af6be4d8f97e6509c6f18` as well as the feature branch: consulting hidden-navigation expectation, continuity CIF boundary wording expectation, dependency concentration candidate, legacy Pilot navigation label, and CIF registry byte hash. They are not hidden or weakened by this change. The registry test is byte-sensitive on Windows checkouts. Release acceptance still requires resolving or explicitly accepting the baseline failures.
+During the original Forms verification for PR #55, five failures were reproduced in the untouched base `4d863a085663cf6b884af6be4d8f97e6509c6f18` as well as the feature branch: consulting hidden-navigation expectation, continuity CIF boundary wording expectation, dependency concentration candidate, legacy Pilot navigation label, and CIF registry byte hash. PR #55 did not hide or weaken these failures; resolving or explicitly accepting them remained a release-acceptance requirement at that time.
+
+That baseline requirement was resolved by [PR #56](https://github.com/davidcjones45/roi-driven-enterprise-architect-mvp/pull/56), merged into `main` on October 6, 2026 as `1936775a9bcfea2ec956a8275bd60cbdf4d74ec2`. Its recorded verification reports 689/689 Node tests passed (0 failed, 0 skipped) and 11/11 Python tests passed. The changes correct test expectations and a dependency fixture, and preserve canonical CIF registry bytes through `.gitattributes`; they do not change application runtime behavior. The registry test remains byte-sensitive: existing Windows checkouts may need to refresh the registry from Git, while new checkouts preserve its bytes automatically.
 
 ## Highest-value follow-on work
 
@@ -81,4 +83,10 @@ Validate the practitioner workflow with authorized forms, then refine low-value 
 
 ### Recorded verification results
 
+#### Historical Forms verification — PR #55
+
 Using the bundled Node 24 runtime and Python runtime on Windows: focused Forms suite 17/17 passed; full JavaScript suite 684/689 passed with the same five failures as the untouched base (667/672); Python unittest 11/11 passed; optional Chrome browser smoke passed at 1440px and 390px; module syntax and staged diff checks passed. No build, lint or TypeScript scripts exist in this repository. These checks establish the tested behavior, not production readiness.
+
+#### Baseline resolution — PR #56
+
+PR #56 records full Node suite 689/689 passed (0 failed, 0 skipped), Python unittest 11/11 passed, and `git diff --check` passed. A fresh checkout with `core.autocrlf=true` retained the canonical CIF registry SHA-256 `2d7d429c0b07d3e3821ef1467a4c78e687fb3029020f360d7c17b24be1584df6`; the expected hash and canonical registry content were unchanged. The published tree matched the tested local commit. These results supersede the historical full-suite failure status above; the PR #55 Forms/browser results remain a record of that earlier verification, not a claim that browser testing was rerun for PR #56. Passing these checks does not establish production readiness.
