@@ -22,7 +22,7 @@ The repository is a static HTML/CSS application using ES modules, not a framewor
 
 - `forms-analysis-model.mjs`: records, verification, revision invalidation, seven analysis lenses, recommendations, decisions and future-state/export derivation.
 - `forms-analysis-store.mjs`: `createGuardedStore` adapter using `roi-ea-forms-analysis-v1`. Corrupt records remain protected, failed saves do not become in-memory successes, and optimistic same-browser conflict detection prevents stale-tab overwrites.
-- `forms-analysis-ui.mjs` and `forms-analysis.css`: workspace, side-by-side field analysis, progressive disclosure, confirmation, recovery export and HTML report. Unsaved edits require a discard confirmation when navigating away.
+- `forms-analysis-ui.mjs` and `forms-analysis.css`: workspace, side-by-side field analysis, progressive disclosure, confirmation, reviewed recovery restore/export and HTML report. Unsaved edits require a discard confirmation when navigating away.
 - `forms-analysis-bridge.mjs`: explicit, noncanonical projection into the existing modernization dependency graph. Forms use `resource` nodes and fields use `data` nodes. Relationships use existing graph types. The adapter preserves unrelated graph content and marks new edges `Unreviewed`. It does not invent CIF relationships or create authority records.
 - `forms-analysis-fixture.mjs`: fictional equipment-service request. Includes repeated customer data, accepted prefill, conditional access information, fictional control evidence, supervisor bottleneck and deferred review.
 - `app.js` / `index.html`: minimal integration with existing navigation. ROI-only draft/recovery controls and operating-cycle navigation are hidden only while Forms is active because Forms has its own storage and workflow. Existing workspaces remain unchanged.
@@ -39,12 +39,20 @@ Forms links target objects already available through `buildDependencyGraph` in A
 
 Analysis JSON includes form inventory, field dictionary, findings register, recommendations with effective status, complete decision history, accepted-decision register, future fields and removals, business rules, integration requirements, approved modernization backlog and dependency relationships. The printable report summarizes these records with escaped user content. Forms recovery export returns the original stored data, including unreadable data when available, for manual reconciliation.
 
+## Reviewed recovery restore
+
+Select **Restore Forms recovery**, paste the contents of `forms-recovery.json`, and select **Review recovery**. The preview lists each form's name, ID, revision, sections, fields, findings, recommendations, verifications, relationships and decision-event counts. Check the explicit confirmation and select **Confirm restore**, or cancel without writing. Existing unsaved edits retain the discard gate before entering restore.
+
+Only the version 1 Forms recovery workspace (`schemaVersion` and `forms`) is accepted, up to 10,000,000 characters. Analysis JSON, ROI backups, malformed JSON, unsupported versions/properties, missing identities, invalid enum values, duplicate identities and invalid model lineage are rejected before any write. Normalization trims supported text and fills existing model defaults; it cannot manufacture missing identities/revisions or silently coerce invalid supplied values. This uses the existing Forms model's structural validation, not authentication of supplied evidence or reviewer identities.
+
+Restore adds all reviewed forms in one guarded write to the Forms key. Any matching existing form ID blocks the whole operation; it never replaces or merges a form's history. Changes after review, competing browser writes, protected unreadable storage and write failures block restore. In-memory data advances only after a successful write. Canceling or reviewing never writes. Unrelated storage, including the modernization graph, is untouched; restored relationships are not projected automatically. Saved revisions and decision history retain their existing semantics. Storage conflict detection remains optimistic, not a multi-tab transaction lock. To retry a failed confirmation, cancel and review again.
+
 ## Boundaries
 
 - Supported import: manual fields and plain pasted text (100,000 characters, maximum 500 fields). The text parser is an explicit adapter boundary in `createForm`; additional adapters should return unverified structure and retain source provenance.
 - Unsupported: direct PDF/DOCX/HTML/image ingestion, OCR, general AI execution, semantic cross-form matching, automatic regulatory research, production system changes and workflow execution.
 - Scan rules flag duplicate labels, missing instructions, typed-field validation gaps, long text, recorded prefill/derivation/conditional opportunities, manual-rule automation, approvals, sources/dependencies, control evidence gaps and unknown justification. More than 30 fields triggers a review prompt, not a finding that the form is excessive. These are transparent heuristics, not a completeness or risk score.
-- Storage is local to one browser/profile and origin. No authentication, tenancy, server backup, tamper-proof audit, encryption or multi-user locking is added. Reviewer names are self-reported. Recovery JSON requires manual reconciliation; there is no backup-restore UI in this increment.
+- Storage is local to one browser/profile and origin. No authentication, tenancy, server backup, tamper-proof audit, encryption or multi-user locking is added. Reviewer names are self-reported. Recovery restore is add-only and requires review and explicit confirmation; matching form IDs block the entire restore. Protected corrupt storage must still be manually reconciled.
 - Forms exports are separate from the ROI assessment's existing executive dossier because they are a separate workspace, consistent with the existing modernization exports.
 - Direct hard deletion is not offered. Preserve current-state evidence and use human decisions to specify removal in the future state.
 - Classification, risk assessment, authorization and value judgment remain distinct. This implementation does not make production-readiness or compliance claims.
@@ -72,13 +80,20 @@ node scripts/forms-browser-smoke.mjs
 
 The browser test uses isolated contexts, never the user's browser profile. It checks empty state, import, edit, verification, scan, human acceptance, future-state derivation, JSON download, reload, stale-decision protection, fictional example, graph projection, mobile overflow, unsaved-navigation cancellation, malformed storage and navigation back to ROI-EA. It fails on browser runtime exceptions.
 
-Five failures were reproduced in the untouched base `4d863a085663cf6b884af6be4d8f97e6509c6f18` as well as the feature branch: consulting hidden-navigation expectation, continuity CIF boundary wording expectation, dependency concentration candidate, legacy Pilot navigation label, and CIF registry byte hash. They are not hidden or weakened by this change. The registry test is byte-sensitive on Windows checkouts. Release acceptance still requires resolving or explicitly accepting the baseline failures.
+Five failures were reproduced in the untouched base `4d863a085663cf6b884af6be4d8f97e6509c6f18` as well as the feature branch: consulting hidden-navigation expectation, continuity CIF boundary wording expectation, dependency concentration candidate, legacy Pilot navigation label, and CIF registry byte hash. They are not hidden or weakened by this change. The registry test is byte-sensitive on Windows checkouts. This is historical PR #55 verification context. PR #56 merged on October 6, resolving those five baseline failures without runtime changes; its recorded results were 689/689 Node and 11/11 Python tests passing. The former baseline blocker is resolved.
 
 ## Highest-value follow-on work
 
-Validate the practitioner workflow with authorized forms, then refine low-value scan prompts. Add reviewed backup restore and cross-form comparison before expanding file ingestion. Any model adapter must preserve unverified provenance and the existing human decision gate.
+Validate the practitioner workflow with authorized forms, then refine low-value scan prompts. Reviewed backup restore is now available. Add cross-form comparison before expanding file ingestion. Any model adapter must preserve unverified provenance and the existing human decision gate.
 
 
 ### Recorded verification results
 
-Using the bundled Node 24 runtime and Python runtime on Windows: focused Forms suite 17/17 passed; full JavaScript suite 684/689 passed with the same five failures as the untouched base (667/672); Python unittest 11/11 passed; optional Chrome browser smoke passed at 1440px and 390px; module syntax and staged diff checks passed. No build, lint or TypeScript scripts exist in this repository. These checks establish the tested behavior, not production readiness.
+Historical PR #55 results, using the bundled Node 24 runtime and Python runtime on Windows: focused Forms suite 17/17 passed; full JavaScript suite 684/689 passed with the same five failures as the untouched base (667/672); Python unittest 11/11 passed; optional Chrome browser smoke passed at 1440px and 390px; module syntax and staged diff checks passed. No build, lint or TypeScript scripts exist in this repository. These checks establish the tested behavior, not production readiness.
+
+
+### Reviewed recovery increment verification (October 7, 2026)
+
+On base `1936775a9bcfea2ec956a8275bd60cbdf4d74ec2` (merged PR #56), Node 24.19.0: focused Forms suite **21/21 passed**, full Node suite **693/693 passed**, Python unittest **11/11 passed**. Syntax checks passed for `app.js`, the Forms UI/store and the browser smoke script; `git diff --check` passed.
+
+The browser smoke script now includes real recovery download, preview without writes, cancellation, confirmation gate, successful restore/reload, duplicate IDs, malformed/non-recovery input, competing writes, unrelated storage preservation and protected corrupt storage. **These added browser scenarios have not run successfully in this environment**: Playwright launch failed because Chromium was absent; attempted installation failed with an invalid ZIP archive. Browser validation remains required before release acceptance. Existing historical browser results above do not validate this new restore increment.
