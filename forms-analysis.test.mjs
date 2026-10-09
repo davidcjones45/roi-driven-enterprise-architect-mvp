@@ -67,3 +67,27 @@ test('500-field bound can be scanned idempotently with non-Latin labels preserve
   let f=m.createForm({name:'Large form'},Array.from({length:500},(_,i)=>`Field ${i}`).join('\n'));f=m.verifyStructure(f,'Reviewer');f=m.runQuickScan(f);assert.ok(f.findings.length>=500);assert.equal(m.runQuickScan(f).findings.length,f.findings.length);assert.throws(()=>m.saveField(f,{label:'Extra',sectionId:f.sections[0].id}),/Maximum/);
   let unicode=m.createForm({name:'Unicode'},'姓名\n地址');unicode=m.runQuickScan(m.verifyStructure(unicode,'Reviewer'));assert.equal(unicode.findings.filter(x=>x.scanKey.endsWith(':duplicate')).length,0);
 });
+test('reviewed recovery is add-only, normalized, confirmed and isolated from other storage',()=>{
+  const storage=memory(),store=createFormsStore(()=>storage),existing=ready(),incoming=formsExample();store.save(existing);storage.setItem('graph','keep');incoming.name='  Recovered sample  ';
+  const review=store.reviewRecovery(JSON.stringify({schemaVersion:1,forms:[incoming]}));assert.equal(review.forms[0].name,'Recovered sample');assert.equal(store.list().length,1);assert.throws(()=>store.restoreRecovery(review),/confirm/);review.forms[0].name='tampered';assert.equal(store.restoreRecovery(review,true),1);assert.equal(store.list()[1].name,'Recovered sample');assert.deepEqual(store.list()[0],existing);assert.deepEqual(store.list()[1].decisions,incoming.decisions);assert.equal(storage.getItem('graph'),'keep');assert.deepEqual(createFormsStore(()=>storage).list(),store.list());assert.throws(()=>store.restoreRecovery(review,true),/confirm/);assert.throws(()=>store.restoreRecovery({forms:[]},true),/confirm/);
+});
+test('recovery rejects wrong formats, malformed values and lineage without writing',()=>{
+  const valid={schemaVersion:1,forms:[formsExample()]};
+  const invalid=['broken','null','[]','{}',JSON.stringify(m.exportForm(valid.forms[0])),JSON.stringify({...valid,schemaVersion:2}),JSON.stringify({...valid,other:1}),JSON.stringify({schemaVersion:1,forms:[]}),'{"schemaVersion":1,"forms":[],"__proto__":{}}'];
+  for(const mutate of [f=>delete f.id,f=>f.revision=0,f=>f.fields[0].type='bogus',f=>f.fields[0].label=123,f=>f.fields[0].sectionId='missing',f=>f.decisions[0].revision=999,f=>f.verifications=[],f=>f.fields.push(f.fields[0])]){const v=structuredClone(valid);mutate(v.forms[0]);invalid.push(JSON.stringify(v));}
+  for(const raw of invalid){const storage=memory(),store=createFormsStore(()=>storage);assert.throws(()=>store.reviewRecovery(raw));assert.equal(storage.getItem(FORMS_KEY),null);assert.deepEqual(store.list(),[]);}
+});
+test('recovery conflicts, blocked storage and failed writes preserve all records',()=>{
+  const incoming=formsExample(),text=JSON.stringify({schemaVersion:1,forms:[incoming]});
+  const storage=memory(),store=createFormsStore(()=>storage);store.save(incoming);const before=storage.getItem(FORMS_KEY);assert.throws(()=>store.reviewRecovery(text),/conflict/);assert.equal(storage.getItem(FORMS_KEY),before);
+  const fresh=memory(),a=createFormsStore(()=>fresh),review=a.reviewRecovery(text);createFormsStore(()=>fresh).save(ready());const changed=fresh.getItem(FORMS_KEY);assert.throws(()=>a.restoreRecovery(review,true),/Another tab/);assert.equal(fresh.getItem(FORMS_KEY),changed);assert.equal(a.list().length,0);
+  const local=memory(),b=createFormsStore(()=>local),pending=b.reviewRecovery(text);b.save(ready());assert.throws(()=>b.restoreRecovery(pending,true),/since review/);assert.equal(b.list().length,1);
+  for(const raw of ['broken','{"schemaVersion":2,"forms":[]}']){const bad=memory();bad.setItem(FORMS_KEY,raw);assert.throws(()=>createFormsStore(()=>bad).reviewRecovery(text),/protected/);assert.equal(bad.getItem(FORMS_KEY),raw);}
+  const quota=createFormsStore(()=>({getItem:()=>null,setItem:()=>{throw Error('Quota');}})),q=quota.reviewRecovery(text);assert.throws(()=>quota.restoreRecovery(q,true),/not saved/);assert.deepEqual(quota.list(),[]);
+});
+test('multi-form recovery conflicts are atomic and review does not expose mutable payloads',()=>{
+  const storage=memory(),store=createFormsStore(()=>storage),existing=ready(),newForm=formsExample();store.save(existing);const before=storage.getItem(FORMS_KEY);
+  assert.throws(()=>store.reviewRecovery(JSON.stringify({schemaVersion:1,forms:[newForm,existing]})),/conflict/);assert.equal(storage.getItem(FORMS_KEY),before);assert.equal(store.list().length,1);
+  const review=store.reviewRecovery(JSON.stringify({schemaVersion:1,forms:[newForm]}));review.forms.length=0;store.restoreRecovery(review,true);assert.equal(store.list().length,2);assert.deepEqual(store.list()[1],newForm);
+  assert.throws(()=>store.reviewRecovery(' '.repeat(10000001)),/size/);
+});

@@ -22,7 +22,7 @@ The repository is a static HTML/CSS application using ES modules, not a framewor
 
 - `forms-analysis-model.mjs`: records, verification, revision invalidation, seven analysis lenses, recommendations, decisions and future-state/export derivation.
 - `forms-analysis-store.mjs`: `createGuardedStore` adapter using `roi-ea-forms-analysis-v1`. Corrupt records remain protected, failed saves do not become in-memory successes, and optimistic same-browser conflict detection prevents stale-tab overwrites.
-- `forms-analysis-ui.mjs` and `forms-analysis.css`: workspace, side-by-side field analysis, progressive disclosure, confirmation, recovery export and HTML report. Unsaved edits require a discard confirmation when navigating away.
+- `forms-analysis-ui.mjs` and `forms-analysis.css`: workspace, side-by-side field analysis, progressive disclosure, confirmation, reviewed recovery restore/export and HTML report. Unsaved edits require a discard confirmation when navigating away.
 - `forms-analysis-bridge.mjs`: explicit, noncanonical projection into the existing modernization dependency graph. Forms use `resource` nodes and fields use `data` nodes. Relationships use existing graph types. The adapter preserves unrelated graph content and marks new edges `Unreviewed`. It does not invent CIF relationships or create authority records.
 - `forms-analysis-fixture.mjs`: fictional equipment-service request. Includes repeated customer data, accepted prefill, conditional access information, fictional control evidence, supervisor bottleneck and deferred review.
 - `app.js` / `index.html`: minimal integration with existing navigation. ROI-only draft/recovery controls and operating-cycle navigation are hidden only while Forms is active because Forms has its own storage and workflow. Existing workspaces remain unchanged.
@@ -39,12 +39,20 @@ Forms links target objects already available through `buildDependencyGraph` in A
 
 Analysis JSON includes form inventory, field dictionary, findings register, recommendations with effective status, complete decision history, accepted-decision register, future fields and removals, business rules, integration requirements, approved modernization backlog and dependency relationships. The printable report summarizes these records with escaped user content. Forms recovery export returns the original stored data, including unreadable data when available, for manual reconciliation.
 
+## Reviewed recovery restore
+
+Select **Restore Forms recovery**, paste the contents of `forms-recovery.json`, and select **Review recovery**. The preview lists each form's name, ID, revision, sections, fields, findings, recommendations, verifications, relationships and decision-event counts. Check the explicit confirmation and select **Confirm restore**, or cancel without writing. Existing unsaved edits retain the discard gate before entering restore.
+
+Only the version 1 Forms recovery workspace (`schemaVersion` and `forms`) is accepted, up to 10,000,000 characters. Analysis JSON, ROI backups, malformed JSON, unsupported versions/properties, missing identities, invalid enum values, duplicate identities and invalid model lineage are rejected before any write. Normalization trims supported text and fills existing model defaults; it cannot manufacture missing identities/revisions or silently coerce invalid supplied values. This uses the existing Forms model's structural validation, not authentication of supplied evidence or reviewer identities.
+
+Restore adds all reviewed forms in one guarded write to the Forms key. Any matching existing form ID blocks the whole operation; it never replaces or merges a form's history. Changes after review, competing browser writes, protected unreadable storage and write failures block restore. In-memory data advances only after a successful write. Canceling or reviewing never writes. Unrelated storage, including the modernization graph, is untouched; restored relationships are not projected automatically. Saved revisions and decision history retain their existing semantics. Storage conflict detection remains optimistic, not a multi-tab transaction lock. To retry a failed confirmation, cancel and review again.
+
 ## Boundaries
 
 - Supported import: manual fields and plain pasted text (100,000 characters, maximum 500 fields). The text parser is an explicit adapter boundary in `createForm`; additional adapters should return unverified structure and retain source provenance.
 - Unsupported: direct PDF/DOCX/HTML/image ingestion, OCR, general AI execution, semantic cross-form matching, automatic regulatory research, production system changes and workflow execution.
 - Scan rules flag duplicate labels, missing instructions, typed-field validation gaps, long text, recorded prefill/derivation/conditional opportunities, manual-rule automation, approvals, sources/dependencies, control evidence gaps and unknown justification. More than 30 fields triggers a review prompt, not a finding that the form is excessive. These are transparent heuristics, not a completeness or risk score.
-- Storage is local to one browser/profile and origin. No authentication, tenancy, server backup, tamper-proof audit, encryption or multi-user locking is added. Reviewer names are self-reported. Recovery JSON requires manual reconciliation; there is no backup-restore UI in this increment.
+- Storage is local to one browser/profile and origin. No authentication, tenancy, server backup, tamper-proof audit, encryption or multi-user locking is added. Reviewer names are self-reported. Recovery restore is add-only and requires review and explicit confirmation; matching form IDs block the entire restore. Protected corrupt storage must still be manually reconciled.
 - Forms exports are separate from the ROI assessment's existing executive dossier because they are a separate workspace, consistent with the existing modernization exports.
 - Direct hard deletion is not offered. Preserve current-state evidence and use human decisions to specify removal in the future state.
 - Classification, risk assessment, authorization and value judgment remain distinct. This implementation does not make production-readiness or compliance claims.
@@ -76,9 +84,10 @@ During the original Forms verification for PR #55, five failures were reproduced
 
 That baseline requirement was resolved by [PR #56](https://github.com/davidcjones45/roi-driven-enterprise-architect-mvp/pull/56), merged into `main` on October 6, 2026 as `1936775a9bcfea2ec956a8275bd60cbdf4d74ec2`. Its recorded verification reports 689/689 Node tests passed (0 failed, 0 skipped) and 11/11 Python tests passed. The changes correct test expectations and a dependency fixture, and preserve canonical CIF registry bytes through `.gitattributes`; they do not change application runtime behavior. The registry test remains byte-sensitive: existing Windows checkouts may need to refresh the registry from Git, while new checkouts preserve its bytes automatically.
 
+
 ## Highest-value follow-on work
 
-Validate the practitioner workflow with authorized forms, then refine low-value scan prompts. Add reviewed backup restore and cross-form comparison before expanding file ingestion. Any model adapter must preserve unverified provenance and the existing human decision gate.
+Validate the practitioner workflow with authorized forms, then refine low-value scan prompts. Reviewed backup restore is now available. Add cross-form comparison before expanding file ingestion. Any model adapter must preserve unverified provenance and the existing human decision gate.
 
 
 ### Recorded verification results
@@ -90,3 +99,18 @@ Using the bundled Node 24 runtime and Python runtime on Windows: focused Forms s
 #### Baseline resolution — PR #56
 
 PR #56 records full Node suite 689/689 passed (0 failed, 0 skipped), Python unittest 11/11 passed, and `git diff --check` passed. A fresh checkout with `core.autocrlf=true` retained the canonical CIF registry SHA-256 `2d7d429c0b07d3e3821ef1467a4c78e687fb3029020f360d7c17b24be1584df6`; the expected hash and canonical registry content were unchanged. The published tree matched the tested local commit. These results supersede the historical full-suite failure status above; the PR #55 Forms/browser results remain a record of that earlier verification, not a claim that browser testing was rerun for PR #56. Passing these checks does not establish production readiness.
+
+
+### Reviewed recovery increment verification (October 7, 2026)
+
+On base `1936775a9bcfea2ec956a8275bd60cbdf4d74ec2` (merged PR #56), Node 24.19.0: focused Forms suite **21/21 passed**, full Node suite **693/693 passed**, Python unittest **11/11 passed**. Syntax checks passed for `app.js`, the Forms UI/store and the browser smoke script; `git diff --check` passed.
+
+The browser smoke script now includes real recovery download, preview without writes, cancellation, confirmation gate, successful restore/reload, duplicate IDs, malformed/non-recovery input, competing writes, unrelated storage preservation and protected corrupt storage. **These added browser scenarios have not run successfully in this environment**: Playwright launch failed because Chromium was absent; attempted installation failed with an invalid ZIP archive. Browser validation remains required before release acceptance. Existing historical browser results above do not validate this new restore increment.
+
+### Recovery integration verification (October 9, 2026)
+
+PR #59 was integrated with current `main` at `67ce06b847eda49e84f397b9abba474ab7943dcb` (merged PR #58). The two overlapping documentation passages retain PR #58's historical PR #55 results and detailed PR #56 baseline-resolution record, alongside the recovery workflow, boundaries and October 7 verification above. Recovery runtime behavior, security boundaries and tests are unchanged by this integration. PR #57's separate navigation changes are not included.
+
+On the integrated tree with Node 24.19.0: focused Forms suite **21/21 passed**; full Node suite **693/693 passed**, with zero failures or skips; Python unittest **11/11 passed**. Syntax checks passed for `app.js`, `forms-analysis-ui.mjs`, `forms-analysis-store.mjs` and `scripts/forms-browser-smoke.mjs`; `git diff --check` passed.
+
+The expanded browser smoke was attempted against the local `serve-roi-ea.py` server using bundled Playwright. It failed at browser launch because the Chromium headless-shell executable was absent, before any scenario ran. No installed Chrome/Chromium executable was found locally. Playwright Chromium installation exhausted its download attempts with invalid/truncated ZIP errors (`End of central directory record signature not found`). **Browser validation remains blocked and PR #59 must remain draft pending successful execution of the expanded smoke test.** No browser pass is claimed for this integration.
