@@ -1,0 +1,78 @@
+name: Logistics browser verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: logistics-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Synthetic logistics workflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      # Match npm package and browser image exactly. Browsers are preinstalled.
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --ipc=host
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      LOG_BASE_URL: http://127.0.0.1:8766
+      LOG_TEST_ARTIFACTS: ${{ github.workspace }}/test-artifacts/logistics
+      ROI_EA_DATA_DIR: ${{ runner.temp }}/roi-ea-ci-data
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install matching development-only Playwright package
+        run: |
+          npm install --prefix "$RUNNER_TEMP/logistics-playwright" --no-save --package-lock=false playwright@1.62.1
+          echo "LOG_PLAYWRIGHT_MODULE=file://$RUNNER_TEMP/logistics-playwright/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
+      - name: Node and Python regression
+        run: |
+          mkdir -p "$LOG_TEST_ARTIFACTS"
+          node --test 2>&1 | tee "$LOG_TEST_ARTIFACTS/node-tests.log"
+          python3 -m unittest discover -p '*_test.py' 2>&1 | tee "$LOG_TEST_ARTIFACTS/python-tests.log"
+      - name: Start loopback test server and verify browser workflow
+        run: |
+          python3 serve-roi-ea.py > "$LOG_TEST_ARTIFACTS/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python3 - <<'PY'
+          import time, urllib.request
+          for attempt in range(30):
+              try:
+                  with urllib.request.urlopen('http://127.0.0.1:8766/index.html', timeout=1) as response:
+                      assert response.status == 200
+                  break
+              except Exception:
+                  if attempt == 29:
+                      raise
+                  time.sleep(1)
+          PY
+          node scripts/logistics-browser-smoke.mjs 2>&1 | tee "$LOG_TEST_ARTIFACTS/browser.log"
+      - name: Retain synthetic screenshots, exports and logs
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: logistics-browser-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-artifacts/logistics
+          retention-days: 14
+          if-no-files-found: warn

@@ -25,9 +25,13 @@ try{
  const reportWait=page.waitForEvent('download');await click('report');const report=await reportWait;const htmlPath=path.join(dir,'logistics.html');await report.saveAs(htmlPath);const html=await fs.readFile(htmlPath,'utf8');assert.ok(html.includes('&lt;script&gt;'));assert.ok(!html.includes('<script>throw'));
  await page.screenshot({path:path.join(dir,'logistics-desktop.png'),fullPage:true});await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(dir,'logistics-mobile.png'),fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.setViewportSize({width:1440,height:1000});
  await page.reload({waitUntil:'networkidle'});await page.locator('#workspace-library').evaluate(e=>e.open=true);await page.locator('[data-workspace-select="logistics"]').click();assert.equal((await read()).cases[0].decisions.length,1);
- await page.locator('#logistics details').first().getByRole('button',{name:'Save new source revision'}).count();await page.locator('#logistics details').first().locator('summary').click();
+await page.locator('#logistics details').first().locator('summary').click();
  const source=page.locator('#log-source');const value=JSON.parse(await source.inputValue());value.readiness.conflicting=true;await source.fill(JSON.stringify(value));accept=false;await page.locator('[data-workspace-select="roi"]').click();assert.equal(await page.locator('#logistics').isVisible(),true);accept=true;await click('source');assert.equal((await read()).cases[0].revision,2);assert.match(await page.locator('#logistics').innerText(),/Diagnostic eligibility: UNKNOWN/);assert.equal((await read()).cases[0].decisions.length,1);
  await page.locator('[data-workspace-select="roi"]').click();assert.equal(await page.locator('#overview').isVisible(),true);assert.deepEqual(errors,[]);
  const bad=await browser.newContext();await bad.addInitScript(()=>localStorage.setItem('roi-ea-logistics-release-v0.1','broken'));const bp=await bad.newPage();await bp.goto(`${base}/index.html`,{waitUntil:'networkidle'});await bp.locator('#workspace-library').evaluate(e=>e.open=true);await bp.locator('[data-workspace-select="logistics"]').click();assert.equal(await bp.locator('[data-log="load"]').isDisabled(),true);assert.equal(await bp.evaluate(()=>localStorage.getItem('roi-ea-logistics-release-v0.1')),'broken');await bad.close();
  console.log('PASS Logistics complete synthetic review, native projection, cancel/confirmation, transfer analysis, exports, reload, stale-source invalidation, navigation, mobile overflow, corrupt storage, unrelated data and runtime errors.');
+ }catch(error){
+ await page.screenshot({path:path.join(dir,'logistics-failure.png'),fullPage:true}).catch(()=>{});
+ await fs.writeFile(path.join(dir,'browser-errors.json'),JSON.stringify({message:error.message,stack:error.stack,pageErrors:errors},null,2));
+ throw error;
 }finally{await browser.close();}
