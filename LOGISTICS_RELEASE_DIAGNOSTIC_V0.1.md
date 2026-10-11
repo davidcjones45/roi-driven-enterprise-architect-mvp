@@ -48,13 +48,12 @@ git diff --check
 
 Optional isolated Playwright workflow: start `python3 serve-roi-ea.py`, then `node scripts/logistics-browser-smoke.mjs`. Defaults to `http://127.0.0.1:8766`; `LOG_BASE_URL`, `LOG_PLAYWRIGHT_MODULE`, `LOG_BROWSER_EXECUTABLE` and `LOG_TEST_ARTIFACTS` provide development overrides. Playwright is development tooling, not an application dependency.
 
-October 11 initial verification: 12/12 focused Node tests passed; initial full regression 700/700 passed before the final quantity/date/constraint guard test was added; Python 11/11 passed. Local browser launch was blocked before scenarios: missing Chromium headless executable; browser installation failed with invalid/truncated ZIP archives. This is not a browser pass or production-readiness claim. Final verification is recorded below after review.
+### Verified implementation — October 11, 2026
 
-### Final implementation verification — October 11, 2026
-
-- Focused Node tests: 12/12 passed. Full Node suite: 701/701 passed, zero failures/skips. Python unittest: 11/11 passed. App, diagnostic/UI and browser-script syntax plus diff checks passed.
-- Published initial implementation tree `54c534b71f70a71253efc9e75ddca57086b5b4dd` exactly matched the tested local tree. Documentation-only verification follow-up does not change runtime behavior.
-- PR #60 is draft. GitHub Vercel status reports a Ready preview for implementation commit `6b8b139a3986e3c6829fb3b3881fcaedb52837c2`. Deployment success is not a functional browser test.
-- Hosted browser attempt reached Vercel Login. Authorized temporary-access lookup and deployment lookup with the repository's reported team/deployment identifiers returned not-found/access errors; no Vercel CLI was available. No hosted workflow scenarios ran.
-- Local Playwright workflow remains blocked before scenarios by missing Chromium; installing it failed with invalid/truncated ZIP downloads. Mobile layout, download behavior, actual browser navigation and full browser state transitions remain unverified. Do not mark ready or merge until the included browser smoke runs successfully and any findings are addressed.
-- No merge or production promotion was performed.
+- Focused Node tests: 13/13 passed. GitHub Actions full Node suite: 702/702 passed, zero failures/skips. Python unittest: 11/11 passed.
+- Complete Chromium smoke passed on implementation commit `3012ff21530697a3e936fa31994df112f3d7f194`: synthetic reviews, native projection, cancellation/confirmation, transferred-delay analysis, JSON/HTML downloads and escaping, reload, source-revision invalidation, navigation, mobile overflow, corrupt-storage protection, unrelated-data preservation and no page runtime errors.
+- Evidence: [successful CI run](https://github.com/davidcjones45/roi-driven-enterprise-architect-mvp/actions/runs/38152186397). Its artifact contains desktop/mobile screenshots, exported JSON and HTML, and Node/Python/browser/server logs. Artifacts are retained for 14 days.
+- `.github/workflows/logistics-browser.yml` runs on main and implementation-branch pushes, main-targeting pull requests and manual dispatch. It pins Playwright package and official preinstalled-browser image to 1.62.1, serves the repository on loopback, uses isolated synthetic browser contexts and retains failure diagnostics.
+- Browser testing exposed invalid native architecture status and numeric field mappings. The adapter now uses Proposed status and supported categories. Unknown cost/benefit/feasibility/risk inputs stay blank; qualitative descriptions remain in diagnosticAssessment metadata and the diagnostic export. A reviewed synthetic intervention does not establish native architecture approval.
+- Local browser installation remains blocked: the Chromium download returned HTTP 200 with a 195-byte HTML Site Unavailable response, which the downloader attempted to extract as ZIP. CI avoids that local download path. The hosted Vercel preview remained behind its sign-in wall; CI tests the application on localhost and does not verify hosted authentication.
+- No merge or production promotion was performed. Client operational evidence and pilot outcomes remain required.
