@@ -30,7 +30,6 @@ jobs:
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       LOG_BASE_URL: http://127.0.0.1:8766
       LOG_TEST_ARTIFACTS: ${{ github.workspace }}/test-artifacts/logistics
-      ROI_EA_DATA_DIR: ${{ runner.temp }}/roi-ea-ci-data
     steps:
       - uses: actions/checkout@v6
         with:
@@ -52,6 +51,7 @@ jobs:
           python3 -m unittest discover -p '*_test.py' 2>&1 | tee "$LOG_TEST_ARTIFACTS/python-tests.log"
       - name: Start loopback test server and verify browser workflow
         run: |
+          export ROI_EA_DATA_DIR="$RUNNER_TEMP/roi-ea-ci-data"
           python3 serve-roi-ea.py > "$LOG_TEST_ARTIFACTS/server.log" 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
