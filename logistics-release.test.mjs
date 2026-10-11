@@ -86,4 +86,6 @@ test('quantities, dates, sparse economics and insufficient evidence cannot becom
  const categories=['Do nothing','Retire or consolidate','Simplify','Integrate','Automate','Improve analytics','Introduce bounded AI'];
  assert.ok(a.alternatives.every(row=>categories.includes(row.category)));
  assert.equal(a.preferredAlternative,'1');
+ assert.ok(a.alternatives.every(row=>['cost','benefit','feasibility','risk'].every(key=>row[key]==='')));
+ assert.match(a.alternatives[1].diagnosticAssessment.cost,/Training/);
  });
