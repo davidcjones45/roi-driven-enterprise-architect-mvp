@@ -49,3 +49,12 @@ git diff --check
 Optional isolated Playwright workflow: start `python3 serve-roi-ea.py`, then `node scripts/logistics-browser-smoke.mjs`. Defaults to `http://127.0.0.1:8766`; `LOG_BASE_URL`, `LOG_PLAYWRIGHT_MODULE`, `LOG_BROWSER_EXECUTABLE` and `LOG_TEST_ARTIFACTS` provide development overrides. Playwright is development tooling, not an application dependency.
 
 October 11 initial verification: 12/12 focused Node tests passed; initial full regression 700/700 passed before the final quantity/date/constraint guard test was added; Python 11/11 passed. Local browser launch was blocked before scenarios: missing Chromium headless executable; browser installation failed with invalid/truncated ZIP archives. This is not a browser pass or production-readiness claim. Final verification is recorded below after review.
+
+### Final implementation verification — October 11, 2026
+
+- Focused Node tests: 12/12 passed. Full Node suite: 701/701 passed, zero failures/skips. Python unittest: 11/11 passed. App, diagnostic/UI and browser-script syntax plus diff checks passed.
+- Published initial implementation tree `54c534b71f70a71253efc9e75ddca57086b5b4dd` exactly matched the tested local tree. Documentation-only verification follow-up does not change runtime behavior.
+- PR #60 is draft. GitHub Vercel status reports a Ready preview for implementation commit `6b8b139a3986e3c6829fb3b3881fcaedb52837c2`. Deployment success is not a functional browser test.
+- Hosted browser attempt reached Vercel Login. Authorized temporary-access lookup and deployment lookup with the repository's reported team/deployment identifiers returned not-found/access errors; no Vercel CLI was available. No hosted workflow scenarios ran.
+- Local Playwright workflow remains blocked before scenarios by missing Chromium; installing it failed with invalid/truncated ZIP downloads. Mobile layout, download behavior, actual browser navigation and full browser state transitions remain unverified. Do not mark ready or merge until the included browser smoke runs successfully and any findings are addressed.
+- No merge or production promotion was performed.
