@@ -79,3 +79,11 @@ test('quantities, dates, sparse economics and insufficient evidence cannot becom
  delete bad.economics.loadedRate;assert.throws(()=>validateCase(bad));
  const h=recordReview(reviewed(),{kind:'hypothesis',reviewer:'R',rationale:'Only a source label',choice:'D-03',evidenceRefs:['E-1'],confirmed:true});assert.equal(projection(h).evaluations.constraint.effectiveValidationStatus,'CANDIDATE');
 });
+
+ test('ROI handoff uses native architecture selections without implying approval',()=>{
+ const a=projection(decided()).roi.architecture;
+ assert.equal(a.decisionStatus,'Proposed');
+ const categories=['Do nothing','Retire or consolidate','Simplify','Integrate','Automate','Improve analytics','Introduce bounded AI'];
+ assert.ok(a.alternatives.every(row=>categories.includes(row.category)));
+ assert.equal(a.preferredAlternative,'1');
+ });
