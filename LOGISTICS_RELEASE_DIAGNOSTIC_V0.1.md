@@ -57,3 +57,10 @@ Optional isolated Playwright workflow: start `python3 serve-roi-ea.py`, then `no
 - Browser testing exposed invalid native architecture status and numeric field mappings. The adapter now uses Proposed status and supported categories. Unknown cost/benefit/feasibility/risk inputs stay blank; qualitative descriptions remain in diagnosticAssessment metadata and the diagnostic export. A reviewed synthetic intervention does not establish native architecture approval.
 - Local browser installation remains blocked: the Chromium download returned HTTP 200 with a 195-byte HTML Site Unavailable response, which the downloader attempted to extract as ZIP. CI avoids that local download path. The hosted Vercel preview remained behind its sign-in wall; CI tests the application on localhost and does not verify hosted authentication.
 - No merge or production promotion was performed. Client operational evidence and pilot outcomes remain required.
+
+### Release-readiness remediation — October 13, 2026
+
+- Missing/blank order or approval revisions yield UNKNOWN readiness. Reopening after a historical snapshot requires fresh reconciliation, snapshot and human release evidence as of the evaluated timestamp; historical release events are retained.
+- New reviews link to their accepted evidence/finding/decision record IDs. Re-review invalidates dependent effective records without deleting history. Legacy reviews without these links require reconfirmation before native handoff. Prior native projections remain historical and require manual applicability review.
+- Customer receipt deterioration is WORSENED independently of gate timing. Repeated or out-of-order handoffs yield unknown acknowledgement/escalation until episodes are reconstructed.
+- Added five focused regressions and a browser regression for same-revision finding changes blocking handoff until decision reconfirmation. Local validation: 18/18 focused, 707/707 full Node and 11/11 Python tests; syntax and diff checks pass. Browser CI on the remediation head must be checked separately; earlier browser evidence applies only to the earlier head. Vercel hosted authentication/runtime remains unverified.

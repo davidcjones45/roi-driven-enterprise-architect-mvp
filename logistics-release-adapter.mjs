@@ -2,7 +2,7 @@
 import { normalizeGraphNode,normalizeGraphEdge } from './dependency-graph-model.mjs';
 import { evaluateRelianceClaim,validateConstrainingDependency,evaluateInterventionOutcome,normalizeReassessmentRecord } from './continuity-assurance-model.mjs';
 import { validateWorkspaceShape,assertSafeJSON,isRecord } from './ux-safety-model.mjs';
-import { validateCase,analyzeCase,economics,compareOutcomes } from './logistics-release-diagnostic.mjs';
+import { effectiveReview,validateCase,analyzeCase,economics,compareOutcomes } from './logistics-release-diagnostic.mjs';
 import { logisticsFixture } from './logistics-release-fixture.mjs';
 export const ROI_KEY='roi-driven-enterprise-architect-mvp-v1';
 export const ARCHITECTURE_KEY='roi-ea-application-modernization-m1-v0.1';
@@ -13,7 +13,7 @@ export const ALTERNATIVES=[
  {id:'A3',name:'ERP/WMS integration',category:'Integrate',cost:'Unknown; obtain estimate',benefit:'Only if synchronization is limiting',feasibility:'Interface and ownership review required',risk:'Scope expansion without proven mechanism'},
  {id:'A4',name:'Additional dock capacity',category:'Simplify',cost:'Unknown; obtain estimate',benefit:'Only if physical dock capacity is limiting',feasibility:'Capacity analysis required',risk:'Spend without relieving review queue'}
 ];
-const current=(c,k)=>c[k].filter(r=>r.revision===c.revision).at(-1);
+const current=effectiveReview;
 export function projection(input){
  const c=validateCase(input),a=analyzeCase(c),prefix=`LOG:${c.id}:r${c.revision}:`,id=x=>prefix+x;
  const reviewed=!!current(c,'reviews'),hyp=current(c,'hypotheses'),decision=current(c,'decisions'),outcome=current(c,'outcomes');

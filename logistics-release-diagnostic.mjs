@@ -6,6 +6,7 @@ const iso=v=>{
  const date=v.slice(0,10),[year,month,day]=date.split('-').map(Number);
  return month>=1&&month<=12&&day>=1&&day<=new Date(Date.UTC(year,month,0)).getUTCDate()&&Number(v.slice(11,13))<24&&Number(v.slice(14,16))<60&&Number(v.slice(17,19))<60;
 };
+const present=v=>typeof v==='string'&&!!v.trim();
 const required=(v,label)=>{if(typeof v!=='string'||!v.trim())throw Error(`${label} is required.`);};
 export function validateCase(raw){
  if(!isRecord(raw))throw Error('Case must be an object.');assertSafeJSON(raw);
@@ -36,6 +37,13 @@ const mins=(a,b)=>(Date.parse(b)-Date.parse(a))/60000;
 export function readiness(c){
  const r=c.readiness,flags=[];const age=mins(r.source_at,r.as_of);
  if(age<0||age>15)flags.push('Snapshot is stale or from the future.');
+ if(!present(r.order_revision)||!present(r.approval_revision))flags.push('Source/approval revision evidence is missing.');
+ const reopened=c.events.filter(e=>e.event_type==='EXCEPTION_REOPENED'&&Date.parse(e.occurred_at)<=Date.parse(r.as_of));
+ if(reopened.length){
+  const last=Math.max(...reopened.map(e=>Date.parse(e.occurred_at)));
+  const renewed=['RECONCILIATION_APPROVED','RELEASE_AUTHORIZED'].every(type=>c.events.some(e=>e.event_type===type&&Date.parse(e.occurred_at)>last&&Date.parse(e.occurred_at)<=Date.parse(r.as_of)&&e.source_revision===r.approval_revision));
+  if(!renewed||Date.parse(r.source_at)<=last)flags.push('Exception reopened; fresh reconciliation, snapshot and human authorization required.');
+ }
  if(r.conflicting||r.order_revision!==r.approval_revision||r.approved_quantity!==r.staged_quantity||r.approved_quantity!==r.document_quantity)flags.push('Conflicting source or approval revision.');
  const conditions=['physical_ready','commercial_ready','transport_ready','documentation_ready','reconciliation_complete'];
  const unknown=flags.length||['approved_quantity','staged_quantity','document_quantity'].some(k=>r[k]===null)||conditions.some(k=>r[k]===null);
@@ -64,9 +72,10 @@ export function analyzeCase(input){
   metric('departureLateness',s.planned_departure_at?{occurred_at:s.planned_departure_at}:null,'GATE_DEPARTURE',{lateness:true});
   metric('receiptLateness',s.planned_receipt_at?{occurred_at:s.planned_receipt_at}:null,'CUSTOMER_RECEIPT',{lateness:true});
   metric('releaseDeadlineMiss',s.release_deadline_at?{occurred_at:s.release_deadline_at}:null,'RELEASE_AUTHORIZED',{lateness:true});
-  const sent=events.find(e=>e.event_type==='HANDOFF_SENT'),ack=events.find(e=>e.event_type==='HANDOFF_ACKNOWLEDGED');
-  const open=sent&&!ack;
-  return {shipmentId:s.id,rows,flags,handoff:{acknowledged:!!ack,ageMinutes:open?mins(sent.occurred_at,c.cutoff):null,escalationDue:!!open&&mins(sent.occurred_at,c.cutoff)>=5}};
+  const sends=events.filter(e=>e.event_type==='HANDOFF_SENT'),acks=events.filter(e=>e.event_type==='HANDOFF_ACKNOWLEDGED');
+  const ambiguous=sends.length>1||acks.length>1||(!sends.length&&acks.length>0)||(sends.length===1&&acks.length===1&&Date.parse(acks[0].occurred_at)<Date.parse(sends[0].occurred_at));
+  const sent=sends[0],ack=acks[0],open=!ambiguous&&sent&&!ack;
+  return {shipmentId:s.id,rows,flags,handoff:{acknowledged:ambiguous?null:!!ack,ageMinutes:open?mins(sent.occurred_at,c.cutoff):null,escalationDue:ambiguous?null:!!open&&mins(sent.occurred_at,c.cutoff)>=5,qualityFlags:ambiguous?['Ambiguous handoff episodes; acknowledgement and escalation unresolved.']:[]}};
  });
  const summary=Object.fromEntries(Object.keys(byShipment[0]?.rows||{}).map(k=>{const records=byShipment.map(s=>s.rows[k]),values=records.map(r=>r.value).filter(v=>v!==null);return [k,{p50:nearestRank(values,.5),p90:nearestRank(values,.9),eligible_n:values.length,excluded_n:records.reduce((n,r)=>n+r.excluded_n,0),censored_n:records.reduce((n,r)=>n+r.censored_n,0),method:'nearest rank',unit:'minutes'}];}));
  const overlapping=c.taskIntervals.some((a,i)=>c.taskIntervals.slice(i+1).some(b=>a.role===b.role&&Date.parse(a.started_at)<Date.parse(b.ended_at)&&Date.parse(b.started_at)<Date.parse(a.ended_at)));
@@ -78,10 +87,10 @@ export function economics(c,{includeFee=true,chargesVerified=false}={}){
  return {classification:'SYNTHETIC FORECAST',capacityHours,capacityEquivalent,chargesVerified,monthlyCashNet:monthlyNet,annualCashNet:monthlyNet*12,totalOneTime,cashPaybackMonths:monthlyNet>0?totalOneTime/monthlyNet:null,annualEquivalentNet:(monthlyNet+capacityEquivalent)*12,equivalentPaybackMonths:monthlyNet+capacityEquivalent>0?totalOneTime/(monthlyNet+capacityEquivalent):null,queueIsNotLabor:true};
 }
 export function compareOutcomes(baseline,target){
- const b=analyzeCase(baseline),t=analyzeCase(target),v=(r,k)=>r.shipments[0]?.rows[k].value;
+ const b=analyzeCase(baseline),t=analyzeCase(target),v=(r,k)=>r.shipments[0]?.rows[k]?.value??null;
  const delta=k=>v(b,k)===null||v(t,k)===null?null:v(b,k)-v(t,k);
  const gateDelta=delta('physicalToGate'),releaseDelta=delta('physicalToRelease'),receiptDelta=delta('receiptLateness');
- const types=gateDelta===null||receiptDelta===null?['UNRESOLVED']:gateDelta<0?['WORSENED',...(releaseDelta>0?['TRANSFERRED']:[])]:gateDelta>0&&receiptDelta>=0?['RELIEVED']:releaseDelta>0?['TRANSFERRED']:['UNCHANGED_EXPOSURE'];
+ const types=gateDelta===null||receiptDelta===null?['UNRESOLVED']:gateDelta<0||receiptDelta<0?['WORSENED',...(releaseDelta>0?['TRANSFERRED']:[])]:gateDelta>0&&receiptDelta>=0?['RELIEVED']:releaseDelta>0?['TRANSFERRED']:['UNCHANGED_EXPOSURE'];
  return {classification:'SYNTHETIC REPLAY, NOT OBSERVED PILOT',types,gateMinutesImproved:gateDelta,releaseMinutesImproved:releaseDelta,departureLatenessImproved:delta('departureLateness'),receiptLatenessImproved:receiptDelta,provesRealImprovement:false};
 }
 export function replaceCaseSource(current,source){
@@ -89,15 +98,28 @@ export function replaceCaseSource(current,source){
  next.revision=current.revision+1;for(const k of ['reviews','hypotheses','decisions','outcomes'])next[k]=structuredClone(current[k]);
  next.evidence=next.evidence.map(e=>({...e,review_state:'NOT REVIEWED'}));return next;
 }
+export function effectiveReview(c,kind){
+ const latest=key=>c[key].filter(r=>r.revision===c.revision).at(-1);
+ const evidence=latest('reviews');
+ if(kind==='reviews')return evidence;
+ const hypothesis=latest('hypotheses');
+ if(!evidence||hypothesis?.evidenceReviewRef!==evidence.id)return undefined;
+ if(kind==='hypotheses')return hypothesis;
+ const decision=latest('decisions');
+ if(decision?.hypothesisReviewRef!==hypothesis.id)return undefined;
+ if(kind==='decisions')return decision;
+ const outcome=latest('outcomes');
+ return outcome?.decisionReviewRef===decision.id?outcome:undefined;
+}
 export function recordReview(input,{kind,reviewer,rationale,confirmed,choice,evidenceRefs=[],now=new Date().toISOString()}){
  const c=validateCase(input);if(confirmed!==true)throw Error('Explicit confirmation required.');if(!iso(now))throw Error('Invalid review time.');required(reviewer,'Reviewer');required(rationale,'Rationale');
  const record={id:globalThis.crypto.randomUUID(),revision:c.revision,kind,reviewer:reviewer.trim(),rationale:rationale.trim(),choice,evidenceRefs,at:now,synthetic:true,confersAuthority:false};
  if(kind==='evidence'){c.evidence=c.evidence.map(e=>({...e,review_state:'REVIEWED',reviewer,reviewed_at:now}));c.reviews.push(record);}
  else{
-  if(!c.reviews.some(r=>r.revision===c.revision&&r.kind==='evidence'))throw Error('Review current source evidence first.');
-  if(kind==='hypothesis'){if(!['D-03','D-DOCK','UNRESOLVED'].includes(choice))throw Error('Select a supported hypothesis.');if(!evidenceRefs.length||evidenceRefs.some(id=>!c.evidence.some(e=>e.id===id)))throw Error('Link current source evidence.');c.hypotheses.push(record);}
-  else if(kind==='decision'){if(!c.hypotheses.some(r=>r.revision===c.revision))throw Error('Record current hypothesis disposition first.');if(!['A0','A1','A2','A3','A4','DEFERRED'].includes(choice))throw Error('Unknown alternative.');c.decisions.push(record);}
-  else if(kind==='outcome'){if(!c.decisions.some(r=>r.revision===c.revision))throw Error('Record a current decision first.');if(!['delegate','dock','transfer'].includes(choice))throw Error('Choose a replay fixture.');c.outcomes.push(record);}
+  if(!effectiveReview(c,'reviews'))throw Error('Review current source evidence first.');
+  if(kind==='hypothesis'){if(!['D-03','D-DOCK','UNRESOLVED'].includes(choice))throw Error('Select a supported hypothesis.');if(!evidenceRefs.length||evidenceRefs.some(id=>!c.evidence.some(e=>e.id===id)))throw Error('Link current source evidence.');record.evidenceReviewRef=effectiveReview(c,'reviews').id;c.hypotheses.push(record);}
+  else if(kind==='decision'){if(!effectiveReview(c,'hypotheses'))throw Error('Record current hypothesis disposition first.');if(!['A0','A1','A2','A3','A4','DEFERRED'].includes(choice))throw Error('Unknown alternative.');record.hypothesisReviewRef=effectiveReview(c,'hypotheses').id;c.decisions.push(record);}
+  else if(kind==='outcome'){if(!effectiveReview(c,'decisions'))throw Error('Record a current decision first.');if(!['delegate','dock','transfer'].includes(choice))throw Error('Choose a replay fixture.');record.decisionReviewRef=effectiveReview(c,'decisions').id;c.outcomes.push(record);}
   else throw Error('Unknown review kind.');
  }
  return c;

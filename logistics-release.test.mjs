@@ -89,3 +89,28 @@ test('quantities, dates, sparse economics and insufficient evidence cannot becom
  assert.ok(a.alternatives.every(row=>['cost','benefit','feasibility','risk'].every(key=>row[key]==='')));
  assert.match(a.alternatives[1].diagnosticAssessment.cost,/Training/);
  });
+
+test('missing revision identities never establish readiness',()=>{
+ for(const value of [undefined,null,'',' ']){const c=logisticsFixture();c.readiness.order_revision=value;c.readiness.approval_revision=value;assert.equal(analyzeCase(c).readiness.eligible,'UNKNOWN');assert.equal(readiness(c).releaseAuthorized,'NOT ESTABLISHED');}
+});
+test('reopening preserves historical release but requires renewed current evidence',()=>{
+ const c=logisticsFixture('reopened');assert.equal(readiness(c).eligible,'TRUE'); // snapshot predates reopening
+ c.readiness.as_of='2026-10-05T10:06:00-05:00';assert.equal(readiness(c).eligible,'UNKNOWN');assert.equal(readiness(c).releaseAuthorized,'NOT ESTABLISHED');
+ for(const [type,time] of [['RECONCILIATION_APPROVED','10:07'],['RELEASE_AUTHORIZED','10:09']])c.events.push({...c.events.find(e=>e.event_type===type),id:`renew-${type}`,occurred_at:`2026-10-05T${time}:00-05:00`});
+ c.readiness.as_of='2026-10-05T10:10:00-05:00';assert.equal(readiness(c).eligible,'UNKNOWN');c.readiness.source_at='2026-10-05T10:09:00-05:00';assert.equal(readiness(c).eligible,'TRUE');assert.equal(c.events.filter(e=>e.event_type==='RELEASE_AUTHORIZED').length,2);
+});
+test('later reviews invalidate dependent decisions and outcomes without deleting history',()=>{
+ let c=recordReview(decided(),{kind:'outcome',reviewer:'R',rationale:'replay',choice:'delegate',confirmed:true});
+ c=recordReview(c,{kind:'hypothesis',reviewer:'R',rationale:'withdraw finding',choice:'UNRESOLVED',evidenceRefs:['E-2'],confirmed:true});
+ assert.equal(projection(c).roi.architecture.preferredAlternative,'');assert.equal(projection(c).comparison,null);assert.equal(c.decisions.length,1);assert.equal(c.outcomes.length,1);
+ assert.throws(()=>recordReview(c,{kind:'outcome',reviewer:'R',rationale:'replay',choice:'delegate',confirmed:true}),/current decision/);
+ c=recordReview(c,{kind:'decision',reviewer:'R',rationale:'defer',choice:'DEFERRED',confirmed:true});assert.equal(projection(c).comparison,null);
+ c=recordReview(c,{kind:'evidence',reviewer:'R',rationale:'review again',confirmed:true});assert.equal(projection(c).evaluations.constraint.effectiveValidationStatus,'CANDIDATE');assert.throws(()=>recordReview(c,{kind:'decision',reviewer:'R',rationale:'choose',choice:'A1',confirmed:true}),/hypothesis/);
+});
+test('customer deterioration is worsened even when gate improves or stays unchanged',()=>{
+ for(const variant of ['delegate','primary']){const c=logisticsFixture(variant);c.events.find(e=>e.event_type==='CUSTOMER_RECEIPT').occurred_at='2026-10-05T14:00:00-05:00';const out=compareOutcomes(logisticsFixture(),c);assert.ok(out.types.includes('WORSENED'));assert.ok(!out.types.includes('RELIEVED'));}
+ const c=logisticsFixture();c.shipments=[];c.events=[];assert.deepEqual(compareOutcomes(c,c).types,['UNRESOLVED']);
+});
+test('repeated and out-of-order handoffs remain unknown instead of silently completed',()=>{
+ for(const mutate of [c=>c.events.push({...c.events.find(e=>e.event_type==='HANDOFF_SENT'),id:'later-send',occurred_at:'2026-10-05T11:00:00-05:00'}),c=>c.events.find(e=>e.event_type==='HANDOFF_ACKNOWLEDGED').occurred_at='2026-10-05T09:01:00-05:00']){const c=logisticsFixture();mutate(c);const h=analyzeCase(c).shipments[0].handoff;assert.equal(h.acknowledged,null);assert.equal(h.escalationDue,null);assert.ok(h.qualityFlags.length);}
+});
