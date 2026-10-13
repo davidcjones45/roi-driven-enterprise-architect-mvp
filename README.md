@@ -105,3 +105,7 @@ G4 adds a browser-local, standards-aware BPMN review workflow with append-only c
 Select **Forms** to import manual/pasted structure, verify fields, analyze seven lenses, propose modernization treatments and record separate human decisions. Approved decisions produce a future-state specification and structured JSON/printable HTML exports. Existing architecture graph objects can be linked through an explicit, unreviewed projection. The workflow remains browser-local and adds no AI execution or operational authority.
 
 See [Forms Analysis workflow, architecture and validation](FORMS_ANALYSIS.md). Run the focused suite with `node --test forms-analysis.test.mjs`.
+
+## Synthetic logistics diagnostic
+
+Select **Specialist workspaces & examples → Logistics diagnostic** to inspect outbound shipment readiness and release exception handoffs. The synthetic workflow reuses existing evidence, dependency, Continuity Assurance, ROI and human decision records. It distinguishes authorized-review constraints from dock capacity and downstream delay transfer, with reviewed native handoff and diagnostic exports. It adds no live integration or shipment execution. See [implementation, boundaries and verification](LOGISTICS_RELEASE_DIAGNOSTIC_V0.1.md).
