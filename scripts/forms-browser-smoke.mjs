@@ -39,9 +39,16 @@ await page.reload({waitUntil:'networkidle'});await page.locator('[data-workspace
 await stage('Verify Structure');await page.locator('#forms .fac-structure').getByRole('button',{name:'Customer account',exact:true}).click();await form('field').getByLabel('Instructions',{exact:true}).fill('New instructions');await form('field').getByRole('button',{name:'Save field',exact:true}).click();assert.equal(await page.locator('#forms [data-stage="Analyze"]').isDisabled(),true);assert.equal((await read()).forms[0].decisions.length,1);
 await click('sample');assert.equal((await read()).forms.length,2);await page.locator('#forms .fac-structure').getByRole('button',{name:'Requester identity check',exact:true}).click();await page.locator('#forms select[name="depth"]').selectOption('Architecture Analysis');
 await page.screenshot({path:path.join(artifactDir,'forms-analysis-desktop.png'),fullPage:true});
-// Create existing graph context through the application module's local persistence contract.
-await page.evaluate(()=>localStorage.setItem('roi-ea-application-modernization-m1-v0.1',JSON.stringify({graphNodes:[{id:'crm-e2e',label:'Existing CRM',nodeType:'application'}],graphEdges:[],applications:[]})));
-await page.locator('#forms select[name="depth"]').selectOption('Quick Scan');await page.locator('#forms select[name="depth"]').selectOption('Architecture Analysis');await form('relationship').getByLabel('Architecture object',{exact:true}).selectOption('crm-e2e');await form('relationship').getByLabel('Relationship evidence / source',{exact:true}).fill('Owner interview');await form('relationship').getByRole('button').click();await click('project');assert.match(await page.locator('#fac-status').innerText(),/projected/);
+// Reproduce the stale target list through real workspace navigation, without a depth toggle.
+assert.match(await page.locator('#forms').innerText(),/No existing architecture objects available/);
+await page.locator('#workspace-library > summary').click();
+await page.locator('[data-workspace-select="modernization"]').click();
+await page.locator('#mod-app-form').getByLabel('Application name',{exact:true}).fill('Existing CRM');
+await page.locator('#mod-app-form').getByRole('button',{name:'Add application',exact:true}).click();
+await page.locator('[data-workspace-select="forms"]').click();
+assert.equal(await page.locator('#forms select[name="depth"]').inputValue(),'Architecture Analysis');
+assert.equal(await form('relationship').getByLabel('Architecture object',{exact:true}).getByRole('option',{name:'Existing CRM (application)',exact:true}).count(),1);
+await form('relationship').getByLabel('Architecture object',{exact:true}).selectOption({label:'Existing CRM (application)'});await form('relationship').getByLabel('Relationship evidence / source',{exact:true}).fill('Owner interview');await form('relationship').getByRole('button').click();await click('project');assert.match(await page.locator('#fac-status').innerText(),/projected/);
 assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('roi-ea-application-modernization-m1-v0.1')).graphEdges.length),1);
 await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(artifactDir,'forms-analysis-mobile.png'),fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1));
 await page.setViewportSize({width:1440,height:1000});await page.locator('[data-workspace-select="roi"]').click();assert.equal(await page.locator('#overview').isVisible(),true);await page.locator('[data-workspace-select="forms"]').click();assert.equal(await page.locator('#forms').isVisible(),true);
