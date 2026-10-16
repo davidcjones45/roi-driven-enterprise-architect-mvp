@@ -1,0 +1,79 @@
+name: Forms browser verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feat/forms-reviewed-recovery-restore, fix/forms-architecture-target-refresh]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: forms-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Forms browser smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --ipc=host
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      FAC_BASE_URL: http://127.0.0.1:8766
+      FAC_TEST_ARTIFACTS: ${{ github.workspace }}/test-artifacts/forms
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install matching isolated Playwright module
+        run: |
+          npm install --prefix "$RUNNER_TEMP/forms-playwright" --no-save --package-lock=false playwright@1.62.1
+          echo "FAC_PLAYWRIGHT_MODULE=file://$RUNNER_TEMP/forms-playwright/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
+      - name: Run regression suites
+        run: |
+          mkdir -p "$FAC_TEST_ARTIFACTS"
+          set -o pipefail
+          node --test 2>&1 | tee "$FAC_TEST_ARTIFACTS/node-tests.log"
+          python3 -m unittest discover -p '*_test.py' 2>&1 | tee "$FAC_TEST_ARTIFACTS/python-tests.log"
+      - name: Run Forms browser smoke against isolated loopback server
+        run: |
+          set -o pipefail
+          export ROI_EA_DATA_DIR="$RUNNER_TEMP/roi-ea-forms-ci-data"
+          python3 serve-roi-ea.py > "$FAC_TEST_ARTIFACTS/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python3 - <<'PY'
+          import os, time, urllib.request
+          for attempt in range(30):
+              try:
+                  with urllib.request.urlopen(os.environ['FAC_BASE_URL'] + '/index.html', timeout=1) as response:
+                      assert response.status == 200
+                  break
+              except Exception:
+                  if attempt == 29:
+                      raise
+                  time.sleep(1)
+          PY
+          node scripts/forms-browser-smoke.mjs 2>&1 | tee "$FAC_TEST_ARTIFACTS/browser.log"
+      - name: Retain screenshots, exports and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: forms-browser-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-artifacts/forms
+          retention-days: 14
+          if-no-files-found: warn

@@ -17,6 +17,7 @@ export function mountFormsWorkspace(root=document.querySelector('#forms')) {
   const store=createFormsStore(()=>window.localStorage);
   let activeId='',fieldId='',stage='Import',mode='Quick Scan',creating=false,dirty=false;
   const dirtyForms=new Set();
+  let restoring=false, restoreReview=null;
   const current=()=>store.list().find(x=>x.id===activeId);
   const selected=f=>f.fields.find(x=>x.id===fieldId);
   const currentFindings=f=>f.findings.filter(x=>x.revision===f.revision && x.fieldId===fieldId);
@@ -54,7 +55,8 @@ export function mountFormsWorkspace(root=document.querySelector('#forms')) {
     dirtyForms.clear();
     const f=current(), blocked=store.state().blocked;
     let body='';
-    if(creating) body=meta({},true);
+    if(restoring) body=restoreReview?`<section class="card"><h2>Review Forms recovery</h2><p>Add ${restoreReview.forms.length} forms. Existing forms remain unchanged. Matching IDs block the entire restore. Saved verification and decision history are retained; restore grants no authority and projects no graph links.</p><ul>${restoreReview.forms.map(f=>`<li>${esc(f.name)} — ID ${esc(f.id)}, revision ${f.revision}, ${f.sections} sections, ${f.fields} fields, ${f.findings} findings, ${f.recommendations} recommendations, ${f.verifications} verifications, ${f.relationships} relationships, ${f.decisions} decision events</li>`).join('')}</ul><form data-fac-form="restore"><label><input type="checkbox" name="confirmed" required> I reviewed these forms and confirm adding them to this browser.</label><button>Confirm restore</button></form>${button('Cancel restore','cancel-restore')}</section>`:`<form data-fac-form="review-recovery" class="card fac-form"><h2 class="full">Restore Forms recovery</h2><p class="full">Paste the contents of forms-recovery.json. Only version 1 Forms recovery workspaces are supported. Analysis exports and other workspace backups are not accepted. Review occurs before any write.</p><label class="full">Forms recovery JSON<textarea name="recovery" rows="8" maxlength="10000000" required></textarea></label><button>Review recovery</button>${button('Cancel restore','cancel-restore')}</form>`;
+    else if(creating) body=meta({},true);
     else if(f){
       body=formHeader(f)+`<nav class="fac-stages" aria-label="Forms analysis stages">${['Import','Verify Structure','Analyze','Recommend','Decide / Export'].map(x=>button(x,'stage',`data-stage="${x}"${stage===x?' aria-current="step"':''}${['Analyze','Recommend'].includes(x)&&!isVerified(f)?' disabled':''}`)).join('')}</nav>`;
       if(stage==='Import') body+=meta(f);
@@ -69,7 +71,7 @@ export function mountFormsWorkspace(root=document.querySelector('#forms')) {
       if(store.list().length) body+=`<div class="table-scroll card"><table class="fac-table"><thead><tr><th>Form</th><th>Status</th><th>Owner / context</th><th>Last modified</th></tr></thead><tbody>${store.list().map(x=>`<tr><td>${button(esc(x.name||'Untitled form'),'open',`data-id="${esc(x.id)}" class="secondary"`)}${x.sample?'<br>Fictional sample':''}</td><td>${esc(statusOf(x))}</td><td>${esc(x.owner||'Unknown')}<br>${esc([x.process,x.system].filter(Boolean).join(' / '))}</td><td>${esc(x.updatedAt||'Not recorded')}</td></tr>`).join('')}</tbody></table></div>`;
       else body+='<div class="card"><h3>No forms yet</h3><p>Create a form manually, paste field labels, or add the fictional sample to explore the workflow.</p></div>';
     }
-    root.innerHTML=`<div id="fac-error" role="alert" class="fac-error" ${blocked?'':'hidden'}>${blocked?esc(store.state().error.message):''}</div><div id="fac-status" role="status" aria-live="polite" class="fac-status"></div><div class="fac-actions">${button('All forms','list','class="secondary"')}${button('Create / import form','new')}${button('Add fictional example','sample','class="secondary"')}${button('Export Forms recovery data','recovery','class="secondary"')}</div><p class="quiet-note">AI proposes. Evidence explains. Human approves. This release uses deterministic suggestions and practitioner analysis. Stored in this browser only.</p>${body}`;
+    root.innerHTML=`<div id="fac-error" role="alert" class="fac-error" ${blocked?'':'hidden'}>${blocked?esc(store.state().error.message):''}</div><div id="fac-status" role="status" aria-live="polite" class="fac-status"></div><div class="fac-actions">${button('All forms','list','class="secondary"')}${button('Create / import form','new')}${button('Add fictional example','sample','class="secondary"')}${button('Export Forms recovery data','recovery','class="secondary"')}${button('Restore Forms recovery','restore-start','class="secondary"')}</div><p class="quiet-note">AI proposes. Evidence explains. Human approves. This release uses deterministic suggestions and practitioner analysis. Stored in this browser only.</p>${body}`;
     if(focus){
       const target=[...root.querySelectorAll('button,select')].find(x=>focus.action?x.dataset.fac===focus.action&&x.dataset.id===focus.id&&x.dataset.stage===focus.stage:focus.name&&x.name===focus.name);
       target?.focus({preventScroll:true});
@@ -80,6 +82,8 @@ export function mountFormsWorkspace(root=document.querySelector('#forms')) {
   root.addEventListener('submit',e=>{const el=e.target.closest('[data-fac-form]');if(!el)return;e.preventDefault();const values=Object.fromEntries(new FormData(el)),f=current();try{
     if([...dirtyForms].some(x=>x!==el))throw new Error('Save or discard the other edited form before submitting this action.');
     switch(el.dataset.facForm){
+      case 'review-recovery':restoreReview=null;restoreReview=store.reviewRecovery(values.recovery);dirty=false;render();break;
+      case 'restore':{const count=store.restoreRecovery(restoreReview,values.confirmed==='on');restoreReview=null;restoring=false;activeId='';creating=false;dirty=false;render();message(`Restored ${count} forms in this browser.`);break;}
       case 'create': {const {pastedText,...metadata}=values;creating=false;try{save(createForm(metadata,pastedText),'Verify Structure');}catch(error){creating=true;throw error;}break;}
       case 'metadata':save(updateMetadata(f,values),'Verify Structure');break;
       case 'section':save(saveSection(f,values.name,values.id));break;
@@ -92,9 +96,12 @@ export function mountFormsWorkspace(root=document.querySelector('#forms')) {
     }
   }catch(error){message(error.message,true);}});
   root.addEventListener('click',e=>{const b=e.target.closest('[data-fac]');if(!b)return;const a=b.dataset.fac,f=current();try{
-    if(['list','new','cancel-create','open','field','new-field','stage','sample','scan'].includes(a)&&!allowNavigation())return;
+    if(['list','new','cancel-create','open','field','new-field','stage','sample','scan','restore-start','cancel-restore'].includes(a)&&!allowNavigation())return;
     if(['list','new','cancel-create','open','field','new-field','stage','sample'].includes(a))dirty=false;
+    if(['list','new','cancel-create','open','sample'].includes(a)){restoring=false;restoreReview=null;}
     switch(a){
+      case 'restore-start':restoring=true;restoreReview=null;dirty=false;render();break;
+      case 'cancel-restore':restoring=false;restoreReview=null;dirty=false;render();break;
       case 'list':activeId='';creating=false;render();break;
       case 'new':creating=true;render();break;
       case 'cancel-create':creating=false;render();break;
