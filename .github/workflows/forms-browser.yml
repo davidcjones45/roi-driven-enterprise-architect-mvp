@@ -27,7 +27,7 @@ jobs:
         shell: bash
     env:
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-      FAC_BASE_URL: http://127.0.0.1:8878
+      FAC_BASE_URL: http://127.0.0.1:8766
       FAC_TEST_ARTIFACTS: ${{ github.workspace }}/test-artifacts/forms
     steps:
       - uses: actions/checkout@v6
@@ -57,10 +57,10 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           python3 - <<'PY'
-          import time, urllib.request
+          import os, time, urllib.request
           for attempt in range(30):
               try:
-                  with urllib.request.urlopen('http://127.0.0.1:8878/index.html', timeout=1) as response:
+                  with urllib.request.urlopen(os.environ['FAC_BASE_URL'] + '/index.html', timeout=1) as response:
                       assert response.status == 200
                   break
               except Exception:
