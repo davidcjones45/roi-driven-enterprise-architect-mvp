@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {economicsCompleteness} from './modernization-economics-model.mjs';
 import {validateCommonBaseline,reconcileAttributions,validateCashBenefitRecognition,assessP1Economics} from './cif-economic-p1-reconciliation.mjs';
 const base={id:'BASE-1',revision:'r1',ownerId:'FIN-1',effectiveFrom:'2026-11-01',currency:'USD',period:'Annual',evidenceRefs:['E1']};
 const cases=[{id:'S',baselineId:'BASE-1',baselineRevision:'r1',currency:'USD',period:'Annual'}];
@@ -33,4 +34,12 @@ test('T21 inconsistent revisions and periods block readiness',()=>{
   const r=assessP1Economics({baseline:base,cases,costItems:costs,costAllocations:alloc,benefitItems:[benefit],benefitAllocations:balloc});
   assert.equal(r.decisionReady,true);
   assert.equal(assessP1Economics({baseline:base,cases:[{...cases[0],baselineId:'OTHER'}],costItems:costs,costAllocations:alloc,benefitItems:[benefit],benefitAllocations:balloc}).decisionReady,false);
+});
+
+test('T21 existing comparison readiness is gated when P1 context is provided',()=>{
+ const lines=[{applicationId:'A',lineType:'CURRENT_RUN_COST',amount:1000,confidence:.8,source:'S'},{applicationId:'A',alternativeId:'X',lineType:'TRANSITION_COST',amount:500,confidence:.8,source:'S'},{applicationId:'A',alternativeId:'X',lineType:'TARGET_RUN_COST',amount:700,confidence:.8,source:'S'}];
+ assert.equal(economicsCompleteness('A','X',lines).decisionReadyForEconomicComparison,true);
+ const p1={baseline:base,cases,costItems:costs,costAllocations:alloc,benefitItems:[benefit],benefitAllocations:balloc};
+ assert.equal(economicsCompleteness('A','X',lines,p1).decisionReadyForEconomicComparison,true);
+ assert.equal(economicsCompleteness('A','X',lines,{...p1,cases:[{...cases[0],baselineRevision:'r2'}]}).decisionReadyForEconomicComparison,false);
 });
