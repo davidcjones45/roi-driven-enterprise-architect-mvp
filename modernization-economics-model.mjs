@@ -1,3 +1,4 @@
+import { assessP1Economics } from './cif-economic-p1-reconciliation.mjs';
 import { stableId } from './authority-model.mjs';
 
 export const ECONOMIC_LINE_TYPES=['CURRENT_RUN_COST','TRANSITION_COST','TARGET_RUN_COST','QUANTIFIED_BENEFIT','RISK_ADJUSTMENT'];
@@ -94,10 +95,12 @@ export function sensitivityCases(e={},options={}){
   ].map(c=>({...c,metrics:investmentMetrics({...e,riskAdjustedAnnualBenefit:baseBenefit*c.benefitFactor,transitionCost:baseTransition*c.transitionFactor},options)}));
 }
 
-export function economicsCompleteness(applicationId,alternativeId,lines=[]){
+export function economicsCompleteness(applicationId,alternativeId,lines=[],p1Context=null){
   const r=lines.map(normalizeEconomicLine).filter(x=>x.applicationId===applicationId&&(x.lineType==='CURRENT_RUN_COST'||x.alternativeId===alternativeId));
   const issues=r.flatMap(x=>economicLineIssues(x).issues.map(issue=>({lineId:x.id,issue})));
   const has=t=>r.some(x=>x.lineType===t&&x.amount!==null);
+  const p1 = p1Context === null ? null : assessP1Economics(p1Context);
   return {hasBaseline:has('CURRENT_RUN_COST'),hasTransition:has('TRANSITION_COST'),hasTarget:has('TARGET_RUN_COST'),
-    decisionReadyForEconomicComparison:has('CURRENT_RUN_COST')&&has('TRANSITION_COST')&&has('TARGET_RUN_COST')&&issues.length===0,issues};
+    decisionReadyForEconomicComparison:has('CURRENT_RUN_COST')&&has('TRANSITION_COST')&&has('TARGET_RUN_COST')&&issues.length===0&&(p1===null||p1.decisionReady),
+    p1Reconciliation:p1,issues:p1 ? [...issues,...p1.issues.map(issue=>({lineId:null,issue}))] : issues};
 }

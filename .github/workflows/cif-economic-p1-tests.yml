@@ -1,0 +1,20 @@
+name: CIF P1 economic verification
+on:
+  push:
+    branches:
+      - feature/cif-economic-p1-baseline-attribution-20261102
+  pull_request:
+    paths:
+      - 'cif-economic-p1-*'
+      - 'modernization-economics-model.mjs'
+      - '.github/workflows/cif-economic-p1-tests.yml'
+jobs:
+  financial-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run CIF P1 and existing modernization economy tests
+        run: node --test cif-economic-p1-reconciliation.test.mjs modernization-economics-model.test.mjs roi-ea-economics-human-control-model.test.mjs modernization-outcomes-model.test.mjs
