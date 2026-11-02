@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="modernization-workspace.css">
   <link rel="stylesheet" href="ux-refinement.css">
   <link rel="stylesheet" href="forms-analysis.css">
+  <link rel="stylesheet" href="logistics-release.css">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to workspace</a>
@@ -26,10 +27,11 @@
         <summary><span id="workspace-library-label">Specialist workspaces &amp; examples</span></summary>
         <div><button type="button" class="workspace-select" data-workspace-select="federated">Federated Enterprise</button>
       <button type="button" class="workspace-select" data-workspace-select="community-banking">Community Banking</button>
-      <button type="button" class="workspace-select" data-workspace-select="mortgage">Mortgage reference</button></div>
+      <button type="button" class="workspace-select" data-workspace-select="mortgage">Mortgage reference</button><button type="button" class="workspace-select" data-workspace-select="logistics">Logistics diagnostic</button></div>
       </details>
     </div>
     <nav aria-label="Workflow">
+      <button class="nav-link" data-workspace="logistics" data-view="logistics" hidden><span>LD</span> Logistics diagnostic</button>
       <button class="nav-link" data-workspace="forms" data-view="forms" hidden><span>FA</span> Forms analysis</button>
 <div class="nav-group" data-nav-workspace="roi"><span class="nav-caption">Frame</span><button class="nav-link active" data-workspace="roi" data-view="overview"><span>01</span> Overview</button>
       <button class="nav-link" data-workspace="roi" data-view="opportunity"><span>02</span> Opportunity</button>
@@ -84,7 +86,8 @@
       <button id="workspace-attention-action" type="button" class="secondary" hidden>Open next step</button>
     </section>
 
-    <section id="forms" class="view" aria-label="Forms analysis workspace"></section>
+    <section id="logistics" class="view"></section>
+<section id="forms" class="view" aria-label="Forms analysis workspace"></section>
     <section id="overview" class="view active">
       <div class="work-summary"><div><span class="eyebrow accent">CURRENT ASSESSMENT</span><h2 id="assessment-name">Your next decision starts here</h2><p id="assessment-question">Define the opportunity, then build the evidence and compare your options.</p><p class="assessment-meta" id="assessment-meta">No opportunity recorded yet.</p></div><div class="hero-status"><span id="readiness-label">Draft</span><strong id="readiness-score">0 / 7</strong><small>workflow components complete</small></div></div>
       <section class="next-action" aria-labelledby="next-action-title"><div><span class="eyebrow accent">NEXT STEP</span><h2 id="next-action-title">Define the opportunity</h2><p id="next-action-description">Start with the business problem and the decision owner.</p></div><button id="continue-assessment" type="button">Start assessment</button></section>
