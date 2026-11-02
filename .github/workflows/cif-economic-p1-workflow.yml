@@ -1,0 +1,21 @@
+name: CIF P1 workflow integration
+on:
+  push:
+    branches:
+      - feature/cif-economic-p1-workflow-integration-20261102
+  pull_request:
+    paths:
+      - 'cif-economic-p1-*'
+      - 'modernization-economics-ui.mjs'
+      - 'modernization-decision-package-model.mjs'
+      - '.github/workflows/cif-economic-p1-workflow.yml'
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check modernization-economics-ui.mjs
+      - run: node --test cif-economic-p1-reconciliation.test.mjs cif-economic-p1-workflow.test.mjs modernization-economics-model.test.mjs modernization-decision-package-model.test.mjs roi-ea-economics-human-control-model.test.mjs modernization-outcomes-model.test.mjs
