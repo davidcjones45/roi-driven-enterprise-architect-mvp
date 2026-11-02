@@ -1,3 +1,4 @@
+import { evaluateOutcomeAcceptance, evaluateInvestmentGate } from './cif-economic-p2-decision-controls.mjs';
 import { economicDecisionReadiness } from './cif-economic-p1-workflow.mjs';
 ﻿import { normalizeModernizationAssessment, assessmentIssues } from './modernization-model.mjs';
 import { candidateTransitionWaves, unresolvedDependencies } from './modernization-dependency-model.mjs';
@@ -42,6 +43,8 @@ export function decisionPackage(workspace={}, options={}){
         confidence:pct(alt.confidence),
         evidenceCompleteness:pct(alt.evidenceCompleteness),
         decisionStatus:alt.decisionStatus || 'Candidate',
+        outcomeAcceptance:(workspace.outcomeAcceptanceContracts||[]).filter(c=>c.applicationId===app.id&&c.alternativeId===alt.id).map(c=>({id:c.id,...evaluateOutcomeAcceptance(c,workspace.outcomeObservations||[],workspace.economicEvidenceRegister||[])})),
+        investmentGates:(workspace.investmentGateDecisions||[]).filter(g=>g.initiativeId===app.id).map(g=>({id:g.id,track:g.track,...evaluateInvestmentGate(g,workspace.investmentGateDecisions||[],workspace.economicEvidenceRegister||[])})),
         economics:{
           comparisonReady:complete.decisionReadyForEconomicComparison,
           currentAnnualCost:money(e.currentAnnualCost),
