@@ -1,3 +1,4 @@
+import { evaluateOutcomeAcceptance, evaluateInvestmentGate } from './cif-economic-p2-decision-controls.mjs';
 import { economicDecisionReadiness } from './cif-economic-p1-workflow.mjs';
 ﻿import { normalizeModernizationAssessment, assessmentIssues } from './modernization-model.mjs';
 import { candidateTransitionWaves, unresolvedDependencies } from './modernization-dependency-model.mjs';
@@ -42,6 +43,8 @@ export function decisionPackage(workspace={}, options={}){
         confidence:pct(alt.confidence),
         evidenceCompleteness:pct(alt.evidenceCompleteness),
         decisionStatus:alt.decisionStatus || 'Candidate',
+        outcomeAcceptance:(workspace.outcomeAcceptanceContracts||[]).filter(c=>c.applicationId===app.id&&c.alternativeId===alt.id).map(c=>({id:c.id,...evaluateOutcomeAcceptance(c,workspace.outcomeObservations||[],workspace.economicEvidenceRegister||[])})),
+        investmentGates:(workspace.investmentGateDecisions||[]).filter(g=>g.initiativeId===app.id).map(g=>({id:g.id,track:g.track,...evaluateInvestmentGate(g,workspace.investmentGateDecisions||[],workspace.economicEvidenceRegister||[])})),
         economics:{
           comparisonReady:complete.decisionReadyForEconomicComparison,
           currentAnnualCost:money(e.currentAnnualCost),
@@ -183,9 +186,10 @@ const pctFmt = value => value === null || value === undefined ? 'Not supplied' :
 export function renderDecisionPackageHtml(pkg={}){
   const apps=(pkg.applications||[]).map(a=>{
     const alternatives=(a.alternatives||[]).map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.provider)}</td><td>${esc(x.strategyClass)}</td><td>${esc(x.targetArchitecture||'Not established')}</td><td>${x.confidence===null?'Not supplied':esc(x.confidence+'%')}</td><td>${x.economics.comparisonReady?moneyFmt(x.economics.npv):'Incomplete'}</td></tr>`).join('');
+    const p2Rows=(a.alternatives||[]).flatMap(x=>[...(x.outcomeAcceptance||[]).map(y=>'<li>Outcome '+esc(y.id)+': '+esc(y.status)+' (accepted: '+esc(y.accepted)+')</li>'),...(x.investmentGates||[]).map(y=>'<li>Investment '+esc(y.track)+' / '+esc(y.id)+': '+esc(y.status)+' (modeled approval: '+esc(y.approved)+')</li>')]).join('');
     const providers=(a.providerEvidence||[]).map(x=>`<li>${esc(x.provider)}: ${esc(x.strategy||'Not supplied')} -> ${esc(x.targetDestination||'Not supplied')} (${x.confidence===null?'confidence not supplied':esc(x.confidence+'% confidence')}) - ${esc(x.status)}</li>`).join('');
     const gaps=a.assessment?.gaps?.length?a.assessment.gaps.map(x=>`<li>${esc(x)}</li>`).join(''):'<li>No assessment gaps recorded.</li>';
-    return `<section><h2>${esc(a.application.name)}</h2><p><strong>Criticality:</strong> ${esc(a.application.businessCriticality)} | <strong>Strategic importance:</strong> ${esc(a.application.strategicImportance)} | <strong>Lifecycle:</strong> ${esc(a.application.lifecycleStatus)}</p><p><strong>Assessment confidence:</strong> ${a.assessment?.overallConfidence ?? 'Not assessed'}% | <strong>Evidence completeness:</strong> ${a.assessment?.evidenceCompleteness ?? 'Not assessed'}%</p><p><strong>Least-regret next move:</strong> ${esc(a.assessment?.leastRegretNextMove||'Not recorded')}</p><h3>Candidate alternatives</h3><table><thead><tr><th>Alternative</th><th>Provider</th><th>Strategy</th><th>Target</th><th>Confidence</th><th>NPV</th></tr></thead><tbody>${alternatives||'<tr><td colspan="6">No alternatives recorded.</td></tr>'}</tbody></table><h3>Provider evidence</h3><ul>${providers||'<li>No provider evidence recorded.</li>'}</ul><h3>Open assessment issues</h3><ul>${gaps}</ul></section>`;
+    return `<section><h2>${esc(a.application.name)}</h2><p><strong>Criticality:</strong> ${esc(a.application.businessCriticality)} | <strong>Strategic importance:</strong> ${esc(a.application.strategicImportance)} | <strong>Lifecycle:</strong> ${esc(a.application.lifecycleStatus)}</p><p><strong>Assessment confidence:</strong> ${a.assessment?.overallConfidence ?? 'Not assessed'}% | <strong>Evidence completeness:</strong> ${a.assessment?.evidenceCompleteness ?? 'Not assessed'}%</p><p><strong>Least-regret next move:</strong> ${esc(a.assessment?.leastRegretNextMove||'Not recorded')}</p><h3>Candidate alternatives</h3><table><thead><tr><th>Alternative</th><th>Provider</th><th>Strategy</th><th>Target</th><th>Confidence</th><th>NPV</th></tr></thead><tbody>${alternatives||'<tr><td colspan="6">No alternatives recorded.</td></tr>'}</tbody></table><h3>Outcome acceptance and investment gates (advisory)</h3><ul>${p2Rows||'<li>No P2 records assessed.</li>'}</ul><h3>Provider evidence</h3><ul>${providers||'<li>No provider evidence recorded.</li>'}</ul><h3>Open assessment issues</h3><ul>${gaps}</ul></section>`;
   }).join('');
 
   const capacity=(pkg.portfolio?.capacity||[]).map(x=>`<tr><td>${esc(x.type)}</td><td>${esc(x.availableFte)}</td><td>${esc(x.demandFte)}</td><td>${esc(x.shortfallFte)}</td><td>${x.constrained?'Constrained':'Available under recorded demand'}</td></tr>`).join('');

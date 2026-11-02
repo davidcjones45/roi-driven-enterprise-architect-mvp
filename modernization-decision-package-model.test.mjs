@@ -28,6 +28,7 @@ const workspace={
     {applicationId:'APP-1',alternativeId:'ALT-1',lineType:'TRANSITION_COST',amount:500,confidence:.8,source:'S'},
     {applicationId:'APP-1',alternativeId:'ALT-1',lineType:'TARGET_RUN_COST',amount:700,confidence:.8,source:'S'}
   ],
+  economicEvidenceRegister:[{id:'E',source:'synthetic fixture',ownerId:'O',revision:'1',recordedAt:'2026-09-22',status:'VERIFIED'}],
   p1EconomicContext:{baseline:{id:'BASE-APP-1',revision:'1',ownerId:'FINANCE',effectiveFrom:'2026-09-22',currency:'USD',period:'Annual',evidenceRefs:['E']},cases:[{id:'APP-1',baselineId:'BASE-APP-1',baselineRevision:'1',currency:'USD',period:'Annual'}],costItems:[],costAllocations:[],benefitItems:[],benefitAllocations:[]},
   economicSettings:{horizonYears:5,discountRate:0},
   deliveryCapacities:[],

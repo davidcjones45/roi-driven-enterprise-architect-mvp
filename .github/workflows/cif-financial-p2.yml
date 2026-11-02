@@ -1,0 +1,24 @@
+name: CIF financial P2 verification
+on:
+  push:
+    branches:
+      - feature/cif-p2-evidence-structured-input-20261102
+  pull_request:
+    paths:
+      - 'cif-economic-*'
+      - 'cif-evidence-resolution.mjs'
+      - 'modernization-economics-ui.mjs'
+      - 'modernization-decision-package-model*'
+      - '.github/workflows/cif-financial-p2.yml'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: node --check modernization-economics-ui.mjs
+      - name: Test financial controls and existing integration
+        run: node --test cif-economic-p1-reconciliation.test.mjs cif-economic-p1-workflow.test.mjs cif-economic-p2-decision-controls.test.mjs modernization-economics-model.test.mjs modernization-decision-package-model.test.mjs roi-ea-economics-human-control-model.test.mjs modernization-outcomes-model.test.mjs
