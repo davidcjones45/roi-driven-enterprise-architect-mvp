@@ -1,3 +1,4 @@
+import { economicDecisionReadiness } from './cif-economic-p1-workflow.mjs';
 ﻿import { normalizeModernizationAssessment, assessmentIssues } from './modernization-model.mjs';
 import { candidateTransitionWaves, unresolvedDependencies } from './modernization-dependency-model.mjs';
 import { economicsForAlternative, investmentMetrics, economicsCompleteness } from './modernization-economics-model.mjs';
@@ -30,7 +31,7 @@ export function decisionPackage(workspace={}, options={}){
 
     const alternativeViews = appAlternatives.map(alt => {
       const e = economicsForAlternative(app.id,alt.id,economicLines);
-      const complete = economicsCompleteness(app.id,alt.id,economicLines);
+      const complete = economicDecisionReadiness(workspace,app.id,alt.id);
       const metrics = investmentMetrics(e,workspace.economicSettings || {});
       return {
         id:alt.id,
