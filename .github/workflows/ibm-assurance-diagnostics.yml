@@ -1,0 +1,22 @@
+name: IBM assurance diagnostics
+on:
+  pull_request:
+    paths:
+      - 'ibm-assurance-diagnostics.mjs'
+      - 'ibm-assurance-diagnostics.test.mjs'
+      - '.github/workflows/ibm-assurance-diagnostics.yml'
+  push:
+    paths:
+      - 'ibm-assurance-diagnostics.mjs'
+      - 'ibm-assurance-diagnostics.test.mjs'
+      - '.github/workflows/ibm-assurance-diagnostics.yml'
+jobs:
+  synthetic-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run bounded synthetic tests
+        run: node --test ibm-assurance-diagnostics.test.mjs
