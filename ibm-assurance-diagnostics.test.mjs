@@ -25,3 +25,16 @@ test('financial leakage rejects invalid adoption and missing provenance',()=>{
  const r=assessValueLeakage({grossBenefit:1000,adoptionRate:1.2,incrementalRunCost:0,transitionCost:0});
  assert.equal(r.valid,false); assert.equal(r.netBenefit,null);
 });
+
+test('zero adoption exposes full benefit leakage without treating it as recognized cash',()=>{
+ const r=assessValueLeakage({grossBenefit:1000,adoptionRate:0,incrementalRunCost:40,transitionCost:10,baselineRef:'b',attributionRef:'a'});
+ assert.equal(r.valid,true); assert.equal(r.leakage,1050); assert.equal(r.netBenefit,-50);
+});
+test('nonfinite economics are rejected',()=>{
+ const r=assessValueLeakage({grossBenefit:Infinity,adoptionRate:0.5,incrementalRunCost:0,transitionCost:0,baselineRef:'b',attributionRef:'a'});
+ assert.equal(r.valid,false); assert.equal(r.netBenefit,null);
+});
+test('human review fails closed without accessible evidence',()=>{
+ const r=assessHumanIntervention({reviewerId:'r',authorityRef:'a',evidenceRef:'e',haltMechanism:'pause',escalationOwner:'o',reviewBeforeExecution:true,evidenceAccessible:false,canHalt:true});
+ assert.equal(r.ready,false); assert.match(r.issues.join(' '),/not accessible/);
+});
