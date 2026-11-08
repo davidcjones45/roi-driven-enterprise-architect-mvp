@@ -1,0 +1,21 @@
+name: IBM assurance workflow integration
+on:
+  pull_request:
+    paths:
+      - 'ibm-assurance-workflow.mjs'
+      - 'ibm-assurance-workflow.test.mjs'
+      - '.github/workflows/ibm-assurance-workflow.yml'
+  push:
+    paths:
+      - 'ibm-assurance-workflow.mjs'
+      - 'ibm-assurance-workflow.test.mjs'
+      - '.github/workflows/ibm-assurance-workflow.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test ibm-assurance-diagnostics.test.mjs ibm-assurance-workflow.test.mjs cif-economic-p1-workflow.test.mjs
